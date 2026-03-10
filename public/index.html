@@ -1686,10 +1686,10 @@ select option{background:#080d0b}
 .mp-rank-ring::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:1px solid rgba(74,173,106,.1);animation:ringExpand 2s ease-out infinite}
 .mp-rank-name{font-family:var(--f-display);font-size:1.2rem;font-style:italic;color:var(--dew);margin-top:.5rem;letter-spacing:.06em;text-shadow:0 0 20px rgba(74,173,106,.2);position:relative;z-index:1}
 .mp-player-name{font-family:var(--f-serif);font-size:.88rem;color:var(--mint);margin-top:.2rem}
-.mp-player-info{font-size:.68rem;color:var(--frond3);margin-top:.1rem}
+.mp-player-info{font-size:.72rem;color:var(--frond2);margin-top:.1rem}
 .mp-rank-bar{width:80%;max-width:240px;height:6px;background:rgba(74,173,106,.1);border-radius:3px;margin:.6rem auto .2rem;overflow:hidden;position:relative;z-index:1}
 .mp-rank-fill{height:100%;background:linear-gradient(90deg,var(--fern),var(--sprout),var(--mint));border-radius:3px;transition:width .6s ease;box-shadow:0 0 8px rgba(74,173,106,.4)}
-.mp-rank-next{font-size:.62rem;color:var(--frond3);position:relative;z-index:1}
+.mp-rank-next{font-size:.66rem;color:var(--frond2);position:relative;z-index:1}
 
 .mp-section{background:rgba(12,20,14,.6);border:1px solid rgba(74,173,106,.1);border-radius:12px;padding:.9rem 1rem;margin:.5rem 0;backdrop-filter:blur(8px);transition:border-color .3s}
 .mp-section:hover{border-color:rgba(74,173,106,.25)}
@@ -1699,34 +1699,40 @@ select option{background:#080d0b}
 .mp-stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.3rem;text-align:center}
 .mp-stat{background:rgba(74,173,106,.04);border-radius:8px;padding:.6rem .3rem}
 .mp-stat-num{font-family:var(--f-display);font-size:1.8rem;line-height:1}
-.mp-stat-label{font-size:.55rem;color:var(--frond3);margin-top:.2rem;letter-spacing:.08em;text-transform:uppercase}
+.mp-stat-label{font-size:.58rem;color:var(--frond2);margin-top:.2rem;letter-spacing:.08em;text-transform:uppercase}
 .mp-stat-win .mp-stat-num{color:var(--sprout);text-shadow:0 0 12px rgba(74,173,106,.3)}
 .mp-stat-loss .mp-stat-num{color:#e07070;text-shadow:0 0 12px rgba(224,112,112,.2)}
 .mp-stat-draw .mp-stat-num{color:var(--frond2)}
-.mp-rate{font-size:.7rem;color:var(--frond3);text-align:center;margin-top:.5rem}
-.mp-rate strong{color:var(--mint);font-size:.82rem}
+.mp-rate{font-size:.74rem;color:var(--frond);text-align:center;margin-top:.5rem}
+.mp-rate strong{color:var(--mint);font-size:.88rem}
 
-.mp-record-line{display:flex;justify-content:space-between;align-items:center;padding:.3rem 0;border-bottom:1px solid rgba(74,173,106,.06);font-size:.76rem;color:var(--frond2)}
+.mp-record-line{display:flex;justify-content:space-between;align-items:center;padding:.35rem 0;border-bottom:1px solid rgba(74,173,106,.06);font-size:.78rem;color:var(--frond)}
 .mp-record-line:last-child{border-bottom:none}
-.mp-record-val{font-family:var(--f-display);font-weight:700;color:var(--dew)}
+.mp-record-val{font-family:var(--f-display);font-weight:700;color:var(--mint)}
 
 .mp-ai-row{display:flex;align-items:center;gap:.6rem;padding:.4rem 0;border-bottom:1px solid rgba(74,173,106,.06)}
 .mp-ai-row:last-child{border-bottom:none}
 .mp-ai-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.mp-ai-name{font-size:.76rem;color:var(--frond2);flex:1}
-.mp-ai-score{font-family:var(--f-display);font-size:.82rem;color:var(--dew)}
+.mp-ai-name{font-size:.78rem;color:var(--frond);flex:1}
+.mp-ai-score{font-family:var(--f-display);font-size:.85rem;color:var(--mint)}
 
-.mp-badge{display:flex;flex-direction:column;align-items:center;width:64px;padding:.4rem .2rem;border-radius:8px;transition:transform .2s,background .2s;cursor:default}
-.mp-badge.earned{background:rgba(74,173,106,.06)}
-.mp-badge.earned:hover{transform:scale(1.1);background:rgba(74,173,106,.12)}
-.mp-badge-icon{font-size:1.8rem;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))}
-.mp-badge.locked .mp-badge-icon{filter:grayscale(1) brightness(.4)}
-.mp-badge-name{font-size:.48rem;color:var(--mint);text-align:center;line-height:1.2;margin-top:.15rem}
-.mp-badge.locked .mp-badge-name{color:var(--frond4)}
+.mp-badge{display:flex;flex-direction:column;align-items:center;width:72px;padding:.5rem .3rem;border-radius:10px;transition:transform .25s,background .25s,box-shadow .25s;cursor:default;position:relative;border:1px solid transparent}
+.mp-badge.earned{background:linear-gradient(160deg,rgba(74,173,106,.1),rgba(74,173,106,.03));border-color:rgba(74,173,106,.2);box-shadow:0 2px 12px rgba(74,173,106,.08)}
+.mp-badge.earned:hover{transform:scale(1.12) translateY(-3px);background:linear-gradient(160deg,rgba(74,173,106,.18),rgba(74,173,106,.06));box-shadow:0 6px 20px rgba(74,173,106,.2)}
+.mp-badge.earned::after{content:'✓';position:absolute;top:2px;right:4px;font-size:.45rem;color:var(--sprout);font-weight:700;background:rgba(74,173,106,.2);border-radius:50%;width:12px;height:12px;display:flex;align-items:center;justify-content:center}
+.mp-badge-icon{font-size:2rem;filter:drop-shadow(0 3px 8px rgba(0,0,0,.4));transition:filter .3s}
+.mp-badge.earned .mp-badge-icon{animation:badgeShine 3s ease-in-out infinite}
+@keyframes badgeShine{0%,100%{filter:drop-shadow(0 3px 8px rgba(0,0,0,.4))}50%{filter:drop-shadow(0 3px 14px rgba(74,173,106,.5))}}
+.mp-badge.locked{opacity:.35;border-color:rgba(255,255,255,.03)}
+.mp-badge.locked .mp-badge-icon{filter:grayscale(1) brightness(.5)}
+.mp-badge-name{font-size:.5rem;color:var(--dew);text-align:center;line-height:1.3;margin-top:.2rem;font-family:var(--f-serif)}
+.mp-badge.locked .mp-badge-name{color:rgba(218,240,223,.25)}
+.mp-badge-desc{font-size:.42rem;color:var(--frond2);text-align:center;line-height:1.2;margin-top:.1rem}
+.mp-badge.locked .mp-badge-desc{color:rgba(218,240,223,.15)}
 
 .mp-profile-fields{display:flex;flex-direction:column;gap:.5rem}
 .mp-field{display:flex;align-items:center;gap:.5rem}
-.mp-field label{font-size:.68rem;color:var(--frond3);min-width:50px;font-family:var(--f-serif)}
+.mp-field label{font-size:.72rem;color:var(--frond2);min-width:50px;font-family:var(--f-serif)}
 .mp-field input,.mp-field select{flex:1;font-size:.8rem;background:rgba(74,173,106,.04);border:1px solid rgba(74,173,106,.15);border-radius:6px;padding:.4rem .6rem;color:var(--frond);transition:border-color .3s}
 .mp-field input:focus,.mp-field select:focus{border-color:var(--sprout);outline:none;box-shadow:0 0 12px rgba(74,173,106,.1)}
 </style>
@@ -3200,6 +3206,7 @@ function openMyPage(){
     return `<div class="mp-badge ${has?'earned':'locked'}" title="${b.desc}">
       <span class="mp-badge-icon">${b.icon}</span>
       <span class="mp-badge-name">${b.name}</span>
+      <span class="mp-badge-desc">${b.desc}</span>
     </div>`;
   }).join('');
 }
