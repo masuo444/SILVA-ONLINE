@@ -1920,12 +1920,67 @@ select option{background:#080d0b}
 </div>
 
 <!-- ═══════ OVERLAYS ═══════ -->
+<style>
+/* Win recap styles */
+.win-recap{width:100%;margin-top:.4rem}
+.win-tab-bar{display:flex;gap:0;border-bottom:1px solid rgba(74,173,106,.2);margin-bottom:.6rem}
+.win-tab{flex:1;padding:.4rem;font-size:.7rem;font-family:var(--f-serif);color:var(--frond3);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;transition:.2s}
+.win-tab.active{color:var(--mint);border-bottom-color:var(--sprout)}
+.win-tab:hover{color:var(--frond2)}
+.win-tab-content{display:none}
+.win-tab-content.active{display:block}
+/* Summary */
+.win-summary{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;margin-bottom:.5rem}
+.win-player{background:rgba(74,173,106,.05);border:1px solid rgba(74,173,106,.1);border-radius:8px;padding:.4rem .6rem;text-align:center;min-width:80px}
+.win-player.winner{border-color:rgba(74,173,106,.4);background:rgba(74,173,106,.1)}
+.win-player.dead{opacity:.4}
+.win-player-name{font-size:.68rem;font-family:var(--f-serif);color:var(--frond2);margin-bottom:.15rem}
+.win-player-card{font-size:.6rem;color:var(--frond3)}
+.win-player-status{font-size:1rem;margin-bottom:.1rem}
+/* Log */
+.win-log{max-height:200px;overflow-y:auto;text-align:left;padding:.2rem 0}
+.win-log-line{font-size:.68rem;color:var(--frond2);padding:.2rem .4rem;border-bottom:1px solid rgba(74,173,106,.05);line-height:1.5}
+.win-log-line:nth-child(odd){background:rgba(74,173,106,.02)}
+/* Highlight replay */
+.win-replay{text-align:center}
+.win-replay-area{min-height:80px;display:flex;align-items:center;justify-content:center;padding:.5rem}
+.win-replay-card{display:flex;flex-direction:column;align-items:center;gap:.3rem;animation:replayFadeIn .5s ease}
+@keyframes replayFadeIn{from{opacity:0;transform:scale(.8) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.win-replay-step{font-size:.72rem;color:var(--frond2);line-height:1.6;text-align:center;min-height:2.4em}
+.win-replay-controls{display:flex;gap:.5rem;justify-content:center;margin-top:.5rem}
+.win-replay-btn{background:rgba(74,173,106,.08);border:1px solid rgba(74,173,106,.2);border-radius:6px;padding:.3rem .8rem;font-size:.7rem;color:var(--mint);cursor:pointer;transition:.2s}
+.win-replay-btn:hover{background:rgba(74,173,106,.15);border-color:var(--sprout)}
+.win-replay-btn:disabled{opacity:.3;cursor:default}
+.win-replay-progress{font-size:.6rem;color:var(--frond3);margin-top:.3rem}
+</style>
 <div class="overlay" id="ovWin">
-  <div class="win-box">
+  <div class="win-box" style="max-width:440px;padding:2rem 1.5rem">
     <div class="win-icon" id="winIcon">🌳</div>
     <div class="win-title" id="winTitle">—</div>
     <div class="win-sub" id="winSub">—</div>
-    <button class="btn filled" onclick="location.reload()">ロビーへ戻る</button>
+    <!-- Recap tabs -->
+    <div class="win-recap">
+      <div class="win-tab-bar">
+        <button class="win-tab active" onclick="winTab('summary')">結果</button>
+        <button class="win-tab" onclick="winTab('log')">履歴</button>
+        <button class="win-tab" onclick="winTab('replay')">ハイライト</button>
+      </div>
+      <div id="winSummary" class="win-tab-content active"></div>
+      <div id="winLog" class="win-tab-content"></div>
+      <div id="winReplay" class="win-tab-content">
+        <div class="win-replay">
+          <div class="win-replay-area" id="replayArea"></div>
+          <div class="win-replay-step" id="replayStep"></div>
+          <div class="win-replay-controls">
+            <button class="win-replay-btn" id="replayPrev" onclick="replayNav(-1)">◀ 前</button>
+            <button class="win-replay-btn" id="replayPlay" onclick="replayToggle()">▶ 再生</button>
+            <button class="win-replay-btn" id="replayNext" onclick="replayNav(1)">次 ▶</button>
+          </div>
+          <div class="win-replay-progress" id="replayProgress"></div>
+        </div>
+      </div>
+    </div>
+    <button class="btn filled" style="margin-top:.5rem" onclick="location.reload()">ロビーへ戻る</button>
   </div>
 </div>
 
@@ -3514,6 +3569,13 @@ function clearTurnBanner(){
   _lastPlayedCard=null;
 }
 
+/* ═══════════════════════════════════
+   WIN SCREEN WITH RECAP & REPLAY
+═══════════════════════════════════ */
+let _replayLog=[];
+let _replayIdx=0;
+let _replayTimer=null;
+
 function showWin(wid,players){
   const icon=document.getElementById('winIcon');
   const title=document.getElementById('winTitle');
@@ -3527,7 +3589,83 @@ function showWin(wid,players){
     const result=!wid?'draw':wid===myId?'win':'loss';
     recordGame(result,_gameInfo);
   }
+  /* 結果サマリー */
+  const summaryEl=document.getElementById('winSummary');
+  summaryEl.innerHTML='<div class="win-summary">'+players.map(p=>{
+    const isW=p.id===wid;
+    const statusIcon=isW?'👑':(!p.alive?'💀':'🌿');
+    const lastCard=p.discard&&p.discard.length?p.discard[p.discard.length-1]:null;
+    const handCard=p.hand&&p.hand.length?p.hand[0]:null;
+    const cardInfo=handCard?`手札: ${handCard.name}(Lv.${handCard.level})`:(p.alive?'':'脱落');
+    return `<div class="win-player${isW?' winner':''}${!p.alive&&!isW?' dead':''}">
+      <div class="win-player-status">${statusIcon}</div>
+      <div class="win-player-name">${p.name}</div>
+      <div class="win-player-card">${cardInfo}</div>
+    </div>`;
+  }).join('')+'</div>';
+  /* 履歴ログ（逆順→時系列順に） */
+  const log=(gameState?.log||[]).slice().reverse();
+  document.getElementById('winLog').innerHTML='<div class="win-log">'+
+    log.map((l,i)=>`<div class="win-log-line"><span style="color:var(--frond4);font-size:.6rem;margin-right:.3rem">${i+1}.</span>${l}</div>`).join('')+
+  '</div>';
+  /* ハイライトリプレイ準備 */
+  _replayLog=log;
+  _replayIdx=0;
+  if(_replayTimer){clearInterval(_replayTimer);_replayTimer=null;}
+  updateReplayDisplay();
+  /* デフォルトタブ */
+  winTab('summary');
   openOv('ovWin');
+}
+
+function winTab(tab){
+  document.querySelectorAll('.win-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.win-tab-content').forEach(t=>t.classList.remove('active'));
+  const tabs={summary:'winSummary',log:'winLog',replay:'winReplay'};
+  document.getElementById(tabs[tab]).classList.add('active');
+  event.target?event.target.classList.add('active'):document.querySelector(`.win-tab`).classList.add('active');
+  /* タブボタンのactive */
+  document.querySelectorAll('.win-tab').forEach(t=>{
+    if(t.textContent==={'summary':'結果','log':'履歴','replay':'ハイライト'}[tab])t.classList.add('active');
+  });
+  if(tab==='replay'&&_replayTimer){clearInterval(_replayTimer);_replayTimer=null;document.getElementById('replayPlay').textContent='▶ 再生';}
+}
+
+function updateReplayDisplay(){
+  const area=document.getElementById('replayArea');
+  const step=document.getElementById('replayStep');
+  const prog=document.getElementById('replayProgress');
+  if(!_replayLog.length){area.innerHTML='<span style="color:var(--frond3);font-size:.72rem">ログがありません</span>';return;}
+  const line=_replayLog[_replayIdx]||'';
+  /* カード使用の場合、アイコンを大きく表示 */
+  const emojiMatch=line.match(/^([\u{1F000}-\u{1FFFF}]|[\u{2600}-\u{27BF}]|[\u{FE00}-\u{FEFF}]|[\u{1F900}-\u{1F9FF}]|.)/u);
+  const emoji=emojiMatch?emojiMatch[0]:'🃏';
+  area.innerHTML=`<div class="win-replay-card"><span style="font-size:2.2rem;filter:drop-shadow(0 2px 12px rgba(74,173,106,.3))">${emoji}</span></div>`;
+  step.textContent=line.replace(/^[\u{1F000}-\u{1FFFF}][\u{FE00}-\u{FEFF}]?\s?|^[\u{2600}-\u{27BF}]\s?/u,'').trim()||line;
+  prog.textContent=`${_replayIdx+1} / ${_replayLog.length}`;
+  document.getElementById('replayPrev').disabled=_replayIdx<=0;
+  document.getElementById('replayNext').disabled=_replayIdx>=_replayLog.length-1;
+}
+
+function replayNav(dir){
+  _replayIdx=Math.max(0,Math.min(_replayLog.length-1,_replayIdx+dir));
+  updateReplayDisplay();
+}
+
+function replayToggle(){
+  const btn=document.getElementById('replayPlay');
+  if(_replayTimer){
+    clearInterval(_replayTimer);_replayTimer=null;
+    btn.textContent='▶ 再生';
+  }else{
+    if(_replayIdx>=_replayLog.length-1)_replayIdx=0;
+    btn.textContent='⏸ 停止';
+    _replayTimer=setInterval(()=>{
+      if(_replayIdx>=_replayLog.length-1){clearInterval(_replayTimer);_replayTimer=null;btn.textContent='▶ 再生';return;}
+      _replayIdx++;updateReplayDisplay();
+    },1500);
+    updateReplayDisplay();
+  }
 }
 
 function showPeek(card){
