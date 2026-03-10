@@ -1664,6 +1664,7 @@ select option{background:#080d0b}
 
 <!-- ═══════ WAITING ═══════ -->
 <div id="waiting" class="screen">
+  <button class="back-link" onclick="if(confirm('ルームを出ますか？'))location.reload()">戻る</button>
   <p class="w-label">対局ルーム</p>
   <div class="room-id" id="roomIdTxt" onclick="copyRoomId()">—</div>
   <p class="room-id-hint" onclick="copyRoomId()">タップでIDをコピー</p>
@@ -1695,6 +1696,7 @@ select option{background:#080d0b}
   <div class="game-wrap">
     <div id="specBanner" class="spec-banner hidden">👁 観戦モード — 全員の手札が表示されています</div>
     <div class="g-bar">
+      <button class="back-link" style="font-size:.7rem;margin-right:.5rem" onclick="if(confirm('部屋を出ますか？'))location.reload()">退出</button>
       <div class="g-turn" id="gTurn">—</div>
       <div class="g-bar-info">
         <span class="g-deck" id="gDeck">🃏 —</span>
