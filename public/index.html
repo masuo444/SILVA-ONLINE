@@ -1679,9 +1679,51 @@ select option{background:#080d0b}
   <div class="panel" style="max-width:480px;width:100%">
     <button class="back-link" onclick="goScreen('lobby')">戻る</button>
     <div class="p-eyebrow">マイページ</div>
+    <!-- プロフィール -->
+    <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:8px;padding:.8rem 1rem;margin:.6rem 0">
+      <div style="font-family:var(--f-serif);font-size:.8rem;color:var(--mint);margin-bottom:.5rem">プロフィール</div>
+      <div style="display:flex;flex-direction:column;gap:.5rem">
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <label style="font-size:.72rem;color:var(--frond3);min-width:42px">名前</label>
+          <input type="text" id="mpName" placeholder="名前を入力" maxlength="12" style="flex:1;font-size:.82rem" onchange="saveProfile()">
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <label style="font-size:.72rem;color:var(--frond3);min-width:42px">国</label>
+          <select id="mpCountry" style="flex:1;font-size:.82rem" onchange="saveProfile()">
+            <option value="">未設定</option>
+            <option value="🇯🇵 日本">🇯🇵 日本</option>
+            <option value="🇺🇸 アメリカ">🇺🇸 アメリカ</option>
+            <option value="🇬🇧 イギリス">🇬🇧 イギリス</option>
+            <option value="🇫🇷 フランス">🇫🇷 フランス</option>
+            <option value="🇩🇪 ドイツ">🇩🇪 ドイツ</option>
+            <option value="🇮🇹 イタリア">🇮🇹 イタリア</option>
+            <option value="🇪🇸 スペイン">🇪🇸 スペイン</option>
+            <option value="🇰🇷 韓国">🇰🇷 韓国</option>
+            <option value="🇨🇳 中国">🇨🇳 中国</option>
+            <option value="🇹🇼 台湾">🇹🇼 台湾</option>
+            <option value="🇹🇭 タイ">🇹🇭 タイ</option>
+            <option value="🇻🇳 ベトナム">🇻🇳 ベトナム</option>
+            <option value="🇮🇩 インドネシア">🇮🇩 インドネシア</option>
+            <option value="🇮🇳 インド">🇮🇳 インド</option>
+            <option value="🇧🇷 ブラジル">🇧🇷 ブラジル</option>
+            <option value="🇨🇦 カナダ">🇨🇦 カナダ</option>
+            <option value="🇦🇺 オーストラリア">🇦🇺 オーストラリア</option>
+            <option value="🇲🇽 メキシコ">🇲🇽 メキシコ</option>
+            <option value="🇷🇺 ロシア">🇷🇺 ロシア</option>
+            <option value="🌍 その他">🌍 その他</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <label style="font-size:.72rem;color:var(--frond3);min-width:42px">自己紹介</label>
+          <input type="text" id="mpBio" placeholder="ひとこと（任意）" maxlength="40" style="flex:1;font-size:.82rem" onchange="saveProfile()">
+        </div>
+      </div>
+    </div>
+    <!-- ランク -->
     <div style="text-align:center;margin:.8rem 0">
       <div id="mpRankIcon" style="font-size:2.4rem"></div>
       <div id="mpRankName" style="font-family:var(--f-serif);font-size:1.1rem;color:var(--dew);margin-top:.2rem"></div>
+      <div id="mpProfileSummary" style="font-size:.72rem;color:var(--frond3);margin-top:.15rem"></div>
       <div id="mpRankNext" style="font-size:.68rem;color:var(--frond3);margin-top:.2rem"></div>
     </div>
     <!-- 戦績 -->
@@ -2879,7 +2921,13 @@ function handle(m){
 function goScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
 function goPanel(id){ensureWS(()=>goScreen(id));}
 /* 自動ルーム参加: ?room= パラメータ */
-window.addEventListener('load',()=>{if(window._autoJoinRoom){setTimeout(()=>{goPanel('panelJoin');document.getElementById('joinId').value=window._autoJoinRoom;},500);}});
+window.addEventListener('load',()=>{
+  /* プロフィール名を各入力欄に自動セット */
+  const prof=getProfile();
+  if(prof.name){['aiName','createName','joinName'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=prof.name;});}
+  /* URL ?room= パラメータで自動参加 */
+  if(window._autoJoinRoom){setTimeout(()=>{goPanel('panelJoin');document.getElementById('joinId').value=window._autoJoinRoom;if(prof.name){document.getElementById('joinName').value=prof.name;}},500);}
+});
 
 /* ═══════════════════════════════════
    LOBBY ACTIONS
@@ -2942,7 +2990,9 @@ function getStats(){
 }
 function defaultStats(){return{wins:0,losses:0,draws:0,total:0,streak:0,bestStreak:0,aiWins:{easy:0,normal:0,hard:0},aiLosses:{easy:0,normal:0,hard:0},onlineWins:0,onlineLosses:0,lastPlayed:null};}
 function saveStats(s){localStorage.setItem('silva_stats',JSON.stringify(s));}
-function resetStats(){localStorage.removeItem('silva_stats');toast('データをリセットしました');openMyPage();}
+function resetStats(){localStorage.removeItem('silva_stats');localStorage.removeItem('silva_badges');toast('データをリセットしました');openMyPage();}
+function getProfile(){try{return JSON.parse(localStorage.getItem('silva_profile'))||{};}catch{return {};}}
+function saveProfile(){const p={name:document.getElementById('mpName').value.trim(),country:document.getElementById('mpCountry').value,bio:document.getElementById('mpBio').value.trim()};localStorage.setItem('silva_profile',JSON.stringify(p));toast('プロフィールを保存しました');}
 function recordGame(result,opts={}){
   /* result: 'win','loss','draw' / opts: {aiDifficulty,isOnline} */
   const s=getStats();
@@ -2980,10 +3030,17 @@ function getNextRank(wins){
 function openMyPage(){
   goScreen('panelMyPage');
   const s=getStats();
+  const prof=getProfile();
+  /* プロフィール欄に値をセット */
+  document.getElementById('mpName').value=prof.name||'';
+  document.getElementById('mpCountry').value=prof.country||'';
+  document.getElementById('mpBio').value=prof.bio||'';
   const rank=getRank(s.wins);
   const next=getNextRank(s.wins);
   document.getElementById('mpRankIcon').textContent=rank.icon;
   document.getElementById('mpRankName').textContent=rank.name;
+  const summaryParts=[prof.name,prof.country].filter(Boolean);
+  document.getElementById('mpProfileSummary').textContent=summaryParts.length?summaryParts.join(' / '):'';
   document.getElementById('mpRankNext').textContent=next?`次のランク「${next.name}」まであと${next.minWins-s.wins}勝`:'最高ランク到達！';
   document.getElementById('mpWins').textContent=s.wins;
   document.getElementById('mpLosses').textContent=s.losses;
