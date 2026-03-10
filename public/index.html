@@ -1711,9 +1711,9 @@ select option{background:#080d0b}
           <div class="s-box">
             <div class="s-label">山札</div>
             <div class="deck-stack" id="deckStack">
-              <div class="deck-card"><img src="/back.png" alt=""></div>
-              <div class="deck-card"><img src="/back.png" alt=""></div>
-              <div class="deck-card"><img src="/back.png" alt=""></div>
+              <div class="deck-card"><img src="/back.jpg" alt=""></div>
+              <div class="deck-card"><img src="/back.jpg" alt=""></div>
+              <div class="deck-card"><img src="/back.jpg" alt=""></div>
             </div>
             <div class="deck-count" id="deckVisCount">—</div>
             <div class="deck-count-label">残り</div>
@@ -1721,7 +1721,7 @@ select option{background:#080d0b}
           <div class="s-box">
             <div class="s-label">再生札</div>
             <div class="rebirth-card">
-              <img src="/11.png" alt="幼きククノチ" style="width:36px;height:36px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(74,173,106,.2));margin-bottom:.1rem">
+              <img src="/11.jpg" alt="幼きククノチ" style="width:36px;height:36px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(74,173,106,.2));margin-bottom:.1rem">
               <div class="rb-lv">0</div>
               <div class="rb-nm">幼きククノチ</div>
             </div>
@@ -1740,7 +1740,7 @@ select option{background:#080d0b}
       <div class="omamori-rope"></div>
       <div class="omamori-body">
         <div class="omamori-glow"></div>
-        <img src="/6.png" alt="枡職人" class="omamori-img">
+        <img src="/6.jpg" alt="枡職人" class="omamori-img">
         <div class="omamori-text">守護</div>
       </div>
     </div>
@@ -2857,7 +2857,7 @@ function doSpectate(roomId){ensureWS(()=>send({type:'spectate',roomId,name:docum
 /* ═══════════════════════════════════
    GAME RENDER
 ═══════════════════════════════════ */
-function cardImg(level){return level===0?'/11.png':`/${level}.png`;}
+function cardImg(level){return level===0?'/11.jpg':`/${level}.jpg`;}
 
 function renderGame(){
   if(!gameState)return;
@@ -2952,7 +2952,7 @@ function renderPlayers(players,curId,phase,pending){
         if(c.hidden){
           const canPick=isWarriorTarget&&!isSpectator;
           return `<div class="card c-back${canPick?'':' no-act'}" ${canPick?`onclick="warriorDiscard('${c.uid}')" style="cursor:pointer"`:''}>
-            <img class="c-back-img" src="/back.png" alt="">
+            <img class="c-back-img" src="/back.jpg" alt="">
             ${canPick?'<div class="c-pick-hint">?</div>':''}
           </div>`;
         }
@@ -2969,7 +2969,7 @@ function renderPlayers(players,curId,phase,pending){
         return `<div class="${cls}" ${oc?`onclick="${oc}"`:''}><div class="c-lv">${N(c.level)}</div><img class="c-img" src="${cardImg(c.level)}" alt="${c.name}"><div class="c-nm">${c.name}</div><div class="c-ef">${c.effect}</div></div>`;
       }).join('');
     } else {
-      hand=Array(p.handCount).fill('<div class="card c-back no-act"><img class="c-back-img" src="/back.png" alt=""></div>').join('');
+      hand=Array(p.handCount).fill('<div class="card c-back no-act"><img class="c-back-img" src="/back.jpg" alt=""></div>').join('');
     }
 
     const discArr=(p.discard||[]).slice(-12);
