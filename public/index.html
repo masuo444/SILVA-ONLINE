@@ -1592,6 +1592,12 @@ select option{background:#080d0b}
         <span class="mc-desc">カードの効果と遊び方を確認</span>
         <div class="root-corner"></div>
       </div>
+      <div class="mode-card" onclick="openMyPage()">
+        <span class="mc-icon">👤</span>
+        <span class="mc-name">マイページ</span>
+        <span class="mc-desc">戦績・ランク・バッジを確認</span>
+        <div class="root-corner"></div>
+      </div>
     </div>
     <!-- 外部リンク -->
     <div style="display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:1.2rem">
@@ -1664,6 +1670,48 @@ select option{background:#080d0b}
     <button class="btn full" onclick="loadRooms()">🔄 対局一覧を更新</button>
     <div class="spec-list" id="specList">
       <p style="font-family:var(--f-serif);font-size:.73rem;color:var(--frond4);text-align:center;padding:1.2rem">更新ボタンを押してください</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MY PAGE ═══════ -->
+<div id="panelMyPage" class="screen panel-screen">
+  <div class="panel" style="max-width:480px;width:100%">
+    <button class="back-link" onclick="goScreen('lobby')">戻る</button>
+    <div class="p-eyebrow">マイページ</div>
+    <div style="text-align:center;margin:.8rem 0">
+      <div id="mpRankIcon" style="font-size:2.4rem"></div>
+      <div id="mpRankName" style="font-family:var(--f-serif);font-size:1.1rem;color:var(--dew);margin-top:.2rem"></div>
+      <div id="mpRankNext" style="font-size:.68rem;color:var(--frond3);margin-top:.2rem"></div>
+    </div>
+    <!-- 戦績 -->
+    <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:8px;padding:.8rem 1rem;margin:.6rem 0">
+      <div style="font-family:var(--f-serif);font-size:.8rem;color:var(--mint);margin-bottom:.5rem">総合戦績</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;text-align:center">
+        <div><div id="mpWins" style="font-family:var(--f-display);font-size:1.6rem;color:var(--sprout)">0</div><div style="font-size:.6rem;color:var(--frond3)">勝利</div></div>
+        <div><div id="mpLosses" style="font-family:var(--f-display);font-size:1.6rem;color:#e07070">0</div><div style="font-size:.6rem;color:var(--frond3)">敗北</div></div>
+        <div><div id="mpDraws" style="font-family:var(--f-display);font-size:1.6rem;color:var(--frond2)">0</div><div style="font-size:.6rem;color:var(--frond3)">引分</div></div>
+      </div>
+      <div id="mpRate" style="font-size:.72rem;color:var(--frond3);text-align:center;margin-top:.4rem"></div>
+    </div>
+    <!-- 記録 -->
+    <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:8px;padding:.8rem 1rem;margin:.6rem 0">
+      <div style="font-family:var(--f-serif);font-size:.8rem;color:var(--mint);margin-bottom:.5rem">記録</div>
+      <div id="mpRecords" style="font-size:.78rem;color:var(--frond2);line-height:2"></div>
+    </div>
+    <!-- AI別戦績 -->
+    <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:8px;padding:.8rem 1rem;margin:.6rem 0">
+      <div style="font-family:var(--f-serif);font-size:.8rem;color:var(--mint);margin-bottom:.5rem">AI難易度別</div>
+      <div id="mpAiStats" style="font-size:.78rem;color:var(--frond2);line-height:2"></div>
+    </div>
+    <!-- バッジ -->
+    <div style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:8px;padding:.8rem 1rem;margin:.6rem 0">
+      <div style="font-family:var(--f-serif);font-size:.8rem;color:var(--mint);margin-bottom:.5rem">バッジ</div>
+      <div id="mpBadges" style="display:flex;flex-wrap:wrap;gap:.5rem"></div>
+    </div>
+    <!-- リセット -->
+    <div style="text-align:center;margin-top:1rem">
+      <button class="btn" style="font-size:.65rem;padding:.3rem .8rem;opacity:.4;border-color:rgba(255,80,80,.3);color:rgba(255,80,80,.6)" onclick="if(confirm('全ての戦績データをリセットしますか？'))resetStats()">データをリセット</button>
     </div>
   </div>
 </div>
@@ -2740,6 +2788,8 @@ let gameState=null;
 let selectedUid=null,pendingCardUid=null,pendingEffect=null,pendingGuess=false,_guessTarget=null;
 let _prevAlive=new Set();
 let _lastPlayedCard=null; // {cardId,cardName,cardLevel,cardEffect,cardEmoji,playerName,playerId}
+let _gameRecorded=false; // 同じゲームで二重記録を防ぐ
+let _gameInfo={aiDifficulty:null,isOnline:false}; // ゲーム種別追跡
 
 const EFFECT_DESC={
   kukuochi_young:'効果なし',
@@ -2836,13 +2886,15 @@ window.addEventListener('load',()=>{if(window._autoJoinRoom){setTimeout(()=>{goP
 ═══════════════════════════════════ */
 function startVsAI(){
   myName=document.getElementById('aiName').value.trim()||'プレイヤー';
+  _gameRecorded=false;_gameInfo={aiDifficulty:document.getElementById('aiDiff').value,isOnline:false};
   ensureWS(()=>send({type:'start_vs_ai',name:myName,difficulty:document.getElementById('aiDiff').value,aiCount:parseInt(document.getElementById('aiCount').value)||1}));
 }
-function doCreateRoom(){myName=document.getElementById('createName').value.trim()||'プレイヤー';ensureWS(()=>send({type:'create_room',name:myName}));}
+function doCreateRoom(){myName=document.getElementById('createName').value.trim()||'プレイヤー';_gameRecorded=false;_gameInfo={aiDifficulty:null,isOnline:true};ensureWS(()=>send({type:'create_room',name:myName}));}
 function doJoinRoom(){
   myName=document.getElementById('joinName').value.trim()||'プレイヤー';
   const rid=document.getElementById('joinId').value.trim().toUpperCase();
   if(!rid){toast('ルームIDを入力してください');return;}
+  _gameRecorded=false;_gameInfo={aiDifficulty:null,isOnline:true};
   ensureWS(()=>send({type:'join_room',roomId:rid,name:myName}));
 }
 function doJoinQueue(){myName=document.getElementById('matchName').value.trim()||'プレイヤー';ensureWS(()=>send({type:'join_queue',name:myName}));}
@@ -2852,6 +2904,113 @@ function doAddAI(){send({type:'add_ai',difficulty:document.getElementById('aiAdd
 function doRemoveAI(){send({type:'remove_ai'});}
 function doStartGame(){send({type:'start_game'});}
 function copyRoomId(){const id=document.getElementById('roomIdTxt').textContent;navigator.clipboard.writeText(id).then(()=>toast('コピーしました: '+id));}
+/* ═══════════════════════════════════
+   STATS / RANK / BADGE SYSTEM
+═══════════════════════════════════ */
+const RANKS=[
+  {name:'種子',icon:'🌰',minWins:0},
+  {name:'芽吹き',icon:'🌱',minWins:3},
+  {name:'若木',icon:'🌿',minWins:7},
+  {name:'樹木',icon:'🌲',minWins:15},
+  {name:'古木',icon:'🌳',minWins:30},
+  {name:'霊樹',icon:'✨',minWins:50},
+  {name:'森の守護者',icon:'🛡',minWins:80},
+  {name:'森の王',icon:'👑',minWins:120},
+  {name:'伝説の大樹',icon:'🏆',minWins:200},
+];
+const BADGES=[
+  {id:'first_win',name:'初勝利',icon:'⭐',desc:'初めて勝利した',check:s=>s.wins>=1},
+  {id:'win5',name:'5勝達成',icon:'🌟',desc:'5回勝利した',check:s=>s.wins>=5},
+  {id:'win10',name:'10勝達成',icon:'💫',desc:'10回勝利した',check:s=>s.wins>=10},
+  {id:'win30',name:'30勝達成',icon:'🔥',desc:'30回勝利した',check:s=>s.wins>=30},
+  {id:'win50',name:'50勝の猛者',icon:'🏅',desc:'50回勝利した',check:s=>s.wins>=50},
+  {id:'win100',name:'百戦錬磨',icon:'🏆',desc:'100回勝利した',check:s=>s.wins>=100},
+  {id:'streak3',name:'3連勝',icon:'🔗',desc:'3連勝した',check:s=>s.bestStreak>=3},
+  {id:'streak5',name:'5連勝',icon:'⛓',desc:'5連勝した',check:s=>s.bestStreak>=5},
+  {id:'streak10',name:'10連勝',icon:'💎',desc:'10連勝した',check:s=>s.bestStreak>=10},
+  {id:'games10',name:'対戦10回',icon:'🎮',desc:'10回対戦した',check:s=>s.total>=10},
+  {id:'games50',name:'対戦50回',icon:'🎲',desc:'50回対戦した',check:s=>s.total>=50},
+  {id:'games100',name:'対戦100回',icon:'🎯',desc:'100回対戦した',check:s=>s.total>=100},
+  {id:'beat_easy',name:'ゆっくり撃破',icon:'🟢',desc:'ゆっくりAIに勝利',check:s=>s.aiWins?.easy>=1},
+  {id:'beat_normal',name:'策士撃破',icon:'🟡',desc:'策士AIに勝利',check:s=>s.aiWins?.normal>=1},
+  {id:'beat_hard',name:'鬼神撃破',icon:'🔴',desc:'鬼神AIに勝利',check:s=>s.aiWins?.hard>=1},
+  {id:'beat_hard10',name:'鬼神の天敵',icon:'👹',desc:'鬼神AIに10回勝利',check:s=>(s.aiWins?.hard||0)>=10},
+  {id:'online_win',name:'オンライン勝者',icon:'🌐',desc:'オンライン対戦で勝利',check:s=>s.onlineWins>=1},
+];
+function getStats(){
+  try{return JSON.parse(localStorage.getItem('silva_stats'))||defaultStats();}catch{return defaultStats();}
+}
+function defaultStats(){return{wins:0,losses:0,draws:0,total:0,streak:0,bestStreak:0,aiWins:{easy:0,normal:0,hard:0},aiLosses:{easy:0,normal:0,hard:0},onlineWins:0,onlineLosses:0,lastPlayed:null};}
+function saveStats(s){localStorage.setItem('silva_stats',JSON.stringify(s));}
+function resetStats(){localStorage.removeItem('silva_stats');toast('データをリセットしました');openMyPage();}
+function recordGame(result,opts={}){
+  /* result: 'win','loss','draw' / opts: {aiDifficulty,isOnline} */
+  const s=getStats();
+  s.total++;
+  s.lastPlayed=new Date().toISOString();
+  if(result==='win'){
+    s.wins++;s.streak++;
+    if(s.streak>s.bestStreak)s.bestStreak=s.streak;
+    if(opts.aiDifficulty)s.aiWins[opts.aiDifficulty]=(s.aiWins[opts.aiDifficulty]||0)+1;
+    if(opts.isOnline)s.onlineWins=(s.onlineWins||0)+1;
+  }else if(result==='loss'){
+    s.losses++;s.streak=0;
+    if(opts.aiDifficulty)s.aiLosses[opts.aiDifficulty]=(s.aiLosses[opts.aiDifficulty]||0)+1;
+    if(opts.isOnline)s.onlineLosses=(s.onlineLosses||0)+1;
+  }else{s.draws++;s.streak=0;}
+  saveStats(s);
+  /* バッジ獲得チェック */
+  const prev=JSON.parse(localStorage.getItem('silva_badges')||'[]');
+  const newBadges=BADGES.filter(b=>b.check(s)&&!prev.includes(b.id));
+  if(newBadges.length){
+    const all=[...prev,...newBadges.map(b=>b.id)];
+    localStorage.setItem('silva_badges',JSON.stringify(all));
+    newBadges.forEach(b=>toast(`🏅 バッジ獲得！「${b.name}」`));
+  }
+}
+function getRank(wins){
+  let r=RANKS[0];
+  for(const rank of RANKS){if(wins>=rank.minWins)r=rank;}
+  return r;
+}
+function getNextRank(wins){
+  for(const rank of RANKS){if(wins<rank.minWins)return rank;}
+  return null;
+}
+function openMyPage(){
+  goScreen('panelMyPage');
+  const s=getStats();
+  const rank=getRank(s.wins);
+  const next=getNextRank(s.wins);
+  document.getElementById('mpRankIcon').textContent=rank.icon;
+  document.getElementById('mpRankName').textContent=rank.name;
+  document.getElementById('mpRankNext').textContent=next?`次のランク「${next.name}」まであと${next.minWins-s.wins}勝`:'最高ランク到達！';
+  document.getElementById('mpWins').textContent=s.wins;
+  document.getElementById('mpLosses').textContent=s.losses;
+  document.getElementById('mpDraws').textContent=s.draws;
+  const rate=s.total>0?Math.round(s.wins/s.total*100):0;
+  document.getElementById('mpRate').textContent=`勝率 ${rate}%（${s.total}戦）`;
+  document.getElementById('mpRecords').innerHTML=[
+    `🔥 現在の連勝: <strong>${s.streak}</strong>`,
+    `⛓ 最高連勝記録: <strong>${s.bestStreak}</strong>`,
+    `🌐 オンライン: <strong>${s.onlineWins||0}勝 ${s.onlineLosses||0}敗</strong>`,
+    s.lastPlayed?`📅 最終プレイ: ${new Date(s.lastPlayed).toLocaleDateString('ja-JP')}`:'',
+  ].filter(Boolean).join('<br>');
+  document.getElementById('mpAiStats').innerHTML=[
+    `🟢 ゆっくり: <strong>${s.aiWins?.easy||0}勝</strong> / ${s.aiLosses?.easy||0}敗`,
+    `🟡 策士: <strong>${s.aiWins?.normal||0}勝</strong> / ${s.aiLosses?.normal||0}敗`,
+    `🔴 鬼神: <strong>${s.aiWins?.hard||0}勝</strong> / ${s.aiLosses?.hard||0}敗`,
+  ].join('<br>');
+  const earned=JSON.parse(localStorage.getItem('silva_badges')||'[]');
+  document.getElementById('mpBadges').innerHTML=BADGES.map(b=>{
+    const has=earned.includes(b.id);
+    return `<div title="${b.desc}" style="display:flex;flex-direction:column;align-items:center;width:56px;opacity:${has?'1':'.25'};filter:${has?'none':'grayscale(1)'}">
+      <span style="font-size:1.5rem">${b.icon}</span>
+      <span style="font-size:.5rem;color:${has?'var(--mint)':'var(--frond4)'};text-align:center;line-height:1.2;margin-top:.15rem">${b.name}</span>
+    </div>`;
+  }).join('');
+}
+
 function shareRoomUrl(){const id=document.getElementById('roomIdTxt').textContent;const url=location.origin+'/?room='+id;if(navigator.share){navigator.share({title:'SILVA対戦',text:'SILVAで対戦しよう！',url}).catch(()=>{});}else{navigator.clipboard.writeText(url).then(()=>toast('招待URLをコピーしました'));}}
 function toggleQR(){const area=document.getElementById('qrArea');if(area.style.display==='none'){area.style.display='block';generateQR();}else{area.style.display='none';}}
 function generateQR(){const id=document.getElementById('roomIdTxt').textContent;const url=location.origin+'/?room='+id;const canvas=document.getElementById('qrCanvas');drawQR(canvas,url,200);}
@@ -3224,6 +3383,12 @@ function showWin(wid,players){
   if(!wid){icon.textContent='\uD83E\uDD1D';title.textContent='引き分け';sub.textContent='同時脱落による引き分け';}
   else if(wid===myId){icon.textContent='\uD83C\uDF33';title.textContent='Victory';sub.textContent='あなたの勝利です';FX.victory();}
   else{const w=players.find(p=>p.id===wid);icon.textContent='\uD83C\uDF42';title.textContent='敗北';sub.textContent=`${w?.name||'\u2014'} の勝利`;}
+  /* 戦績記録 */
+  if(!_gameRecorded&&!isSpectator){
+    _gameRecorded=true;
+    const result=!wid?'draw':wid===myId?'win':'loss';
+    recordGame(result,_gameInfo);
+  }
   openOv('ovWin');
 }
 
