@@ -2904,7 +2904,7 @@ function renderGame(){
     }
     _prevAlive=nowAlive;
   }
-  if(phase==='ended')setTimeout(()=>showWin(winner,players),400);
+  if(phase==='ended')setTimeout(()=>showWin(winner,players),900);
 }
 
 function renderPlayers(players,curId,phase,pending){
@@ -3150,9 +3150,9 @@ function showTurnBanner(info){
     </div>
   </div>`;
   /* カードを裏面から表にめくる */
-  setTimeout(()=>{const f=document.getElementById('tbFlipper');if(f)f.classList.add('do-flip');},150);
+  setTimeout(()=>{const f=document.getElementById('tbFlipper');if(f)f.classList.add('do-flip');},300);
   /* めくり完了後にテキスト表示 */
-  setTimeout(()=>{const i=document.getElementById('tbInfo');if(i)i.style.opacity='1';},450);
+  setTimeout(()=>{const i=document.getElementById('tbInfo');if(i)i.style.opacity='1';},900);
 }
 function showTurnBannerSimple(info){
   const el=document.getElementById('turnBanner');
@@ -3202,9 +3202,9 @@ function showPeek(card){
   openOv('ovPeek');
   if(typeof FX!=='undefined') FX.playCard('scout',document.querySelector('.pzone.pz-mine'));
   /* 少し待ってからフリップ開始 */
-  setTimeout(()=>{flipper.classList.add('do-flip');},200);
+  setTimeout(()=>{flipper.classList.add('do-flip');},400);
   /* フリップ完了後にカード名を表示 */
-  setTimeout(()=>{document.getElementById('peekTxt').textContent=`相手の手札は「${card.name}」(Lv.${card.level})`;},600);
+  setTimeout(()=>{document.getElementById('peekTxt').textContent=`相手の手札は「${card.name}」(Lv.${card.level})`;},1200);
 }
 
 function showKurando(myCard,theirCard){
@@ -3228,11 +3228,11 @@ function showKurando(myCard,theirCard){
   openOv('ovKurando');
   if(typeof FX!=='undefined') FX.playCard('kurando',document.querySelector('.pzone.pz-mine'));
   /* 左カードめくり */
-  setTimeout(()=>{a.flipper.classList.add('do-flip');},250);
+  setTimeout(()=>{a.flipper.classList.add('do-flip');},500);
   /* 右カードめくり */
-  setTimeout(()=>{b.flipper.classList.add('do-flip');},500);
+  setTimeout(()=>{b.flipper.classList.add('do-flip');},900);
   /* VS と ラベル表示 */
-  setTimeout(()=>{vs.classList.add('show');a.lbl.classList.add('show');b.lbl.classList.add('show');},750);
+  setTimeout(()=>{vs.classList.add('show');a.lbl.classList.add('show');b.lbl.classList.add('show');},1400);
 }
 
 function showKurandoAll(m){
@@ -3256,9 +3256,9 @@ function showKurandoAll(m){
   d.appendChild(a.side);d.appendChild(vs);d.appendChild(b.side);
   openOv('ovKurando');
   if(typeof FX!=='undefined') FX.playCard('kurando',document.querySelector('.pzone.pz-active')||document.querySelector('.pzone.pz-mine'));
-  setTimeout(()=>{a.flipper.classList.add('do-flip');},250);
-  setTimeout(()=>{b.flipper.classList.add('do-flip');},500);
-  setTimeout(()=>{vs.classList.add('show');a.lbl.classList.add('show');b.lbl.classList.add('show');},750);
+  setTimeout(()=>{a.flipper.classList.add('do-flip');},500);
+  setTimeout(()=>{b.flipper.classList.add('do-flip');},900);
+  setTimeout(()=>{vs.classList.add('show');a.lbl.classList.add('show');b.lbl.classList.add('show');},1400);
 }
 
 function showFarmer(cards){
