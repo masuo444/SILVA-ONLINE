@@ -1259,7 +1259,7 @@ select option{background:#080d0b}
   padding:.2rem .5rem;
   background:linear-gradient(90deg,rgba(74,173,106,.03),rgba(74,173,106,.01));
   border:1px solid rgba(74,173,106,.08);
-  max-height:48px;overflow-y:auto;
+  max-height:120px;overflow-y:auto;
   backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
 }
 .mobile-log .log-line{font-size:.6rem;border-bottom:none;padding-bottom:.1rem;line-height:1.4}
@@ -2925,6 +2925,18 @@ function renderPlayers(players,curId,phase,pending){
     const z=document.createElement('div');
     z.className=`pzone${isMe?' pz-mine':''}${isAct&&p.alive?' pz-active':''}${!p.alive?' pz-dead':''}${isWarriorTarget?' pz-warrior-tgt':''}${posClass?' '+posClass:''}`;
     z.setAttribute('data-pid',p.id);
+    /* プレイヤーゾーンタップでターゲット選択 */
+    if(!isMe&&p.alive&&!isSpectator){
+      z.style.cursor='pointer';
+      z.addEventListener('click',function(e){
+        if(e.target.closest('.card')||e.target.closest('.tgt-btn')||e.target.closest('button'))return;
+        const pid=p.id;
+        /* ターゲット選択待ちの場合 */
+        if(pendingCardUid&&!pendingGuess){playCardWithFX(pendingCardUid,{targetId:pid});pendingCardUid=null;pendingEffect=null;selectedUid=null;return;}
+        if(pendingGuess&&!_guessTarget){_guessTarget=pid;renderGuessFlow();return;}
+        if(selectedUid&&gameState){const me2=gameState.players.find(pp=>pp.id===myId);const card=me2?.hand?.find(c=>c.uid===selectedUid);if(card&&NEEDS_TGT.has(card.id)){playCardWithFX(selectedUid,{targetId:pid});selectedUid=null;return;}}
+      });
+    }
     const tags=[
       isMe?'<span class="tag t-you">あなた</span>':'',
       isSpectator?'<span class="tag t-spec">観戦</span>':'',
@@ -2987,7 +2999,7 @@ function renderPlayers(players,curId,phase,pending){
 function renderLog(log){
   document.getElementById('logItems').innerHTML=(log||[]).map(l=>`<div class="log-line">${l}</div>`).join('');
   const ml=document.getElementById('mobileLog');
-  if(ml) ml.innerHTML=(log||[]).slice(0,2).map(l=>`<div class="log-line">${l}</div>`).join('');
+  if(ml) ml.innerHTML=(log||[]).slice(0,10).map(l=>`<div class="log-line">${l}</div>`).join('');
 }
 
 /* ═══════════════════════════════════
