@@ -408,7 +408,7 @@ function createAI(difficulty) {
   return { id:'AI_'+uuidv4(), name:`[${labels[difficulty]||'AI'}]`, isAI:true, difficulty };
 }
 
-function scheduleAI(roomId, delay=2000) { setTimeout(() => aiTurn(roomId), delay); }
+function scheduleAI(roomId, delay=700) { setTimeout(() => aiTurn(roomId), delay); }
 
 function aiTurn(roomId) {
   const room = rooms[roomId]; if (!room?.game) return;
@@ -433,13 +433,13 @@ function aiTurn(roomId) {
         addLog(game, `🌾 ${cur.name}が「${kept.name}」を選択`);
         game.phase = 'action'; broadcastStateUpdate(roomId);
         if (game.phase!=='ended' && cp(game)?.isAI) scheduleAI(roomId);
-      }, 1200);
+      }, 400);
       return;
     }
     const drawn = drawCard(game, cur);
     if (!drawn) { checkDeckEmpty(game); broadcastStateUpdate(roomId); return; }
     game.phase = 'action'; broadcastStateUpdate(roomId);
-    setTimeout(() => aiTurn(roomId), 1500);
+    setTimeout(() => aiTurn(roomId), 500);
     return;
   }
 
@@ -462,7 +462,7 @@ function aiTurn(roomId) {
       if (pending && (pending.type === 'warrior_discard' || pending.type === 'sword_girl_discard' || pending.type === 'boy_discard')) {
         if (cur.isAI) {
           const tgtP = game.players.find(p=>p.id===action.targetId);
-          setTimeout(() => { processTargetDiscard(roomId,cur.id,aiWorst(tgtP.hand,cur.difficulty).uid); broadcastStateUpdate(roomId); if(game.phase!=='ended'&&cp(game)?.isAI)scheduleAI(roomId); }, 1500);
+          setTimeout(() => { processTargetDiscard(roomId,cur.id,aiWorst(tgtP.hand,cur.difficulty).uid); broadcastStateUpdate(roomId); if(game.phase!=='ended'&&cp(game)?.isAI)scheduleAI(roomId); }, 500);
         }
       }
       return;
@@ -476,7 +476,7 @@ function aiTurn(roomId) {
     if ((pending?.type === 'warrior_discard' || pending?.type === 'sword_girl_discard') && pending.fromPlayerId === cur.id && cur.isAI) {
       /* warrior & sword_girl: 攻撃者AIがターゲットの手札から選ぶ */
       const tgtP = game.players.find(p=>p.id===pending.targetId);
-      setTimeout(() => { processTargetDiscard(roomId,cur.id,aiWorst(tgtP.hand,cur.difficulty).uid); broadcastStateUpdate(roomId); if(game.phase!=='ended'&&cp(game)?.isAI)scheduleAI(roomId); }, 1500);
+      setTimeout(() => { processTargetDiscard(roomId,cur.id,aiWorst(tgtP.hand,cur.difficulty).uid); broadcastStateUpdate(roomId); if(game.phase!=='ended'&&cp(game)?.isAI)scheduleAI(roomId); }, 500);
     }
   }
 }
@@ -708,7 +708,7 @@ wss.on('connection', ws => {
       const game=rooms[roomId]?.game;
       if (result.waitingTarget) {
         const tgtP=game?.players.find(p=>p.id===msg.targetId);
-        if (tgtP?.isAI) setTimeout(()=>{ processTargetDiscard(roomId,tgtP.id,aiWorst(tgtP.hand,tgtP.difficulty).uid); broadcastStateUpdate(roomId); if(game.phase!=='ended'&&cp(game)?.isAI)scheduleAI(roomId); },900);
+        if (tgtP?.isAI) setTimeout(()=>{ processTargetDiscard(roomId,tgtP.id,aiWorst(tgtP.hand,tgtP.difficulty).uid); broadcastStateUpdate(roomId); if(game.phase!=='ended'&&cp(game)?.isAI)scheduleAI(roomId); },400);
         return;
       }
       if (game&&game.phase!=='ended'&&cp(game)?.isAI) scheduleAI(roomId);
