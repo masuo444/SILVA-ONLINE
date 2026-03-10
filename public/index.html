@@ -1221,28 +1221,31 @@ select option{background:#080d0b}
   .pz-head{margin-bottom:.1rem}
   .pz-name{font-size:.76rem}
   .tag{font-size:.46rem;padding:.1rem .32rem}
-  /* Cards: fill width, min 72px for good tap targets */
-  .card{width:74px;height:107px}
-  .c-lv{font-size:1.4rem}
-  .c-img{width:40px;height:40px}
-  .c-nm{font-size:.44rem}
-  .c-ef{font-size:.34rem}
-  .cards-row{gap:.2rem;justify-content:center}
+  /* Cards: larger for mobile readability */
+  .card{width:96px;height:138px}
+  .c-lv{font-size:1.8rem}
+  .c-img{width:52px;height:52px}
+  .c-nm{font-size:.58rem}
+  .c-ef{font-size:.44rem}
+  .cards-row{gap:.3rem;justify-content:center}
   /* Discard: horizontal scroll, single row */
-  .disc-row{gap:.1rem;margin-top:.1rem;padding-top:.1rem;flex-wrap:nowrap;overflow-x:auto}
-  .d-card{width:24px;height:34px;flex-shrink:0}
-  .d-lv{font-size:.55rem}
+  .disc-row{gap:.15rem;margin-top:.15rem;padding-top:.15rem;flex-wrap:nowrap;overflow-x:auto}
+  .d-card{width:30px;height:42px;flex-shrink:0}
+  .d-lv{font-size:.6rem}
   .d-nm{display:none}
   /* Action bar: prominent, sticky feel */
-  .action-bar{padding:.35rem .5rem;min-height:40px}
-  .a-hint{font-size:.76rem}
+  .action-bar{padding:.4rem .5rem;min-height:44px}
+  .a-hint{font-size:.88rem}
   .a-btns{gap:.3rem}
   /* Target & guess buttons: bigger tap area */
-  .tgt-btn{padding:.5rem .9rem;font-size:.78rem}
-  .guess-btn{padding:.25rem .3rem;font-size:.5rem;min-width:44px}
-  .guess-btn img{width:26px;height:26px}
-  .guess-btn .g-lv{font-size:.7rem}
-  .draw-btn{padding:.45rem .8rem;font-size:.78rem}
+  .tgt-btn{padding:.55rem 1rem;font-size:.88rem}
+  .guess-btn{padding:.3rem .4rem;font-size:.58rem;min-width:48px}
+  .guess-btn img{width:30px;height:30px}
+  .guess-btn .g-lv{font-size:.78rem}
+  .draw-btn{padding:.5rem .9rem;font-size:.88rem}
+  /* Player name & tags */
+  .pz-name{font-size:.88rem}
+  .tag{font-size:.52rem;padding:.12rem .36rem}
   /* Overlays */
   .fomus-box,.modal-box,.win-box{padding:1.5rem 1rem}
   .win-title{font-size:1.8rem}
@@ -1577,24 +1580,7 @@ select option{background:#080d0b}
         <span class="mc-desc">ルームIDを共有してオンライン対戦</span>
         <div class="root-corner"></div>
       </div>
-      <div class="mode-card" onclick="goPanel('panelJoin')">
-        <span class="mc-icon">⚔️</span>
-        <span class="mc-name">ルーム参加</span>
-        <span class="mc-desc">友人のルームIDを入力して参戦</span>
-        <div class="root-corner"></div>
-      </div>
-      <div class="mode-card" onclick="goPanel('panelMatch')">
-        <span class="mc-icon">🌐</span>
-        <span class="mc-name">マッチング</span>
-        <span class="mc-desc">ランダムな相手とオンライン対戦</span>
-        <div class="root-corner"></div>
-      </div>
-      <div class="mode-card" onclick="goPanel('panelSpectate')">
-        <span class="mc-icon">👁</span>
-        <span class="mc-name">観戦</span>
-        <span class="mc-desc">進行中の対局を観戦する</span>
-        <div class="root-corner"></div>
-      </div>
+      <!-- ルーム参加・マッチング・観戦は非表示 -->
     </div>
   </div>
 </div>
@@ -1733,6 +1719,10 @@ select option{background:#080d0b}
         </div>
       </div>
     </div>
+  </div>
+  <!-- 部屋を出るボタン -->
+  <div style="text-align:center;padding:.5rem 0 .8rem">
+    <button class="btn" id="leaveRoomBtn" style="font-size:.75rem;padding:.4rem 1.2rem;opacity:.5;border-color:rgba(255,80,80,.3);color:rgba(255,80,80,.7)" onclick="if(confirm('部屋を出ますか？'))location.reload()">部屋を出る</button>
   </div>
   <!-- 枡お守り（守護中に常時表示） -->
   <div class="masu-omamori hidden" id="masuOmamori">
