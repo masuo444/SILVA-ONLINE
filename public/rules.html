@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>SILVA — ルール説明</title>
+<meta name="theme-color" content="#05080a">
+<link href="https://fonts.googleapis.com/css2?family=Philosopher:ital,wght@0,400;0,700;1,400&family=Shippori+Mincho:wght@400;500;600;700&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --soil: #030608;
+  --deep: #060b09;
+  --bark: #0b120e;
+  --moss: #0f1812;
+  --fern: #1a5c30;
+  --leaf: #2d7a47;
+  --sprout: #4aad6a;
+  --mint: #7dcf9a;
+  --dew: #b2e8c5;
+  --frond: #daf0df;
+  --frond2: rgba(218,240,223,.72);
+  --frond3: rgba(218,240,223,.38);
+  --ring: rgba(74,173,106,.22);
+  --ring2: rgba(74,173,106,.4);
+  --glass-bg: rgba(12,20,14,.72);
+  --glass-border: rgba(74,173,106,.14);
+  --f-display: 'Philosopher', serif;
+  --f-serif: 'Shippori Mincho', serif;
+  --f-body: 'Noto Sans JP', sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--soil);color:var(--frond);font-family:var(--f-body);line-height:1.8;overflow-x:hidden}
+a{color:var(--mint);text-decoration:none}
+a:hover{text-decoration:underline}
+
+.container{max-width:720px;margin:0 auto;padding:1.5rem 1.2rem 4rem}
+
+/* Header */
+.header{text-align:center;padding:3rem 0 2rem}
+.header-back{display:inline-block;font-size:.8rem;color:var(--frond3);margin-bottom:1rem;cursor:pointer;transition:.2s}
+.header-back:hover{color:var(--mint)}
+.header-back::before{content:'← '}
+.header h1{font-family:var(--f-display);font-size:2.8rem;font-style:italic;letter-spacing:.08em;color:var(--dew);text-shadow:0 0 40px rgba(74,173,106,.2)}
+.header p{font-family:var(--f-serif);font-size:1rem;color:var(--frond2);margin-top:.3rem}
+
+/* Section */
+.section{margin-top:2.5rem}
+.section-title{font-family:var(--f-serif);font-size:1.3rem;font-weight:600;color:var(--dew);border-bottom:1px solid var(--ring);padding-bottom:.5rem;margin-bottom:1rem;letter-spacing:.06em}
+.section-title .emoji{margin-right:.4rem}
+.section p,.section li{font-size:.88rem;color:var(--frond2);line-height:1.9}
+.section ul,.section ol{padding-left:1.2rem;margin-top:.5rem}
+.section li{margin-bottom:.3rem}
+
+/* Highlight box */
+.highlight{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:8px;padding:1rem 1.2rem;margin:1rem 0;backdrop-filter:blur(10px)}
+.highlight-title{font-family:var(--f-serif);font-weight:600;color:var(--mint);font-size:.9rem;margin-bottom:.4rem}
+
+/* Card table */
+.card-table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.8rem}
+.card-table th{background:rgba(74,173,106,.1);border:1px solid var(--ring);padding:.5rem .6rem;text-align:left;font-family:var(--f-serif);font-weight:600;color:var(--mint);white-space:nowrap}
+.card-table td{border:1px solid rgba(74,173,106,.08);padding:.5rem .6rem;vertical-align:top}
+.card-table tr:hover{background:rgba(74,173,106,.04)}
+.card-table .lv{font-family:var(--f-display);font-weight:700;font-size:1rem;color:var(--sprout);text-align:center;width:36px}
+.card-table .name{font-family:var(--f-serif);font-weight:600;white-space:nowrap}
+.card-table .emoji{font-size:1.1rem;text-align:center;width:30px}
+.card-table .count{text-align:center;width:30px}
+.card-table .effect-name{color:var(--mint);font-weight:500;white-space:nowrap}
+.card-table .effect-desc{color:var(--frond2);font-size:.76rem;line-height:1.6}
+
+/* Flow */
+.flow{display:flex;flex-direction:column;gap:.8rem;margin:1rem 0}
+.flow-step{display:flex;align-items:flex-start;gap:.8rem;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:8px;padding:.8rem 1rem}
+.flow-num{font-family:var(--f-display);font-size:1.4rem;font-weight:700;color:var(--sprout);min-width:28px;text-align:center;line-height:1.2}
+.flow-content{flex:1}
+.flow-title{font-family:var(--f-serif);font-weight:600;font-size:.9rem;color:var(--dew);margin-bottom:.2rem}
+.flow-desc{font-size:.8rem;color:var(--frond2);line-height:1.7}
+
+/* Special rules */
+.special{display:grid;gap:.6rem;margin:1rem 0}
+.special-item{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:8px;padding:.7rem 1rem;display:flex;gap:.6rem;align-items:flex-start}
+.special-icon{font-size:1.3rem;min-width:28px;text-align:center}
+.special-text{font-size:.82rem;color:var(--frond2);line-height:1.7}
+.special-text strong{color:var(--mint)}
+
+/* CTA */
+.cta{text-align:center;margin-top:3rem;padding:2rem 1rem;background:linear-gradient(180deg,transparent,rgba(74,173,106,.04));border-radius:12px}
+.cta-btn{display:inline-block;font-family:var(--f-serif);font-size:1rem;padding:.7rem 2rem;background:linear-gradient(135deg,var(--fern),var(--leaf));color:#fff;border:none;border-radius:6px;cursor:pointer;transition:transform .2s,box-shadow .2s;text-decoration:none}
+.cta-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(74,173,106,.25);text-decoration:none}
+
+/* Responsive */
+@media(max-width:660px){
+  .container{padding:1rem .8rem 3rem}
+  .header h1{font-size:2rem}
+  .card-table{font-size:.72rem}
+  .card-table th,.card-table td{padding:.35rem .4rem}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <a href="/" class="header-back">トップへ戻る</a>
+  <h1>SILVA</h1>
+  <p>心理戦カードゲーム — ルール説明</p>
+</div>
+
+<!-- ═══ 概要 ═══ -->
+<div class="section">
+  <h2 class="section-title"><span class="emoji">🌳</span>ゲーム概要</h2>
+  <p>SILVAは、日本の職人文化と森の精霊をテーマにした心理戦カードゲームです。<br>
+  手札はたった<strong>1枚</strong>。山札から引いて2枚になったら、1枚を場に出して効果を発動。相手の手札を読み、生き残れ。</p>
+  <div class="highlight">
+    <div class="highlight-title">勝利条件</div>
+    <p style="font-size:.85rem;color:var(--frond2)">他のプレイヤーを全員脱落させるか、山札がなくなった時に最もレベルの高いカードを持っていれば勝利。</p>
+  </div>
+  <ul>
+    <li><strong>プレイ人数：</strong>2〜4人</li>
+    <li><strong>カード枚数：</strong>全17枚（11種類）</li>
+    <li><strong>手札：</strong>常に1枚（ターン中のみ2枚）</li>
+  </ul>
+</div>
+
+<!-- ═══ ゲームの流れ ═══ -->
+<div class="section">
+  <h2 class="section-title"><span class="emoji">🃏</span>ゲームの流れ</h2>
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-num">1</div>
+      <div class="flow-content">
+        <div class="flow-title">準備</div>
+        <div class="flow-desc">山札をシャッフルし、各プレイヤーに1枚ずつ配る。</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">2</div>
+      <div class="flow-content">
+        <div class="flow-title">カードを引く</div>
+        <div class="flow-desc">自分の手番が来たら、山札から1枚引いて手札を2枚にする。</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">3</div>
+      <div class="flow-content">
+        <div class="flow-title">カードを出す</div>
+        <div class="flow-desc">手札2枚のうち1枚を場に出し、その効果を発動する。<br>残り1枚が次の手札となる。</div>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">4</div>
+      <div class="flow-content">
+        <div class="flow-title">繰り返し</div>
+        <div class="flow-desc">次のプレイヤーの手番へ。山札がなくなるか、生存者が1人になるまで続ける。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ カード一覧 ═══ -->
+<div class="section">
+  <h2 class="section-title"><span class="emoji">🎴</span>カード一覧と効果</h2>
+  <p>レベルが高いほど強力ですが、枚数が少なく狙われやすい。低レベルでも効果で逆転が可能です。</p>
+  <div style="overflow-x:auto;margin-top:1rem">
+  <table class="card-table">
+    <thead>
+      <tr><th></th><th>Lv</th><th>カード名</th><th>枚数</th><th>効果</th><th>説明</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="emoji">🌱</td>
+        <td class="lv">0</td>
+        <td class="name">幼きククノチ</td>
+        <td class="count">※</td>
+        <td class="effect-name">光合成</td>
+        <td class="effect-desc">ククノチ(Lv.10)の再生で手札に加わる特殊カード。効果なし。精霊(Lv.8)に対して勝利する特殊ルールあり。</td>
+      </tr>
+      <tr>
+        <td class="emoji">⚡</td>
+        <td class="lv">1</td>
+        <td class="name">少年</td>
+        <td class="count">2</td>
+        <td class="effect-name">変革</td>
+        <td class="effect-desc">1枚目は効果なし。2枚目が場に出ると<strong>「一閃」</strong>と同じ効果が発動（相手の手札を見て1枚捨てさせる）。</td>
+      </tr>
+      <tr>
+        <td class="emoji">🎯</td>
+        <td class="lv">2</td>
+        <td class="name">訓練生</td>
+        <td class="count">2</td>
+        <td class="effect-name">特攻</td>
+        <td class="effect-desc">相手を1人選び、手札のカード名を宣言。当たれば相手は脱落。</td>
+      </tr>
+      <tr>
+        <td class="emoji">🔍</td>
+        <td class="lv">3</td>
+        <td class="name">偵察隊</td>
+        <td class="count">2</td>
+        <td class="effect-name">偵察</td>
+        <td class="effect-desc">相手を1人選び、手札を覗き見る。</td>
+      </tr>
+      <tr>
+        <td class="emoji">⚔️</td>
+        <td class="lv">4</td>
+        <td class="name">戦士</td>
+        <td class="count">2</td>
+        <td class="effect-name">格闘</td>
+        <td class="effect-desc">相手を1人選ぶ。相手は山札から1枚引き、あなたが相手の手札から1枚を裏向きのまま選んで捨てさせる。</td>
+      </tr>
+      <tr>
+        <td class="emoji">🍶</td>
+        <td class="lv">5</td>
+        <td class="name">蔵人</td>
+        <td class="count">1</td>
+        <td class="effect-name">醸造</td>
+        <td class="effect-desc">相手を1人選び、互いに手札を公開。レベルが低い方が脱落。同レベルなら両者脱落。</td>
+      </tr>
+      <tr>
+        <td class="emoji">🏺</td>
+        <td class="lv">6</td>
+        <td class="name">枡職人</td>
+        <td class="count">2</td>
+        <td class="effect-name">守護</td>
+        <td class="effect-desc">1枚目は効果なし。2枚目が場に出ると<strong>「守護」</strong>を獲得。次に脱落する効果を1回だけ無効化する。</td>
+      </tr>
+      <tr>
+        <td class="emoji">🌾</td>
+        <td class="lv">7</td>
+        <td class="name">農家</td>
+        <td class="count">2</td>
+        <td class="effect-name">栽培</td>
+        <td class="effect-desc">次の手番で山札から2枚引き（2枚目は3枚）、1枚を選んで残りを山札に戻す。</td>
+      </tr>
+      <tr>
+        <td class="emoji">✨</td>
+        <td class="lv">8</td>
+        <td class="name">精霊</td>
+        <td class="count">2</td>
+        <td class="effect-name">思念</td>
+        <td class="effect-desc">相手を1人選び、手札を交換する。</td>
+      </tr>
+      <tr>
+        <td class="emoji">🗡️</td>
+        <td class="lv">9</td>
+        <td class="name">刀の少女</td>
+        <td class="count">1</td>
+        <td class="effect-name">一閃</td>
+        <td class="effect-desc">相手を1人選ぶ。相手は山札から1枚引き、あなたが相手の手札を見て1枚を選んで捨てさせる。ククノチを捨てさせた場合、再生は発動しない。</td>
+      </tr>
+      <tr>
+        <td class="emoji">🌳</td>
+        <td class="lv">10</td>
+        <td class="name">ククノチ</td>
+        <td class="count">1</td>
+        <td class="effect-name">再生</td>
+        <td class="effect-desc"><strong>場に出すことはできない。</strong>脱落時にこのカードを持っていれば、手札を全て捨てて「幼きククノチ(Lv.0)」として復活する。</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<!-- ═══ 特殊ルール ═══ -->
+<div class="section">
+  <h2 class="section-title"><span class="emoji">⚡</span>特殊ルール</h2>
+  <div class="special">
+    <div class="special-item">
+      <div class="special-icon">🌳</div>
+      <div class="special-text"><strong>ククノチの再生：</strong>脱落時にククノチ(Lv.10)を手札に持っていれば、手札を全て捨てて「幼きククノチ(Lv.0)」として復活する。ただし刀の少女(Lv.9)でククノチを捨てさせられた場合は再生しない。</div>
+    </div>
+    <div class="special-item">
+      <div class="special-icon">🛡</div>
+      <div class="special-text"><strong>守護（枡職人）：</strong>枡職人が2枚場に出ると、そのプレイヤーは「守護」を得る。次の脱落効果を1回だけ無効化。</div>
+    </div>
+    <div class="special-item">
+      <div class="special-icon">🌱</div>
+      <div class="special-text"><strong>幼きククノチ vs 精霊：</strong>山札がなくなった時、1対1で幼きククノチ(Lv.0)と精霊(Lv.8)が残った場合、幼きククノチが勝利する（特殊勝利）。</div>
+    </div>
+    <div class="special-item">
+      <div class="special-icon">⚡</div>
+      <div class="special-text"><strong>変革（少年）：</strong>少年が2枚場に出ると、2枚目は「一閃」と同等の効果（手札を見て1枚捨てさせる）が発動する。</div>
+    </div>
+    <div class="special-item">
+      <div class="special-icon">📊</div>
+      <div class="special-text"><strong>山札切れ：</strong>山札がなくなった時点で生存者が複数いる場合、手札のレベルが最も高いプレイヤーが勝利。</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 戦略のヒント ═══ -->
+<div class="section">
+  <h2 class="section-title"><span class="emoji">💡</span>戦略のヒント</h2>
+  <ul>
+    <li>高レベルのカードは強いが、場に出せば捨て札から相手にバレる。あえて低レベルを手元に残す選択肢も。</li>
+    <li>偵察隊(Lv.3)で得た情報は、訓練生(Lv.2)の「特攻」に活かせる。</li>
+    <li>ククノチ(Lv.10)は最強だが場に出せない。蔵人(Lv.5)の「醸造」と組み合わせると確実に相手を倒せる。</li>
+    <li>捨て札をよく観察しよう。場に出たカードから相手の手札を推理できる。</li>
+    <li>守護は強力だが、枡職人2枚は運が必要。守護を過信しすぎないこと。</li>
+  </ul>
+</div>
+
+<!-- CTA -->
+<div class="cta">
+  <p style="font-family:var(--f-serif);color:var(--frond2);margin-bottom:1rem">ルールを覚えたら、さっそく対戦してみよう</p>
+  <a href="/" class="cta-btn">ゲームをプレイする</a>
+</div>
+
+</div>
+</body>
+</html>
