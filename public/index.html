@@ -1580,7 +1580,12 @@ select option{background:#080d0b}
         <span class="mc-desc">ルームIDを共有してオンライン対戦</span>
         <div class="root-corner"></div>
       </div>
-      <!-- ルーム参加・マッチング・観戦は非表示 -->
+      <div class="mode-card" onclick="goPanel('panelJoin')">
+        <span class="mc-icon">⚔️</span>
+        <span class="mc-name">ルーム参加</span>
+        <span class="mc-desc">ルームIDやURLで友達と対戦</span>
+        <div class="root-corner"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1656,7 +1661,8 @@ select option{background:#080d0b}
 <div id="waiting" class="screen">
   <p class="w-label">対局ルーム</p>
   <div class="room-id" id="roomIdTxt" onclick="copyRoomId()">—</div>
-  <p class="room-id-hint" onclick="copyRoomId()">クリックでIDをコピー</p>
+  <p class="room-id-hint" onclick="copyRoomId()">タップでIDをコピー</p>
+  <button class="btn" style="margin-top:.5rem;font-size:.78rem;padding:.4rem 1rem" onclick="shareRoomUrl()">🔗 招待URLをコピー</button>
   <div class="branch"><div class="branch-icon">🌿</div></div>
   <div class="player-list" id="playerList"></div>
   <div class="ai-controls" id="aiCtrl" style="display:none">
@@ -2802,6 +2808,8 @@ function handle(m){
 ═══════════════════════════════════ */
 function goScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
 function goPanel(id){ensureWS(()=>goScreen(id));}
+/* 自動ルーム参加: ?room= パラメータ */
+window.addEventListener('load',()=>{if(window._autoJoinRoom){setTimeout(()=>{goPanel('panelJoin');document.getElementById('joinId').value=window._autoJoinRoom;},500);}});
 
 /* ═══════════════════════════════════
    LOBBY ACTIONS
@@ -2824,6 +2832,9 @@ function doAddAI(){send({type:'add_ai',difficulty:document.getElementById('aiAdd
 function doRemoveAI(){send({type:'remove_ai'});}
 function doStartGame(){send({type:'start_game'});}
 function copyRoomId(){const id=document.getElementById('roomIdTxt').textContent;navigator.clipboard.writeText(id).then(()=>toast('コピーしました: '+id));}
+function shareRoomUrl(){const id=document.getElementById('roomIdTxt').textContent;const url=location.origin+'/?room='+id;if(navigator.share){navigator.share({title:'SILVA対戦',text:'SILVAで対戦しよう！',url}).catch(()=>{});}else{navigator.clipboard.writeText(url).then(()=>toast('招待URLをコピーしました'));}}
+/* URL ?room= パラメータで自動参加 */
+(function(){const params=new URLSearchParams(location.search);const roomParam=params.get('room');if(roomParam){window._autoJoinRoom=roomParam.toUpperCase();history.replaceState(null,'',location.pathname);}})();
 
 function renderWaiting(players){
   document.getElementById('playerList').innerHTML=players.map(p=>`
