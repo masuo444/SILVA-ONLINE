@@ -3023,7 +3023,7 @@ function handle(m){
     case 'room_created':
       myRoomId=m.roomId;isHost=true;goScreen('waiting');
       document.getElementById('roomIdTxt').textContent=m.roomId;
-      document.getElementById('startBtn').disabled=false;
+      document.getElementById('startBtn').disabled=true;
       document.getElementById('aiCtrl').style.display='flex'; break;
     case 'room_joined':
       myRoomId=m.roomId;isHost=false;goScreen('waiting');
@@ -3358,6 +3358,8 @@ function renderWaiting(players){
       <span>${p.name}${p.id===myId?' <span style="font-size:.6rem;color:var(--sprout)">(あなた)</span>':''}</span>
       ${p.isAI?'<span class="ai-chip">[AI]</span>':''}
     </div>`).join('');
+  /* ホストなら2人以上で開始ボタン有効化 */
+  if(isHost) document.getElementById('startBtn').disabled=players.length<2;
 }
 function renderRooms(rooms){
   const el=document.getElementById('specList');
