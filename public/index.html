@@ -2016,8 +2016,9 @@ select option{background:#080d0b}
         </div>
       </div>
     </div>
-    <div class="win-actions" style="display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap;justify-content:center">
-      <button class="btn filled" id="rematchBtn" style="display:none" onclick="doRematch()">⚔️ バトルを続ける</button>
+    <div class="win-actions" style="display:flex;flex-direction:column;align-items:center;gap:.5rem;margin-top:.5rem">
+      <button class="btn filled" id="rematchBtn" style="display:none" onclick="doRematch()">⚔️ 続けて対戦する</button>
+      <div id="rematchStatus" style="display:none;font-size:.65rem;color:var(--sprout);text-align:center"></div>
       <button class="btn" onclick="location.reload()">ロビーへ戻る</button>
     </div>
   </div>
@@ -3045,6 +3046,16 @@ function handle(m){
       document.getElementById('matchWait').classList.add('hidden');
       document.getElementById('matchStart').classList.remove('hidden'); break;
     case 'game_started':
+      document.querySelectorAll('.overlay.show').forEach(o=>o.classList.remove('show'));
+      /* リマッチUI リセット */
+      const _rb=document.getElementById('rematchBtn');if(_rb){_rb.disabled=false;_rb.textContent='⚔️ 続けて対戦する';}
+      const _rs=document.getElementById('rematchStatus');if(_rs){_rs.style.display='none';_rs.textContent='';}
+      gameState=m.state;goScreen('game');renderGame(); break;
+    case 'rematch_vote': {
+      const rs=document.getElementById('rematchStatus');
+      if(rs){rs.style.display='block';rs.textContent=`${m.votedCount}/${m.totalHumans} 人が同意`;}
+      break;
+    }
     case 'state_update': gameState=m.state;goScreen('game');renderGame(); break;
     case 'spectating': isSpectator=true;gameState=m.state;goScreen('game');document.getElementById('specBanner').classList.remove('hidden');renderGame(); break;
     case 'public_rooms': renderRooms(m.rooms); break;
@@ -3213,7 +3224,16 @@ function loadRooms(){ensureWS(()=>send({type:'get_public_rooms'}));}
 function doAddAI(){send({type:'add_ai',difficulty:document.getElementById('aiAddDiff').value});}
 function doRemoveAI(){send({type:'remove_ai'});}
 function doStartGame(){send({type:'start_game'});}
-function doRematch(){closeOv('ovWin');_gameRecorded=false;send({type:'rematch'});}
+function doRematch(){
+  _gameRecorded=false;
+  send({type:'rematch'});
+  /* AI戦は即閉じ、オンラインは投票待ち */
+  if(_gameInfo.aiDifficulty){closeOv('ovWin');return;}
+  const btn=document.getElementById('rematchBtn');
+  btn.disabled=true;btn.textContent='✓ 待機中…';
+  document.getElementById('rematchStatus').style.display='block';
+  document.getElementById('rematchStatus').textContent='相手の同意を待っています…';
+}
 function copyRoomId(){const id=document.getElementById('roomIdTxt').textContent;navigator.clipboard.writeText(id).then(()=>toast('コピーしました: '+id));}
 /* ═══════════════════════════════════
    STATS / RANK / BADGE SYSTEM
@@ -3758,9 +3778,12 @@ function showWin(wid,players){
   _replayIdx=0;
   if(_replayTimer){clearInterval(_replayTimer);_replayTimer=null;}
   updateReplayDisplay();
-  /* 再戦ボタン（ホストまたはAI戦なら表示） */
+  /* 再戦ボタン（観戦者以外は常に表示） */
   const rb=document.getElementById('rematchBtn');
-  rb.style.display=(isHost||_gameInfo.aiDifficulty)?'inline-flex':'none';
+  rb.style.display=isSpectator?'none':'inline-flex';
+  rb.disabled=false;rb.textContent='⚔️ 続けて対戦する';
+  const rs=document.getElementById('rematchStatus');
+  rs.style.display='none';rs.textContent='';
   /* デフォルトタブ */
   winTab('summary');
   openOv('ovWin');
