@@ -132,6 +132,12 @@ function eliminatePlayer(game, playerId, byKill=false) {
 function checkDeckEmpty(game) {
   const alive = game.players.filter(p => p.alive);
   if (alive.length <= 1) { endGame(game, alive[0]?.id??null); return; }
+  addLog(game, '📦 山札が無くなりました！手札を公開して勝負！');
+  // 各プレイヤーの手札をログに表示
+  alive.forEach(p => {
+    const c = p.hand[0];
+    addLog(game, `🃏 ${p.name}の手札：${c ? `${c.name}（Lv.${c.level}）` : '無し'}`);
+  });
   // 1v1 幼きククノチ vs 精霊特殊ルール
   if (alive.length === 2) {
     const [a, b] = alive;
@@ -140,6 +146,8 @@ function checkDeckEmpty(game) {
   }
   let max=-1, winners=[];
   alive.forEach(p => { const lv=p.hand[0]?.level??-1; if(lv>max){max=lv;winners=[p];}else if(lv===max)winners.push(p); });
+  if (winners.length===1) addLog(game, `👑 最大レベル Lv.${max} — ${winners[0].name}の勝利！`);
+  else addLog(game, `⚖️ 同レベル Lv.${max} — 引き分け！`);
   endGame(game, winners.length===1 ? winners[0].id : null);
 }
 
@@ -378,6 +386,7 @@ function processFarmerSelect(roomId, playerId, keepCardUid) {
 // ============================================================
 function stateFor(game, playerId) {
   const pa = game.pendingAction;
+  const ended = game.phase === 'ended';
   /* sword_girl: 攻撃者にターゲットの手札を公開 / warrior: uidのみ（裏向き） */
   const isSwordAttacker = pa && (pa.type==='sword_girl_discard' || pa.type==='boy_discard') && pa.fromPlayerId===playerId;
   const isWarriorAttacker = pa && pa.type==='warrior_discard' && pa.fromPlayerId===playerId;
@@ -385,7 +394,8 @@ function stateFor(game, playerId) {
     players: game.players.map(p => ({
       id:p.id, name:p.name, alive:p.alive, shield:p.shield, isAI:p.isAI,
       handCount:p.hand.length,
-      hand: p.id===playerId ? p.hand
+      hand: ended ? p.hand
+        : p.id===playerId ? p.hand
         : (isSwordAttacker && p.id===pa.targetId) ? p.hand
         : (isWarriorAttacker && p.id===pa.targetId) ? p.hand.map(c=>({uid:c.uid, hidden:true}))
         : null,
