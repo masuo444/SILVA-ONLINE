@@ -626,6 +626,18 @@ wss.on('connection', ws => {
       if (cp(game).isAI) scheduleAI(info.roomId);
     }
 
+    else if (type==='rematch') {
+      const room = rooms[info?.roomId];
+      if (!room) return;
+      if (room.players[0].id!==pid) { sendWs(ws,{type:'error',msg:'ホストのみ再戦できます'}); return; }
+      if (room.players.length<2) { sendWs(ws,{type:'error',msg:'2人以上必要です'}); return; }
+      room.state = 'waiting'; room.game = null;
+      const game = initGame(room);
+      addLog(game, `🎮 再戦開始！先手は ${cp(game).name}`);
+      room.players.forEach(p => { if(!p.isAI) sendTo(p.id,{type:'game_started',state:stateFor(game,p.id)}); });
+      if (cp(game).isAI) scheduleAI(info.roomId);
+    }
+
     else if (type==='start_vs_ai') {
       const roomId = createRoom();
       const room = rooms[roomId];
