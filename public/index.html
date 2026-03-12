@@ -3426,7 +3426,7 @@ function renderGame(){
     }
     _prevAlive=nowAlive;
   }
-  if(phase==='ended')setTimeout(()=>showWin(winner,players),900);
+  if(phase==='ended')setTimeout(()=>{document.querySelectorAll('.overlay.show').forEach(o=>o.classList.remove('show'));showWin(winner,players);},3000);
 }
 
 function renderPlayers(players,curId,phase,pending){
@@ -3859,6 +3859,8 @@ function showKurando(myCard,theirCard){
   setTimeout(()=>{b.flipper.classList.add('do-flip');},900);
   /* VS と ラベル表示 */
   setTimeout(()=>{vs.classList.add('show');a.lbl.classList.add('show');b.lbl.classList.add('show');},1400);
+  /* 自動クローズ（勝敗画面への遷移のため） */
+  setTimeout(()=>{closeOv('ovKurando');},2800);
 }
 
 function showKurandoAll(m){
@@ -3885,6 +3887,8 @@ function showKurandoAll(m){
   setTimeout(()=>{a.flipper.classList.add('do-flip');},500);
   setTimeout(()=>{b.flipper.classList.add('do-flip');},900);
   setTimeout(()=>{vs.classList.add('show');a.lbl.classList.add('show');b.lbl.classList.add('show');},1400);
+  /* 自動クローズ */
+  setTimeout(()=>{closeOv('ovKurando');},2800);
 }
 
 function showFarmer(cards){
