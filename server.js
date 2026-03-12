@@ -639,13 +639,34 @@ wss.on('connection', ws => {
     else if (type==='rematch') {
       const room = rooms[info?.roomId];
       if (!room) return;
-      if (room.players[0].id!==pid) { sendWs(ws,{type:'error',msg:'ホストのみ再戦できます'}); return; }
-      if (room.players.length<2) { sendWs(ws,{type:'error',msg:'2人以上必要です'}); return; }
-      room.state = 'waiting'; room.game = null;
-      const game = initGame(room);
-      addLog(game, `🎮 再戦開始！先手は ${cp(game).name}`);
-      room.players.forEach(p => { if(!p.isAI) sendTo(p.id,{type:'game_started',state:stateFor(game,p.id)}); });
-      if (cp(game).isAI) scheduleAI(info.roomId);
+      const humanPlayers = room.players.filter(p => !p.isAI);
+      // AI戦はホストだけで即再戦
+      if (humanPlayers.length <= 1) {
+        room.state = 'waiting'; room.game = null;
+        if (!room.rematchVotes) room.rematchVotes = new Set();
+        room.rematchVotes.clear();
+        const game = initGame(room);
+        addLog(game, `🎮 再戦開始！先手は ${cp(game).name}`);
+        room.players.forEach(p => { if(!p.isAI) sendTo(p.id,{type:'game_started',state:stateFor(game,p.id)}); });
+        if (cp(game).isAI) scheduleAI(info.roomId);
+        return;
+      }
+      // オンライン対戦: 投票制
+      if (!room.rematchVotes) room.rematchVotes = new Set();
+      room.rematchVotes.add(pid);
+      const votedCount = room.rematchVotes.size;
+      const totalHumans = humanPlayers.length;
+      // 全員に投票状況を通知
+      broadcastToRoom(info.roomId, { type:'rematch_vote', votedCount, totalHumans, votedBy: pid });
+      // 全員が同意したら再戦開始
+      if (votedCount >= totalHumans) {
+        room.rematchVotes.clear();
+        room.state = 'waiting'; room.game = null;
+        const game = initGame(room);
+        addLog(game, `🎮 再戦開始！先手は ${cp(game).name}`);
+        room.players.forEach(p => { if(!p.isAI) sendTo(p.id,{type:'game_started',state:stateFor(game,p.id)}); });
+        if (cp(game).isAI) scheduleAI(info.roomId);
+      }
     }
 
     else if (type==='start_vs_ai') {
