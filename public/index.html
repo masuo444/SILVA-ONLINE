@@ -2016,7 +2016,10 @@ select option{background:#080d0b}
         </div>
       </div>
     </div>
-    <button class="btn filled" style="margin-top:.5rem" onclick="location.reload()">ロビーへ戻る</button>
+    <div class="win-actions" style="display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap;justify-content:center">
+      <button class="btn filled" id="rematchBtn" style="display:none" onclick="doRematch()">⚔️ バトルを続ける</button>
+      <button class="btn" onclick="location.reload()">ロビーへ戻る</button>
+    </div>
   </div>
 </div>
 
@@ -3210,6 +3213,7 @@ function loadRooms(){ensureWS(()=>send({type:'get_public_rooms'}));}
 function doAddAI(){send({type:'add_ai',difficulty:document.getElementById('aiAddDiff').value});}
 function doRemoveAI(){send({type:'remove_ai'});}
 function doStartGame(){send({type:'start_game'});}
+function doRematch(){closeOv('ovWin');_gameRecorded=false;send({type:'rematch'});}
 function copyRoomId(){const id=document.getElementById('roomIdTxt').textContent;navigator.clipboard.writeText(id).then(()=>toast('コピーしました: '+id));}
 /* ═══════════════════════════════════
    STATS / RANK / BADGE SYSTEM
@@ -3754,6 +3758,9 @@ function showWin(wid,players){
   _replayIdx=0;
   if(_replayTimer){clearInterval(_replayTimer);_replayTimer=null;}
   updateReplayDisplay();
+  /* 再戦ボタン（ホストまたはAI戦なら表示） */
+  const rb=document.getElementById('rematchBtn');
+  rb.style.display=(isHost||_gameInfo.aiDifficulty)?'inline-flex':'none';
   /* デフォルトタブ */
   winTab('summary');
   openOv('ovWin');
