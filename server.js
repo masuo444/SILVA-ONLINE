@@ -8,6 +8,7 @@ const app = express();
 const server = createServer(app);
 const wss = new WebSocketServer({ server });
 app.use(express.static(path.join(__dirname, 'public')));
+app.get('/ping', (req, res) => res.send('pong'));
 
 // ============================================================
 // Cards
