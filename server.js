@@ -1,7 +1,7 @@
 const express = require('express');
 const { WebSocketServer } = require('ws');
 const { createServer } = require('http');
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID } = require('crypto');
 const path = require('path');
 
 const app = express();
@@ -31,7 +31,7 @@ function buildDeck() {
   const deck = [];
   for (const c of CARDS) {
     if (c.id === 'kukuochi_young') continue;
-    for (let i = 0; i < c.count; i++) deck.push({ ...c, uid: uuidv4() });
+    for (let i = 0; i < c.count; i++) deck.push({ ...c, uid: randomUUID() });
   }
   return shuffle(deck);
 }
@@ -49,26 +49,39 @@ function shuffle(arr) {
 // ============================================================
 const rooms = {};
 const playerMap = new Map();   // playerId -> ws
-const clientInfo = new Map();  // ws -> { playerId, roomId, spectator }
-const matchQueue = [];
+const clientInfo = new Map();  // ws -> { playerId, roomId }
 
 function sendWs(ws, msg)       { if (ws?.readyState === 1) ws.send(JSON.stringify(msg)); }
 function sendTo(pid, msg)      { const ws = playerMap.get(pid); if (ws) sendWs(ws, msg); }
 
 function broadcastToRoom(roomId, msg, exceptId = null) {
   const room = rooms[roomId]; if (!room) return;
-  [...room.players, ...(room.spectators||[])].forEach(p => { if (p.id !== exceptId) sendTo(p.id, msg); });
+  room.players.forEach(p => { if (p.id !== exceptId) sendTo(p.id, msg); });
 }
 function broadcastStateUpdate(roomId) {
   const room = rooms[roomId]; if (!room?.game) return;
   room.players.forEach(p => { if (!p.isAI) sendTo(p.id, { type:'state_update', state: stateFor(room.game, p.id) }); });
-  (room.spectators||[]).forEach(s => sendTo(s.id, { type:'state_update', state: stateForSpectator(room.game) }));
+}
+function broadcastThinking(roomId, player, action='考えています') {
+  if (!player?.isAI) return;
+  broadcastToRoom(roomId, { type:'computer_thinking', playerId:player.id, playerName:player.name, action });
+}
+function roomPlayersPublic(room) {
+  return room.players.map(({ clientToken, ...p }) => p);
 }
 
-function createRoom(opts = {}) {
+function createRoom() {
   const id = Math.random().toString(36).substring(2,7).toUpperCase();
-  rooms[id] = { id, players:[], spectators:[], state:'waiting', game:null, isPublic: opts.isPublic||false };
+  rooms[id] = { id, players:[], state:'waiting', game:null };
   return id;
+}
+function findReconnectSlot(token) {
+  if (!token) return null;
+  for (const room of Object.values(rooms)) {
+    const player = room.players.find(p => !p.isAI && p.clientToken === token);
+    if (player) return { room, player };
+  }
+  return null;
 }
 
 // ============================================================
@@ -76,9 +89,9 @@ function createRoom(opts = {}) {
 // ============================================================
 function initGame(room) {
   const deck = buildDeck();
-  const rebirthCard = { ...CARDS.find(c => c.id==='kukuochi_young'), uid: uuidv4() };
+  const rebirthCard = { ...CARDS.find(c => c.id==='kukuochi_young'), uid: randomUUID() };
   const gamePlayers = room.players.map(p => ({
-    id: p.id, name: p.name, isAI: p.isAI||false,
+    id: p.id, name: p.name, isAI: p.isAI||false, connected:p.connected!==false, clientToken:p.clientToken,
     difficulty: p.difficulty||'normal',
     hand:[], discard:[], alive:true, shield:false, nextTurnBonus:null,
   }));
@@ -120,7 +133,7 @@ function eliminatePlayer(game, playerId, byKill=false) {
   if (kIdx !== -1 && !byKill) {
     const others = player.hand.filter((_,i) => i!==kIdx);
     player.discard.push(...others, player.hand[kIdx]);
-    player.hand = [{ ...game.rebirthCard, uid:uuidv4() }];
+    player.hand = [{ ...game.rebirthCard, uid:randomUUID() }];
     addLog(game, `🌱 ${player.name}のククノチが再生！幼きククノチとして復活！`);
     return { rebirth:true };
   }
@@ -333,7 +346,7 @@ function processTargetDiscard(roomId, playerId, cardUid) {
     const remaining = target.hand.splice(0);
     target.discard.push(...remaining);
     /* 幼きククノチを手札に加える */
-    const rebirthCard = { ...CARDS.find(c => c.id==='kukuochi_young'), uid: uuidv4() };
+    const rebirthCard = { ...CARDS.find(c => c.id==='kukuochi_young'), uid: randomUUID() };
     target.hand.push(rebirthCard);
     broadcastToRoom(roomId, { type:'rebirth', playerId:pending.targetId, playerName:target.name });
   } else {
@@ -392,7 +405,7 @@ function stateFor(game, playerId) {
   const isWarriorAttacker = pa && pa.type==='warrior_discard' && pa.fromPlayerId===playerId;
   return {
     players: game.players.map(p => ({
-      id:p.id, name:p.name, alive:p.alive, shield:p.shield, isAI:p.isAI,
+      id:p.id, name:p.name, alive:p.alive, shield:p.shield, isAI:p.isAI, connected:p.connected!==false,
       handCount:p.hand.length,
       hand: ended ? p.hand
         : p.id===playerId ? p.hand
@@ -407,16 +420,12 @@ function stateFor(game, playerId) {
     log:game.log, winner:game.winner, turn:game.turn,
   };
 }
-function stateForSpectator(game) {
-  return { ...stateFor(game, null), players: game.players.map(p => ({ id:p.id, name:p.name, alive:p.alive, shield:p.shield, isAI:p.isAI, handCount:p.hand.length, hand:p.hand, discard:p.discard })), isSpectator:true };
-}
-
 // ============================================================
 // AI
 // ============================================================
 function createAI(difficulty) {
-  const labels = { easy:'ゆっくりAI', normal:'策士AI', hard:'鬼神AI' };
-  return { id:'AI_'+uuidv4(), name:`[${labels[difficulty]||'AI'}]`, isAI:true, difficulty };
+  const labels = { easy:'ゆっくり', normal:'策士', hard:'鬼神' };
+  return { id:'AI_'+randomUUID(), name:`[${labels[difficulty]||'コンピューター'}]`, isAI:true, difficulty };
 }
 
 function scheduleAI(roomId, delay=2000) { setTimeout(() => aiTurn(roomId), delay); }
@@ -427,6 +436,7 @@ function aiTurn(roomId) {
   const cur = cp(game); if (!cur?.isAI) return;
 
   if (game.phase === 'draw') {
+    broadcastThinking(roomId, cur, cur.nextTurnBonus ? '手札を整えています' : '山札を引こうとしています');
     if (cur.nextTurnBonus) {
       const count = cur.nextTurnBonus; cur.nextTurnBonus = null;
       const drawn = [];
@@ -455,6 +465,7 @@ function aiTurn(roomId) {
   }
 
   if (game.phase === 'action') {
+    broadcastThinking(roomId, cur, '使うカードを考えています');
     const action = aiChoose(game, cur, cur.difficulty);
     if (!action) { nextTurn(game); broadcastStateUpdate(roomId); return; }
     const result = processPlay(roomId, cur.id, action.cardUid, action.targetId, action.guess);
@@ -473,6 +484,7 @@ function aiTurn(roomId) {
       if (pending && (pending.type === 'warrior_discard' || pending.type === 'sword_girl_discard' || pending.type === 'boy_discard')) {
         if (cur.isAI) {
           const tgtP = game.players.find(p=>p.id===action.targetId);
+          broadcastThinking(roomId, cur, '捨てさせるカードを選んでいます');
           setTimeout(() => { processTargetDiscard(roomId,cur.id,aiWorst(tgtP.hand,cur.difficulty).uid); broadcastStateUpdate(roomId); if(game.phase!=='ended'&&cp(game)?.isAI)scheduleAI(roomId); }, 1500);
         }
       }
@@ -487,6 +499,7 @@ function aiTurn(roomId) {
     if ((pending?.type === 'warrior_discard' || pending?.type === 'sword_girl_discard') && pending.fromPlayerId === cur.id && cur.isAI) {
       /* warrior & sword_girl: 攻撃者AIがターゲットの手札から選ぶ */
       const tgtP = game.players.find(p=>p.id===pending.targetId);
+      broadcastThinking(roomId, cur, '捨てさせるカードを選んでいます');
       setTimeout(() => { processTargetDiscard(roomId,cur.id,aiWorst(tgtP.hand,cur.difficulty).uid); broadcastStateUpdate(roomId); if(game.phase!=='ended'&&cp(game)?.isAI)scheduleAI(roomId); }, 1500);
     }
   }
@@ -550,36 +563,10 @@ function aiChoose(game, player, diff) {
 }
 
 // ============================================================
-// Matchmaking
-// ============================================================
-function tryMatch() {
-  while (matchQueue.length >= 2) {
-    const [a, b] = matchQueue.splice(0,2);
-    const roomId = createRoom({ isPublic:true });
-    const room = rooms[roomId];
-    room.players.push({ id:a.pid, name:a.name, isAI:false });
-    room.players.push({ id:b.pid, name:b.name, isAI:false });
-    clientInfo.set(a.ws, { playerId:a.pid, roomId });
-    clientInfo.set(b.ws, { playerId:b.pid, roomId });
-    sendWs(a.ws, { type:'matched', roomId, opponentName:b.name });
-    sendWs(b.ws, { type:'matched', roomId, opponentName:a.name });
-    const game = initGame(room);
-    addLog(game, `🎮 マッチング成立！${room.players[0].name} vs ${room.players[1].name}`);
-    room.players.forEach(p => sendTo(p.id, { type:'game_started', state:stateFor(game,p.id) }));
-  }
-}
-
-function publicRooms() {
-  return Object.values(rooms)
-    .filter(r => r.isPublic && r.state==='playing')
-    .map(r => ({ id:r.id, players:r.players.map(p=>p.name), spectators:(r.spectators||[]).length, turn:r.game?.turn??0 }));
-}
-
-// ============================================================
 // WS handler
 // ============================================================
 wss.on('connection', ws => {
-  const pid = uuidv4();
+  const pid = randomUUID();
   playerMap.set(pid, ws);
   clientInfo.set(ws, { playerId:pid, roomId:null });
   sendWs(ws, { type:'connected', playerId:pid });
@@ -589,12 +576,28 @@ wss.on('connection', ws => {
     const info = clientInfo.get(ws);
     const { type } = msg;
 
+    if (type==='reconnect') {
+      const slot = findReconnectSlot(msg.clientToken);
+      if (!slot || slot.player.connected !== false) return;
+      playerMap.delete(pid);
+      slot.player.connected = true;
+      const gamePlayer = slot.room.game?.players.find(p=>p.id===slot.player.id);
+      if (gamePlayer) gamePlayer.connected = true;
+      playerMap.set(slot.player.id, ws);
+      clientInfo.set(ws, { playerId:slot.player.id, roomId:slot.room.id });
+      sendWs(ws, { type:'connected', playerId:slot.player.id });
+      sendWs(ws, { type:'reconnected', roomId:slot.room.id, state:slot.room.game ? stateFor(slot.room.game, slot.player.id) : null, roomState:slot.room.state });
+      if (slot.room.game) broadcastStateUpdate(slot.room.id);
+      else broadcastToRoom(slot.room.id, { type:'room_update', players:roomPlayersPublic(slot.room) });
+      return;
+    }
+
     if (type==='create_room') {
       const roomId = createRoom();
-      rooms[roomId].players.push({ id:pid, name:msg.name||'プレイヤー', isAI:false });
+      rooms[roomId].players.push({ id:pid, name:msg.name||'プレイヤー', isAI:false, connected:true, clientToken:msg.clientToken });
       clientInfo.set(ws, { playerId:pid, roomId });
       sendWs(ws, { type:'room_created', roomId });
-      sendWs(ws, { type:'room_update', players:rooms[roomId].players });
+      sendWs(ws, { type:'room_update', players:roomPlayersPublic(rooms[roomId]) });
     }
 
     else if (type==='join_room') {
@@ -602,10 +605,10 @@ wss.on('connection', ws => {
       if (!room) { sendWs(ws,{type:'error',msg:'ルームが見つかりません'}); return; }
       if (room.state!=='waiting') { sendWs(ws,{type:'error',msg:'ゲームはすでに開始しています'}); return; }
       if (room.players.length>=4) { sendWs(ws,{type:'error',msg:'ルームが満員です'}); return; }
-      room.players.push({ id:pid, name:msg.name||`プレイヤー${room.players.length+1}`, isAI:false });
+      room.players.push({ id:pid, name:msg.name||`プレイヤー${room.players.length+1}`, isAI:false, connected:true, clientToken:msg.clientToken });
       clientInfo.set(ws, { playerId:pid, roomId:msg.roomId });
       sendWs(ws, { type:'room_joined', roomId:msg.roomId });
-      broadcastToRoom(msg.roomId, { type:'room_update', players:room.players });
+      broadcastToRoom(msg.roomId, { type:'room_update', players:roomPlayersPublic(room) });
     }
 
     else if (type==='add_ai') {
@@ -614,7 +617,7 @@ wss.on('connection', ws => {
       if (room.players[0].id!==pid) return;
       if (room.players.length>=4) { sendWs(ws,{type:'error',msg:'満員です'}); return; }
       room.players.push(createAI(msg.difficulty||'normal'));
-      broadcastToRoom(info.roomId, { type:'room_update', players:room.players });
+      broadcastToRoom(info.roomId, { type:'room_update', players:roomPlayersPublic(room) });
     }
 
     else if (type==='remove_ai') {
@@ -622,7 +625,7 @@ wss.on('connection', ws => {
       if (!room||room.state!=='waiting'||room.players[0].id!==pid) return;
       const idx = room.players.findIndex(p=>p.isAI);
       if (idx!==-1) room.players.splice(idx,1);
-      broadcastToRoom(info.roomId, { type:'room_update', players:room.players });
+      broadcastToRoom(info.roomId, { type:'room_update', players:roomPlayersPublic(room) });
     }
 
     else if (type==='start_game') {
@@ -672,7 +675,7 @@ wss.on('connection', ws => {
     else if (type==='start_vs_ai') {
       const roomId = createRoom();
       const room = rooms[roomId];
-      room.players.push({ id:pid, name:msg.name||'プレイヤー', isAI:false });
+      room.players.push({ id:pid, name:msg.name||'プレイヤー', isAI:false, connected:true, clientToken:msg.clientToken });
       const cnt = Math.min(Math.max(msg.aiCount||1,1),3);
       for (let i=0;i<cnt;i++) room.players.push(createAI(msg.difficulty||'normal'));
       clientInfo.set(ws, { playerId:pid, roomId });
@@ -680,32 +683,6 @@ wss.on('connection', ws => {
       addLog(game, `🎮 ゲーム開始！先手は ${cp(game).name}`);
       sendWs(ws, { type:'game_started', state:stateFor(game,pid) });
       if (cp(game).isAI) scheduleAI(roomId);
-    }
-
-    else if (type==='join_queue') {
-      if (matchQueue.find(q=>q.pid===pid)) return;
-      matchQueue.push({ pid, name:msg.name||'プレイヤー', ws });
-      sendWs(ws, { type:'queue_joined', position:matchQueue.length });
-      tryMatch();
-    }
-
-    else if (type==='leave_queue') {
-      const idx = matchQueue.findIndex(q=>q.pid===pid);
-      if (idx!==-1) matchQueue.splice(idx,1);
-      sendWs(ws, { type:'queue_left' });
-    }
-
-    else if (type==='get_public_rooms') {
-      sendWs(ws, { type:'public_rooms', rooms:publicRooms() });
-    }
-
-    else if (type==='spectate') {
-      const room = rooms[msg.roomId];
-      if (!room||room.state!=='playing') { sendWs(ws,{type:'error',msg:'観戦できるゲームがありません'}); return; }
-      if (!room.spectators) room.spectators=[];
-      room.spectators.push({ id:pid, name:msg.name||'観戦者' });
-      clientInfo.set(ws, { playerId:pid, roomId:msg.roomId, spectator:true });
-      sendWs(ws, { type:'spectating', state:stateForSpectator(room.game) });
     }
 
     else if (type==='draw_card') {
@@ -751,8 +728,6 @@ wss.on('connection', ws => {
       broadcastStateUpdate(roomId);
       const game=rooms[roomId]?.game;
       if (result.waitingTarget) {
-        const tgtP=game?.players.find(p=>p.id===msg.targetId);
-        if (tgtP?.isAI) setTimeout(()=>{ processTargetDiscard(roomId,tgtP.id,aiWorst(tgtP.hand,tgtP.difficulty).uid); broadcastStateUpdate(roomId); if(game.phase!=='ended'&&cp(game)?.isAI)scheduleAI(roomId); },900);
         return;
       }
       if (game&&game.phase!=='ended'&&cp(game)?.isAI) scheduleAI(roomId);
@@ -782,11 +757,20 @@ wss.on('connection', ws => {
     const info = clientInfo.get(ws);
     if (info) {
       playerMap.delete(info.playerId);
-      const idx=matchQueue.findIndex(q=>q.pid===info.playerId);
-      if (idx!==-1) matchQueue.splice(idx,1);
-      if (info.roomId&&info.spectator) {
-        const room=rooms[info.roomId];
-        if (room) room.spectators=room.spectators.filter(s=>s.id!==info.playerId);
+      const room = rooms[info.roomId];
+      const player = room?.players.find(p=>p.id===info.playerId);
+      if (room && player && !player.isAI) {
+        player.connected = false;
+        const gamePlayer = room.game?.players.find(p=>p.id===info.playerId);
+        if (gamePlayer) gamePlayer.connected = false;
+        if (room.state === 'waiting') {
+          room.players = room.players.filter(p=>p.id!==info.playerId);
+          if (room.players.length) broadcastToRoom(info.roomId, { type:'room_update', players:roomPlayersPublic(room) });
+          else delete rooms[info.roomId];
+        } else {
+          broadcastToRoom(info.roomId, { type:'player_disconnected', playerId:info.playerId, playerName:player.name });
+          broadcastStateUpdate(info.roomId);
+        }
       }
       clientInfo.delete(ws);
     }
@@ -794,4 +778,5 @@ wss.on('connection', ws => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`SILVA server running on http://localhost:${PORT}`));
+const HOST = process.env.HOST || (process.env.PORT ? '0.0.0.0' : '127.0.0.1');
+server.listen(PORT, HOST, () => console.log(`SILVA server running on http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`));

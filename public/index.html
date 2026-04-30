@@ -6,25 +6,25 @@
 <title>SILVA — 心理戦カードゲーム</title>
 
 <!-- PWA -->
-<link rel="manifest" href="/manifest.json">
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#05080a">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="SILVA">
-<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-<link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png">
-<link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
 
 <!-- OGP -->
 <meta property="og:title" content="SILVA — 心理戦カードゲーム">
 <meta property="og:description" content="FOMUS × KUKU PROJECT — 日本の職人文化をテーマにした心理戦カードゲーム">
 <meta property="og:type" content="website">
-<meta property="og:image" content="/icons/icon-512.png">
+<meta property="og:image" content="icons/icon-512.png">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="SILVA — 心理戦カードゲーム">
 <meta name="twitter:description" content="FOMUS × KUKU PROJECT — 日本の職人文化をテーマにした心理戦カードゲーム">
-<meta name="twitter:image" content="/icons/icon-512.png">
+<meta name="twitter:image" content="icons/icon-512.png">
 
 <link href="https://fonts.googleapis.com/css2?family=Philosopher:ital,wght@0,400;0,700;1,400&family=Shippori+Mincho:wght@400;500;600;700&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -205,8 +205,9 @@ body::after{
 .modes-wrap{position:relative;z-index:2;width:min(840px,94vw);animation:fadeUp .9s .7s both}
 
 .modes-divider{
-  display:flex;align-items:center;gap:.9rem;margin-bottom:1.3rem;
+  display:flex;align-items:center;gap:.9rem;margin-bottom:.85rem;
 }
+.modes-divider.secondary{margin-top:1.15rem}
 .modes-divider::before,.modes-divider::after{
   content:'';flex:1;height:1px;
   background:linear-gradient(90deg,transparent,rgba(74,173,106,.2),transparent);
@@ -268,6 +269,40 @@ body::after{
 }
 .mode-card:hover .mc-name{color:var(--mint)}
 .mc-desc{font-size:.65rem;color:var(--frond3);line-height:1.8;display:block}
+.quick-start{
+  display:grid;grid-template-columns:1.4fr 1fr;gap:.7rem;margin-bottom:.95rem;
+}
+.quick-btn{
+  min-height:58px;padding:.75rem .95rem;border:1px solid rgba(74,173,106,.24);
+  background:linear-gradient(160deg,rgba(74,173,106,.08),rgba(6,11,8,.86));
+  color:var(--frond);font-family:var(--f-serif);cursor:pointer;text-align:left;
+  display:flex;flex-direction:column;justify-content:center;gap:.18rem;border-radius:7px;
+  transition:transform .25s,border-color .25s,box-shadow .25s,background .25s;
+}
+.quick-btn strong{font-size:.92rem;color:var(--mint);letter-spacing:.08em}
+.quick-btn span{font-size:.62rem;color:var(--frond3);line-height:1.5}
+.quick-btn.primary{border-color:rgba(74,173,106,.48);background:linear-gradient(160deg,rgba(74,173,106,.16),rgba(6,11,8,.9));box-shadow:0 0 24px rgba(74,173,106,.08)}
+.quick-btn:hover{transform:translateY(-3px);border-color:var(--sprout);box-shadow:0 10px 28px rgba(0,0,0,.28),0 0 24px rgba(74,173,106,.1)}
+.quick-btn:active{transform:translateY(0)}
+
+.card-pop{
+  position:fixed;left:50%;bottom:88px;z-index:260;
+  width:min(340px,calc(100vw - 28px));padding:.9rem 1rem;
+  transform:translateX(-50%);
+  background:linear-gradient(170deg,rgba(13,26,16,.96),rgba(7,13,8,.98));
+  border:1px solid rgba(74,173,106,.36);border-radius:8px;
+  box-shadow:0 18px 48px rgba(0,0,0,.52),0 0 32px rgba(74,173,106,.1);
+  display:grid;grid-template-columns:auto 1fr auto;gap:.65rem;align-items:start;
+  animation:fadeUp .18s ease both;
+}
+.card-pop-lv{
+  width:34px;height:34px;border:1px solid rgba(74,173,106,.28);border-radius:50%;
+  display:grid;place-items:center;font-family:var(--f-serif);font-size:1.05rem;color:var(--mint);
+  background:rgba(74,173,106,.06);
+}
+.card-pop-name{font-family:var(--f-serif);font-size:.86rem;color:var(--mint);letter-spacing:.08em;margin-bottom:.2rem}
+.card-pop-text{font-size:.68rem;color:var(--frond2);line-height:1.65}
+.card-pop-close{border:0;background:transparent;color:var(--frond3);font-size:1rem;cursor:pointer;padding:.1rem .2rem}
 
 /* ═══════════════════════════════════════
    PANEL SCREENS
@@ -320,7 +355,16 @@ body::after{
 
 /* ── Fields ── */
 .field{display:flex;flex-direction:column;gap:.38rem}
+.field.compact-name{margin-top:-.25rem}
 .field-label{font-family:var(--f-serif);font-size:.6rem;letter-spacing:.35em;color:rgba(74,173,106,.45)}
+.profile-chip{
+  display:flex;align-items:center;justify-content:center;gap:.45rem;
+  min-height:36px;padding:.45rem .8rem;margin-top:-.35rem;
+  border:1px solid rgba(74,173,106,.16);background:rgba(74,173,106,.045);
+  color:var(--frond2);font-family:var(--f-serif);font-size:.72rem;border-radius:6px;
+}
+.profile-chip strong{color:var(--mint);font-weight:600}
+.profile-chip.empty{color:var(--frond3);border-style:dashed}
 
 input[type=text],select{
   background:rgba(74,173,106,.03);
@@ -447,35 +491,6 @@ select option{background:#080d0b}
 .ai-controls{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center}
 
 /* ═══════════════════════════════════════
-   MATCH / SPECTATE
-═══════════════════════════════════════ */
-.pulse-ring{
-  width:72px;height:72px;position:relative;
-  display:flex;align-items:center;justify-content:center;
-  margin:0 auto;
-}
-.pulse-ring::before,.pulse-ring::after{
-  content:'';position:absolute;border-radius:50%;
-  border:1px solid var(--ring2);
-  animation:ringExpand 2s ease-out infinite;
-}
-.pulse-ring::before{inset:0}
-.pulse-ring::after{inset:-8px;animation-delay:.5s;border-color:var(--ring)}
-.pulse-icon{font-size:1.8rem;position:relative;z-index:1}
-@keyframes ringExpand{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.4);opacity:0}}
-
-.queue-txt{font-family:var(--f-serif);font-size:.85rem;letter-spacing:.15em;color:var(--frond3)}
-
-.spec-list{display:flex;flex-direction:column;gap:.45rem;max-height:260px;overflow-y:auto;width:100%}
-.spec-item{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:.6rem .9rem;border:1px solid var(--ring3);background:rgba(74,173,106,.03);
-  font-size:.8rem;gap:.8rem;
-}
-.spec-vs{font-family:var(--f-serif);font-size:.78rem;color:var(--frond2)}
-.spec-meta{font-size:.64rem;color:var(--frond4)}
-
-/* ═══════════════════════════════════════
    GAME SCREEN
 ═══════════════════════════════════════ */
 #game{
@@ -581,7 +596,7 @@ select option{background:#080d0b}
 .t-dead{border-color:rgba(192,100,100,.45);color:#c08080;text-shadow:0 0 6px rgba(192,100,100,.2);background:rgba(192,100,100,.04)}
 .t-shield{border-color:rgba(120,180,255,.35);color:#9ecfff;background:rgba(120,180,255,.04);box-shadow:0 0 6px rgba(120,180,255,.08)}
 .t-ai{border-color:rgba(150,100,220,.35);color:#c0a0e8;background:rgba(150,100,220,.04)}
-.t-spec{border-color:rgba(120,120,120,.25);color:#999;background:rgba(120,120,120,.04)}
+.t-offline{border-color:rgba(220,110,90,.38);color:#dfa08f;background:rgba(220,90,70,.05)}
 @keyframes tp{0%,100%{opacity:1}50%{opacity:.4}}
 
 /* Cards */
@@ -795,6 +810,18 @@ select option{background:#080d0b}
 .turn-banner-desc{font-family:var(--f-serif);font-size:.55rem;color:var(--frond3);line-height:1.5}
 @keyframes bannerIn{from{opacity:0;transform:translateX(-16px) scale(.98)}to{opacity:1;transform:none}}
 
+.recent-actions{
+  display:flex;gap:.35rem;align-items:center;overflow-x:auto;padding:.05rem 0;
+}
+.recent-action{
+  display:flex;align-items:center;gap:.38rem;min-width:0;flex:0 0 auto;
+  padding:.34rem .5rem;border:1px solid rgba(74,173,106,.12);border-radius:6px;
+  background:rgba(74,173,106,.035);font-family:var(--f-serif);
+}
+.recent-action img{width:24px;height:24px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35))}
+.recent-action span{font-size:.58rem;color:var(--frond2);white-space:nowrap}
+.recent-action b{font-size:.64rem;color:var(--mint);font-weight:500}
+
 /* Sidebar */
 .sidebar{display:flex;flex-direction:row;gap:.35rem;overflow-y:auto;min-height:0}
 .s-col{display:flex;flex-direction:column;gap:.35rem;flex-shrink:0;width:120px}
@@ -851,6 +878,42 @@ select option{background:#080d0b}
 }
 .a-hint{font-family:var(--f-serif);font-size:.84rem;letter-spacing:.05em;color:var(--frond2);flex:1;min-width:0;text-shadow:0 1px 3px rgba(0,0,0,.35)}
 .a-btns{display:flex;gap:.4rem;flex-wrap:wrap}
+.rule-coach{
+  display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.55rem;
+  padding:.45rem .75rem;border:1px solid rgba(74,173,106,.12);
+  background:linear-gradient(90deg,rgba(74,173,106,.045),rgba(74,173,106,.015));
+  color:var(--frond2);font-family:var(--f-serif);font-size:.68rem;border-radius:4px;
+}
+.rule-coach strong{color:var(--mint);font-weight:600}
+.rule-coach .coach-pill{
+  font-family:var(--f-display);font-size:.8rem;color:var(--sprout);
+  border:1px solid rgba(74,173,106,.2);padding:.12rem .42rem;border-radius:999px;background:rgba(74,173,106,.06);
+}
+.rule-coach button{
+  border:1px solid rgba(74,173,106,.25);background:rgba(74,173,106,.04);
+  color:var(--sprout);font-family:var(--f-serif);font-size:.62rem;padding:.25rem .55rem;border-radius:4px;cursor:pointer;
+}
+.rule-coach button:hover{border-color:var(--sprout);color:var(--mint)}
+
+.endgame-countdown{
+  display:flex;align-items:center;justify-content:center;gap:.55rem;
+  padding:.52rem .8rem;border:1px solid rgba(212,165,116,.28);
+  background:linear-gradient(90deg,rgba(212,165,116,.1),rgba(74,173,106,.035));
+  color:#e8c596;font-family:var(--f-serif);font-size:.76rem;letter-spacing:.12em;
+  border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.04);
+  animation:endgamePulse 2.2s ease-in-out infinite;
+}
+.endgame-countdown strong{color:#ffe1a8;font-size:.92rem;letter-spacing:.16em}
+@keyframes endgamePulse{0%,100%{border-color:rgba(212,165,116,.24);box-shadow:0 6px 20px rgba(0,0,0,.22)}50%{border-color:rgba(255,210,128,.46);box-shadow:0 8px 28px rgba(212,165,116,.12)}}
+
+.thinking-strip{
+  display:flex;align-items:center;justify-content:center;gap:.5rem;
+  padding:.46rem .75rem;border:1px solid rgba(120,180,255,.18);
+  background:linear-gradient(90deg,rgba(120,180,255,.07),rgba(74,173,106,.025));
+  color:#b9d8ff;font-family:var(--f-serif);font-size:.72rem;letter-spacing:.12em;border-radius:4px;
+}
+.thinking-dot{width:6px;height:6px;border-radius:50%;background:#9ecfff;box-shadow:0 0 12px rgba(120,180,255,.6);animation:thinkingBlink 1.2s ease-in-out infinite}
+@keyframes thinkingBlink{0%,100%{opacity:.35;transform:scale(.85)}50%{opacity:1;transform:scale(1.15)}}
 
 .tgt-btn{
   padding:.65rem 1.5rem;
@@ -911,7 +974,7 @@ select option{background:#080d0b}
 .guess-btn .g-lv{font-family:var(--f-display);font-style:italic;font-size:.88rem;line-height:1;color:transparent;background:linear-gradient(170deg,var(--dew),var(--mint));-webkit-background-clip:text;background-clip:text}
 .guess-btn .g-nm{font-size:.44rem;color:var(--frond3);white-space:nowrap}
 
-.zone-tgt-wrap{
+.zone-tgt-wrap,.zone-action-wrap{
   margin-top:.6rem;padding:.7rem;
   border-top:1px solid rgba(74,173,106,.18);
   background:linear-gradient(180deg,rgba(74,173,106,.03),transparent);
@@ -919,8 +982,9 @@ select option{background:#080d0b}
   animation:zoneTargetIn .4s cubic-bezier(.16,1,.3,1);
 }
 @keyframes zoneTargetIn{0%{opacity:0;transform:translateY(-6px)}100%{opacity:1;transform:none}}
-.zone-tgt-label{font-family:var(--f-serif);font-size:.72rem;color:var(--sprout);letter-spacing:.15em;margin-bottom:.5rem;text-shadow:0 0 12px rgba(74,173,106,.2)}
-.zone-tgt-row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.zone-tgt-label,.zone-action-label{font-family:var(--f-serif);font-size:.72rem;color:var(--sprout);letter-spacing:.15em;margin-bottom:.5rem;text-shadow:0 0 12px rgba(74,173,106,.2)}
+.zone-tgt-row,.zone-action-row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.zone-action-row .btn{min-width:120px;justify-content:center}
 
 .draw-btn{
   margin-top:.4rem;width:100%;
@@ -942,17 +1006,6 @@ select option{background:#080d0b}
 @keyframes drawBtnShine{0%{left:-100%}50%{left:100%}100%{left:100%}}
 .draw-btn:hover{background:linear-gradient(160deg,rgba(74,173,106,.18),rgba(74,173,106,.08));border-color:var(--sprout);box-shadow:0 4px 20px rgba(74,173,106,.15),0 2px 12px rgba(0,0,0,.25);transform:translateY(-2px)}
 .draw-btn:active{transform:translateY(1px);box-shadow:0 1px 4px rgba(0,0,0,.3)}
-
-/* Spectator banner */
-.spec-banner{
-  background:linear-gradient(90deg,rgba(0,0,0,.3),rgba(0,0,0,.4),rgba(0,0,0,.3));
-  border-bottom:1px solid rgba(74,173,106,.15);
-  padding:.45rem 1rem;text-align:center;
-  font-family:var(--f-serif);font-size:.72rem;letter-spacing:.24em;color:var(--lichen);
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  box-shadow:0 4px 12px rgba(0,0,0,.25);
-  border-radius:2px;
-}
 
 /* ═══════════════════════════════════════
    OVERLAYS
@@ -996,6 +1049,16 @@ select option{background:#080d0b}
   filter:drop-shadow(0 0 20px rgba(74,173,106,.3));
 }
 .win-sub{font-family:var(--f-serif);font-size:.9rem;letter-spacing:.12em;color:var(--frond3)}
+.win-reason{
+  font-size:.72rem;line-height:1.7;color:var(--frond2);
+  padding:.55rem .75rem;border:1px solid rgba(74,173,106,.16);border-radius:7px;
+  background:rgba(74,173,106,.05);max-width:360px;
+}
+.win-key{
+  font-size:.68rem;line-height:1.65;color:#e8c596;
+  padding:.5rem .72rem;border:1px solid rgba(212,165,116,.2);border-radius:7px;
+  background:rgba(212,165,116,.055);max-width:360px;
+}
 
 /* Modal */
 .modal-box{
@@ -1015,6 +1078,40 @@ select option{background:#080d0b}
 }
 .m-title{font-family:var(--f-serif);font-weight:700;font-size:.95rem;letter-spacing:.2em;color:var(--sprout)}
 .m-body{font-family:var(--f-serif);font-size:.83rem;color:var(--frond3);line-height:1.85}
+.guide-box{max-width:760px;max-height:92vh;overflow:auto;text-align:left;padding-bottom:1rem}
+.guide-box .m-title{text-align:center}
+.guide-close{
+  position:absolute;top:.7rem;right:.7rem;width:32px;height:32px;
+  border:1px solid rgba(74,173,106,.2);background:rgba(74,173,106,.04);
+  color:var(--sprout);font-size:1rem;border-radius:50%;cursor:pointer;z-index:2;
+}
+.guide-close:hover{border-color:var(--sprout);color:var(--mint)}
+.guide-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:.55rem}
+.guide-step,.guide-rule-grid>div{
+  border:1px solid rgba(74,173,106,.12);background:rgba(74,173,106,.04);
+  padding:.72rem;border-radius:7px;display:flex;flex-direction:column;gap:.28rem;
+}
+.guide-step strong,.guide-rule-grid b{font-family:var(--f-serif);font-size:.86rem;color:var(--mint)}
+.guide-step span,.guide-rule-grid span{font-size:.72rem;color:var(--frond2);line-height:1.65}
+.guide-rule-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.55rem}
+.guide-card-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:.45rem}
+.guide-card-mini{
+  display:grid;grid-template-columns:30px 1fr;gap:.42rem;align-items:center;
+  border:1px solid rgba(74,173,106,.1);background:rgba(0,0,0,.12);padding:.42rem;border-radius:6px;
+}
+.guide-card-mini img{width:30px;height:30px;object-fit:contain}
+.guide-card-mini strong{display:block;font-family:var(--f-serif);font-size:.66rem;color:var(--frond)}
+.guide-card-mini span{display:block;font-size:.52rem;color:var(--frond3);line-height:1.35;margin-top:.08rem}
+.guide-actions{
+  position:sticky;bottom:-1rem;margin:0 -3rem -1rem;padding:.8rem 1rem 1rem;
+  background:linear-gradient(180deg,rgba(7,13,8,0),rgba(7,13,8,.98) 34%);
+}
+@media(max-width:760px){
+  .guide-box{padding:1.4rem .9rem}
+  .guide-steps,.guide-rule-grid{grid-template-columns:1fr}
+  .guide-card-list{grid-template-columns:1fr 1fr}
+  .guide-actions{margin:0 -.9rem -.9rem;bottom:-.9rem}
+}
 
 /* Kurando duel layout */
 .k-duel{display:flex;gap:2rem;justify-content:center;align-items:center;margin:.6rem 0;perspective:600px}
@@ -1111,6 +1208,11 @@ select option{background:#080d0b}
   .omamori-img{width:22px;height:22px}
   .omamori-text{font-size:.5rem}
   .omamori-rope{height:12px}
+  .rulebot-fab{left:8px;bottom:8px;padding:.52rem .7rem;font-size:.68rem}
+  .rulebot-box{height:92vh;width:94vw}
+  .rulebot-body{height:calc(100% - 158px);padding:.75rem}
+  .rulebot-msg{max-width:94%;font-size:.74rem}
+  .rulebot-input{grid-template-columns:1fr}
 }
 
 /* Peek card flip */
@@ -1165,6 +1267,36 @@ select option{background:#080d0b}
 .tr-miss .tr-text{color:#7799dd;text-shadow:0 0 24px rgba(100,140,255,.5),0 0 48px rgba(100,140,255,.2)}
 @keyframes trFadeInOut{0%{opacity:0;transform:scale(.85)}8%{opacity:1;transform:scale(1.02)}12%{transform:scale(1)}75%{opacity:1}100%{opacity:0}}
 
+.defeat-bridge{
+  position:fixed;left:50%;top:50%;z-index:540;pointer-events:none;
+  transform:translate(-50%,-50%);
+  width:min(420px,calc(100vw - 32px));padding:1.2rem 1.3rem;
+  background:linear-gradient(170deg,rgba(18,12,10,.94),rgba(7,10,8,.98));
+  border:1px solid rgba(220,112,92,.32);border-radius:8px;
+  box-shadow:0 22px 70px rgba(0,0,0,.62),0 0 44px rgba(220,82,64,.12);
+  text-align:center;font-family:var(--f-serif);
+  animation:defeatBridgeInOut 3.1s ease forwards;
+}
+.defeat-bridge-kicker{font-size:.62rem;letter-spacing:.28em;color:rgba(220,150,130,.75);margin-bottom:.45rem}
+.defeat-bridge-title{font-size:1.15rem;letter-spacing:.08em;color:#ffd8cf;margin-bottom:.45rem}
+.defeat-bridge-text{font-size:.78rem;line-height:1.8;color:var(--frond2)}
+@keyframes defeatBridgeInOut{0%{opacity:0;transform:translate(-50%,-46%) scale(.96)}12%,82%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-53%) scale(.98)}}
+
+.shield-notice{
+  position:fixed;left:50%;top:50%;z-index:545;pointer-events:none;
+  transform:translate(-50%,-50%);
+  width:min(390px,calc(100vw - 32px));padding:1rem 1.1rem;
+  background:linear-gradient(170deg,rgba(13,24,32,.94),rgba(7,12,13,.98));
+  border:1px solid rgba(130,190,255,.38);border-radius:8px;
+  box-shadow:0 20px 64px rgba(0,0,0,.58),0 0 46px rgba(120,180,255,.18);
+  text-align:center;font-family:var(--f-serif);
+  animation:shieldNoticeInOut 2.7s ease forwards;
+}
+.shield-notice-icon{font-size:2rem;filter:drop-shadow(0 0 18px rgba(120,190,255,.7));margin-bottom:.25rem}
+.shield-notice-title{font-size:1.05rem;letter-spacing:.12em;color:#d7ecff;margin-bottom:.35rem}
+.shield-notice-text{font-size:.74rem;line-height:1.75;color:var(--frond2)}
+@keyframes shieldNoticeInOut{0%{opacity:0;transform:translate(-50%,-45%) scale(.94)}12%,78%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-54%) scale(.98)}}
+
 .fomus-blast{
   position:fixed;inset:0;z-index:500;pointer-events:none;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.7rem;
@@ -1216,6 +1348,40 @@ select option{background:#080d0b}
 }
 @keyframes toastIn{from{opacity:0;top:.2rem;transform:translateX(-50%) scale(.96)}to{opacity:1;top:1rem;transform:translateX(-50%) scale(1)}}
 
+/* Offline rule chatbot */
+.rulebot-fab{
+  position:fixed;left:16px;bottom:16px;z-index:220;
+  display:flex;align-items:center;gap:.45rem;padding:.62rem .9rem;
+  border:1px solid rgba(74,173,106,.38);background:rgba(8,13,8,.9);
+  color:var(--mint);font-family:var(--f-serif);font-size:.78rem;letter-spacing:.1em;
+  border-radius:999px;cursor:pointer;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  box-shadow:0 8px 28px rgba(0,0,0,.45),0 0 18px rgba(74,173,106,.08);
+  transition:transform .25s,border-color .25s,box-shadow .25s;
+}
+.rulebot-fab:hover{transform:translateY(-3px);border-color:var(--sprout);box-shadow:0 10px 32px rgba(0,0,0,.5),0 0 24px rgba(74,173,106,.12)}
+.rulebot-box{max-width:560px;height:min(640px,88vh);padding:0;overflow:hidden;text-align:left}
+.rulebot-head{
+  display:flex;align-items:center;justify-content:space-between;gap:.8rem;
+  padding:1rem 1.1rem;border-bottom:1px solid rgba(74,173,106,.12);
+  background:linear-gradient(90deg,rgba(74,173,106,.08),rgba(74,173,106,.02));
+}
+.rulebot-title{font-family:var(--f-serif);font-size:.9rem;color:var(--mint);letter-spacing:.12em}
+.rulebot-sub{font-size:.58rem;color:var(--frond3);margin-top:.16rem}
+.rulebot-close{border:1px solid rgba(74,173,106,.2);background:rgba(74,173,106,.04);color:var(--sprout);width:32px;height:32px;border-radius:50%;cursor:pointer}
+.rulebot-body{height:calc(100% - 150px);overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.7rem}
+.rulebot-msg{max-width:88%;padding:.65rem .78rem;border-radius:9px;font-size:.78rem;line-height:1.75}
+.rulebot-msg.bot{align-self:flex-start;background:rgba(74,173,106,.06);border:1px solid rgba(74,173,106,.12);color:var(--frond2)}
+.rulebot-msg.user{align-self:flex-end;background:rgba(74,173,106,.14);border:1px solid rgba(74,173,106,.22);color:var(--dew)}
+.rulebot-msg strong{color:var(--mint)}
+.rulebot-msg ul{padding-left:1rem;margin:.25rem 0 0}
+.rulebot-msg li{margin:.12rem 0}
+.rulebot-suggestions{display:flex;gap:.35rem;flex-wrap:wrap;padding:0 1rem .7rem}
+.rulebot-chip{border:1px solid rgba(74,173,106,.18);background:rgba(74,173,106,.035);color:var(--sprout);font-family:var(--f-serif);font-size:.62rem;padding:.32rem .55rem;border-radius:999px;cursor:pointer}
+.rulebot-chip:hover{border-color:var(--sprout);color:var(--mint)}
+.rulebot-input{display:grid;grid-template-columns:1fr auto;gap:.5rem;padding:.8rem 1rem 1rem;border-top:1px solid rgba(74,173,106,.12);background:rgba(4,8,6,.7)}
+.rulebot-input input{font-size:.82rem;padding:.62rem .8rem}
+.rulebot-input button{padding:.62rem .9rem}
+
 /* Scrollbar */
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:rgba(0,0,0,.1);border-radius:4px}
@@ -1231,9 +1397,13 @@ select option{background:#080d0b}
   .g-bar{padding:.25rem .5rem;flex-wrap:wrap;gap:.15rem}
   .g-turn{font-size:.72rem}
   .board{grid-template-columns:1fr;gap:.15rem}
+  .action-bar,.thinking-strip,.endgame-countdown,.rule-coach{position:sticky;top:0;z-index:25}
   /* Hide full sidebar, show inline info strip instead */
   .sidebar{display:none}
   .players-col{gap:.15rem}
+  .players-col.pc-2{grid-template-areas:"bot" "top";grid-template-rows:auto auto}
+  .players-col.pc-3{grid-template-areas:"bot bot" "top-l top-r";grid-template-rows:auto auto}
+  .players-col.pc-4{grid-template-areas:"bot bot" "top top" "left right";grid-template-rows:auto auto auto}
   .players-col.pc-3,.players-col.pc-4{grid-template-columns:1fr 1fr}
   .pzone{padding:.3rem .4rem}
   .pz-head{margin-bottom:.1rem}
@@ -1241,6 +1411,16 @@ select option{background:#080d0b}
   .tag{font-size:.46rem;padding:.1rem .32rem}
   /* Cards: larger for mobile readability */
   .card{width:96px;height:138px}
+  .pzone.pz-mine{padding:.45rem .5rem}
+  .pzone.pz-mine .cards-row{gap:.48rem}
+  .pzone.pz-mine .card{
+    width:min(42vw,132px);height:auto;aspect-ratio:82/118;
+    min-width:112px;
+  }
+  .pzone.pz-mine .c-lv{font-size:2.15rem}
+  .pzone.pz-mine .c-img{width:64px;height:64px}
+  .pzone.pz-mine .c-nm{font-size:.68rem}
+  .pzone.pz-mine .c-ef{font-size:.5rem}
   .c-lv{font-size:1.8rem}
   .c-img{width:52px;height:52px}
   .c-nm{font-size:.58rem}
@@ -1255,6 +1435,8 @@ select option{background:#080d0b}
   .action-bar{padding:.4rem .5rem;min-height:44px}
   .a-hint{font-size:.88rem}
   .a-btns{gap:.3rem}
+  .endgame-countdown{flex-direction:column;gap:.18rem;text-align:center;font-size:.68rem;padding:.5rem .65rem}
+  .endgame-countdown strong{font-size:.86rem}
   /* Target & guess buttons: bigger tap area */
   .tgt-btn{padding:.55rem 1rem;font-size:.88rem}
   .guess-btn{padding:.3rem .4rem;font-size:.58rem;min-width:48px}
@@ -1266,7 +1448,15 @@ select option{background:#080d0b}
   .tag{font-size:.52rem;padding:.12rem .36rem}
   /* Overlays */
   .fomus-box,.modal-box,.win-box{padding:1.5rem 1rem}
+  .win-box{max-height:94vh;overflow:auto;gap:.9rem;width:min(96vw,440px)}
   .win-title{font-size:1.8rem}
+  .win-reason,.win-key{font-size:.66rem;padding:.45rem .55rem}
+  .win-tab{font-size:.66rem;padding:.36rem .2rem}
+  .win-summary.final-numbers{grid-template-columns:1fr 1fr;gap:.45rem}
+  .win-final-img{width:42px;height:42px}
+  .win-final-level{font-size:1.55rem}
+  .win-recap{margin-top:.1rem}
+  .card-pop{bottom:74px}
   /* Mobile log: show last 2 entries as compact bar below action */
   .mobile-log{display:flex}
 }
@@ -1281,6 +1471,21 @@ select option{background:#080d0b}
   backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
 }
 .mobile-log .log-line{font-size:.6rem;border-bottom:none;padding-bottom:.1rem;line-height:1.4}
+@media(max-width:760px){
+  #lobby{padding:1.5rem .75rem 2rem;gap:1.6rem;justify-content:flex-start}
+  .silva-title{font-size:clamp(3.9rem,24vw,6rem)}
+  .modes-wrap{width:min(520px,96vw)}
+  .quick-start{grid-template-columns:1fr;gap:.55rem}
+  .quick-btn{min-height:54px;text-align:center;align-items:center}
+  .mode-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}
+  .mode-card{padding:1.05rem .7rem;min-height:126px}
+  .mc-icon{font-size:1.35rem;margin-bottom:.45rem}
+  .mc-name{font-size:.78rem}
+  .mc-desc{font-size:.57rem;line-height:1.55}
+  .panel{width:min(440px,94vw);padding:2.2rem 1rem 1.2rem;gap:.85rem}
+  .rule-coach{grid-template-columns:1fr;gap:.35rem;text-align:center;padding:.4rem .55rem;font-size:.64rem}
+  .rule-coach .coach-pill{justify-self:center}
+}
 
 /* ═══════════════════════════════════════
    FX ENGINE — EFFECTS CSS
@@ -1519,6 +1724,7 @@ select option{background:#080d0b}
 
 <!-- FX Canvas overlay for particle effects -->
 <canvas id="fxCanvas"></canvas>
+<button class="rulebot-fab" onclick="openRuleBot()">ルール相談</button>
 
 <!-- Root network SVG — organic background for entire app -->
 <div class="root-canvas" aria-hidden="true">
@@ -1596,12 +1802,23 @@ select option{background:#080d0b}
     <p class="silva-desc">FOMUS × KUKU PROJECT</p>
   </div>
   <div class="modes-wrap">
-    <div class="modes-divider"><span class="modes-label">モードを選択</span></div>
+    <div class="modes-divider"><span class="modes-label">すぐ遊ぶ</span></div>
+    <div class="quick-start">
+      <button class="quick-btn primary" onclick="quickStartFromLobby()">
+        <strong>すぐコンピューター戦</strong>
+        <span>名前入力なしで開始</span>
+      </button>
+      <button class="quick-btn" onclick="openGuide(true)">
+        <strong>はじめて遊ぶ</strong>
+        <span>流れを確認して練習へ</span>
+      </button>
+    </div>
+    <div class="modes-divider secondary"><span class="modes-label">その他</span></div>
     <div class="mode-grid">
       <div class="mode-card" onclick="goPanel('panelAI')">
         <span class="mc-icon">🤖</span>
-        <span class="mc-name">コンピューター</span>
-        <span class="mc-desc">AIと1人で対戦。3段階の難易度</span>
+        <span class="mc-name">コンピューター戦</span>
+        <span class="mc-desc">人数や難易度を選んで対戦</span>
         <div class="root-corner"></div>
       </div>
       <div class="mode-card" onclick="goPanel('panelCreate')">
@@ -1616,38 +1833,36 @@ select option{background:#080d0b}
         <span class="mc-desc">ルームIDやURLで友達と対戦</span>
         <div class="root-corner"></div>
       </div>
-      <div class="mode-card" onclick="window.open('/rules.html','_blank')">
+      <div class="mode-card" onclick="window.open('rules.html','_blank')">
         <span class="mc-icon">📖</span>
         <span class="mc-name">ルール</span>
-        <span class="mc-desc">カードの効果と遊び方を確認</span>
+        <span class="mc-desc">カード効果と勝ち筋を確認</span>
         <div class="root-corner"></div>
       </div>
       <div class="mode-card" onclick="openMyPage()">
         <span class="mc-icon">👤</span>
-        <span class="mc-name">マイページ</span>
-        <span class="mc-desc">戦績・ランク・バッジを確認</span>
+        <span class="mc-name">プレイヤー記録</span>
+        <span class="mc-desc">この端末の戦績・ランク・バッジ</span>
         <div class="root-corner"></div>
       </div>
     </div>
-    <!-- 外部リンク -->
-    <div style="display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:1.2rem">
-      <a href="https://silva.fomus.jp/" target="_blank" rel="noopener" class="btn" style="font-size:.72rem;padding:.4rem 1rem;text-decoration:none;border-color:var(--ring2);color:var(--mint)">🌐 公式サイト</a>
-      <a href="#" id="buyCardLink" onclick="toast('購入ページは準備中です');return false;" class="btn" style="font-size:.72rem;padding:.4rem 1rem;text-decoration:none;border-color:rgba(212,165,116,.3);color:#d4a574">🃏 実物カードを購入</a>
-    </div>
   </div>
 </div>
+
+<div class="card-pop hidden" id="cardPop" aria-live="polite"></div>
 
 <!-- ═══════ PANELS ═══════ -->
 <div id="panelAI" class="screen panel-screen">
   <div class="panel">
     <button class="back-link" onclick="goScreen('lobby')">戻る</button>
     <div class="p-eyebrow">コンピューター対戦</div>
-    <div class="p-title">vs AI</div>
-    <div class="field"><label class="field-label">あなたの名前</label><input type="text" id="aiName" placeholder="名前を入力" maxlength="12"></div>
+    <div class="p-title">コンピューター戦</div>
+    <div class="profile-chip" id="aiProfileChip"><span>名前</span><strong>プレイヤー</strong></div>
+    <input type="hidden" id="aiName" value="プレイヤー">
     <div class="field"><label class="field-label">難易度</label>
-      <select id="aiDiff"><option value="easy">🟢 ゆっくりAI（簡単）</option><option value="normal" selected>🟡 策士AI（普通）</option><option value="hard">🔴 鬼神AI（強い）</option></select></div>
+      <select id="aiDiff"><option value="easy">🟢 ゆっくり（簡単）</option><option value="normal" selected>🟡 策士（普通）</option><option value="hard">🔴 鬼神（強い）</option></select></div>
     <div class="field"><label class="field-label">対戦人数</label>
-      <select id="aiCount"><option value="1">AI 1人と対戦</option><option value="2">AI 2人と対戦</option><option value="3">AI 3人と対戦</option></select></div>
+      <select id="aiCount"><option value="1">1人と対戦</option><option value="2">2人と対戦</option><option value="3">3人と対戦</option></select></div>
     <button class="btn filled full" onclick="startVsAI()">ゲームを開始</button>
   </div>
 </div>
@@ -1657,7 +1872,7 @@ select option{background:#080d0b}
     <button class="back-link" onclick="goScreen('lobby')">戻る</button>
     <div class="p-eyebrow">ルーム作成</div>
     <div class="p-title">新しい対局</div>
-    <div class="field"><label class="field-label">あなたの名前</label><input type="text" id="createName" placeholder="名前を入力" maxlength="12"></div>
+    <div class="field"><label class="field-label">あなたの名前</label><input type="text" id="createName" placeholder="自動設定" maxlength="12" onchange="rememberNameFrom('createName')"></div>
     <button class="btn filled full" onclick="doCreateRoom()">ルームを作成する</button>
   </div>
 </div>
@@ -1667,46 +1882,16 @@ select option{background:#080d0b}
     <button class="back-link" onclick="goScreen('lobby')">戻る</button>
     <div class="p-eyebrow">ルーム参加</div>
     <div class="p-title">対局に参加</div>
-    <div class="field"><label class="field-label">あなたの名前</label><input type="text" id="joinName" placeholder="名前を入力" maxlength="12"></div>
+    <div class="field"><label class="field-label">あなたの名前</label><input type="text" id="joinName" placeholder="自動設定" maxlength="12" onchange="rememberNameFrom('joinName')"></div>
     <div class="field"><label class="field-label">ルームID</label>
       <input type="text" id="joinId" placeholder="AB3CD" maxlength="6" style="text-transform:uppercase;letter-spacing:.28em;font-family:var(--f-display);font-style:italic;font-size:1.2rem"></div>
     <button class="btn filled full" onclick="doJoinRoom()">参加する</button>
   </div>
 </div>
 
-<div id="panelMatch" class="screen panel-screen">
-  <div class="panel">
-    <button class="back-link" onclick="doLeaveQueue();goScreen('lobby')">戻る</button>
-    <div class="p-eyebrow">オンラインマッチング</div>
-    <div class="p-title">相手を探す</div>
-    <div class="field"><label class="field-label">あなたの名前</label><input type="text" id="matchName" placeholder="名前を入力" maxlength="12"></div>
-    <div id="matchStart">
-      <button class="btn filled full" onclick="doJoinQueue()">マッチングを開始</button>
-    </div>
-    <div id="matchWait" class="hidden" style="display:flex;flex-direction:column;align-items:center;gap:1.1rem;padding:.3rem 0">
-      <div class="pulse-ring"><div class="pulse-icon">🌿</div></div>
-      <p class="queue-txt">対戦相手を探しています...</p>
-      <button class="btn danger" onclick="doLeaveQueue()">キャンセル</button>
-    </div>
-  </div>
-</div>
-
-<div id="panelSpectate" class="screen panel-screen">
-  <div class="panel">
-    <button class="back-link" onclick="goScreen('lobby')">戻る</button>
-    <div class="p-eyebrow">観戦モード</div>
-    <div class="p-title">対局を見る</div>
-    <div class="field"><label class="field-label">あなたの名前</label><input type="text" id="specName" placeholder="名前を入力" maxlength="12"></div>
-    <button class="btn full" onclick="loadRooms()">🔄 対局一覧を更新</button>
-    <div class="spec-list" id="specList">
-      <p style="font-family:var(--f-serif);font-size:.73rem;color:var(--frond4);text-align:center;padding:1.2rem">更新ボタンを押してください</p>
-    </div>
-  </div>
-</div>
-
 <!-- ═══════ MY PAGE ═══════ -->
 <style>
-/* My Page Styles */
+/* Player record styles */
 .mp-wrap{max-width:480px;width:100%;overflow-y:auto;max-height:90vh;padding-bottom:2rem}
 .mp-hero{position:relative;text-align:center;padding:1.5rem 1rem 1rem;background:linear-gradient(180deg,rgba(74,173,106,.08),transparent);border-radius:16px;border:1px solid rgba(74,173,106,.12);margin-bottom:.8rem;overflow:hidden}
 .mp-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(74,173,106,.12) 0%,transparent 70%);pointer-events:none}
@@ -1720,6 +1905,9 @@ select option{background:#080d0b}
 .mp-rank-bar{width:80%;max-width:240px;height:6px;background:rgba(74,173,106,.1);border-radius:3px;margin:.6rem auto .2rem;overflow:hidden;position:relative;z-index:1}
 .mp-rank-fill{height:100%;background:linear-gradient(90deg,var(--fern),var(--sprout),var(--mint));border-radius:3px;transition:width .6s ease;box-shadow:0 0 8px rgba(74,173,106,.4)}
 .mp-rank-next{font-size:.66rem;color:var(--frond2);position:relative;z-index:1}
+.mp-page-title{text-align:center;margin:.4rem 0 .8rem}
+.mp-page-title strong{display:block;font-family:var(--f-serif);font-size:1rem;letter-spacing:.12em;color:var(--mint)}
+.mp-page-title span{display:block;font-size:.62rem;color:var(--frond3);margin-top:.18rem}
 
 .mp-section{background:rgba(12,20,14,.6);border:1px solid rgba(74,173,106,.1);border-radius:12px;padding:.9rem 1rem;margin:.5rem 0;backdrop-filter:blur(8px);transition:border-color .3s}
 .mp-section:hover{border-color:rgba(74,173,106,.25)}
@@ -1770,6 +1958,10 @@ select option{background:#080d0b}
 <div id="panelMyPage" class="screen panel-screen">
   <div class="mp-wrap">
     <button class="back-link" onclick="goScreen('lobby')">戻る</button>
+    <div class="mp-page-title">
+      <strong>プレイヤー記録</strong>
+      <span>この端末に保存される戦績です</span>
+    </div>
 
     <!-- Hero: ランク＆プロフィール -->
     <div class="mp-hero">
@@ -1781,6 +1973,10 @@ select option{background:#080d0b}
       <div class="mp-player-info" id="mpProfileSummary"></div>
       <div class="mp-rank-bar"><div class="mp-rank-fill" id="mpRankFill" style="width:0%"></div></div>
       <div class="mp-rank-next" id="mpRankNext"></div>
+      <div class="btn-row" style="justify-content:center;margin-top:.85rem">
+        <button class="btn filled" style="font-size:.72rem;padding:.5rem 1rem" onclick="quickStartFromMyPage()">すぐ遊ぶ</button>
+        <button class="btn" style="font-size:.72rem;padding:.5rem 1rem" onclick="goScreen('panelAI')">設定して遊ぶ</button>
+      </div>
     </div>
 
     <!-- 戦績 -->
@@ -1800,9 +1996,9 @@ select option{background:#080d0b}
       <div id="mpRecords"></div>
     </div>
 
-    <!-- AI難易度別 -->
+    <!-- コンピューター難易度別 -->
     <div class="mp-section">
-      <div class="mp-section-title">AI難易度別</div>
+      <div class="mp-section-title">コンピューター戦</div>
       <div id="mpAiStats"></div>
     </div>
 
@@ -1812,9 +2008,9 @@ select option{background:#080d0b}
       <div id="mpBadges" style="display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center"></div>
     </div>
 
-    <!-- プロフィール編集 -->
+    <!-- プレイヤー設定 -->
     <div class="mp-section">
-      <div class="mp-section-title">プロフィール編集</div>
+      <div class="mp-section-title">プレイヤー設定</div>
       <div class="mp-profile-fields">
         <div class="mp-field">
           <label>名前</label>
@@ -1878,21 +2074,20 @@ select option{background:#080d0b}
   <div class="player-list" id="playerList"></div>
   <div class="ai-controls" id="aiCtrl" style="display:none">
     <select id="aiAddDiff" style="width:auto;padding:.48rem .75rem;font-size:.76rem">
-      <option value="easy">ゆっくりAI</option><option value="normal" selected>策士AI</option><option value="hard">鬼神AI</option>
+      <option value="easy">ゆっくり</option><option value="normal" selected>策士</option><option value="hard">鬼神</option>
     </select>
-    <button class="btn" style="padding:.5rem .9rem;font-size:.8rem" onclick="doAddAI()">＋ AI追加</button>
-    <button class="btn danger" style="padding:.5rem .8rem;font-size:.76rem" onclick="doRemoveAI()">AI削除</button>
+    <button class="btn" style="padding:.5rem .9rem;font-size:.8rem" onclick="doAddAI()">＋ コンピューター追加</button>
+    <button class="btn danger" style="padding:.5rem .8rem;font-size:.76rem" onclick="doRemoveAI()">コンピューター削除</button>
   </div>
   <div class="btn-row" style="justify-content:center">
     <button class="btn filled" id="startBtn" onclick="doStartGame()" disabled>対局を開始する</button>
   </div>
-  <p style="font-family:var(--f-serif);font-size:.63rem;color:var(--frond4);margin-top:.3rem">2〜4人（AIを含む）で対局できます</p>
+  <p style="font-family:var(--f-serif);font-size:.63rem;color:var(--frond4);margin-top:.3rem">2〜4人（コンピューターを含む）で対局できます</p>
 </div>
 
 <!-- ═══════ GAME ═══════ -->
 <div id="game" class="screen">
   <div class="game-wrap">
-    <div id="specBanner" class="spec-banner hidden">👁 観戦モード — 全員の手札が表示されています</div>
     <div class="g-bar">
       <button class="back-link" style="font-size:.7rem;margin-right:.5rem" onclick="if(confirm('部屋を出ますか？'))location.reload()">退出</button>
       <div class="g-turn" id="gTurn">—</div>
@@ -1906,7 +2101,11 @@ select option{background:#080d0b}
       <div class="a-hint" id="aHint">待機中...</div>
       <div class="a-btns" id="aBtns"></div>
     </div>
+    <div class="thinking-strip hidden" id="thinkingStrip"><span class="thinking-dot"></span><span id="thinkingText"></span></div>
+    <div class="endgame-countdown hidden" id="endgameCountdown"></div>
+    <div class="rule-coach" id="ruleCoach"></div>
     <div id="turnBanner"></div>
+    <div class="recent-actions" id="recentActions"></div>
     <div class="mobile-log" id="mobileLog"></div>
     <div class="board">
       <div class="players-col" id="playersCol"></div>
@@ -1915,9 +2114,9 @@ select option{background:#080d0b}
           <div class="s-box">
             <div class="s-label">山札</div>
             <div class="deck-stack" id="deckStack">
-              <div class="deck-card"><img src="/back.jpg" alt=""></div>
-              <div class="deck-card"><img src="/back.jpg" alt=""></div>
-              <div class="deck-card"><img src="/back.jpg" alt=""></div>
+              <div class="deck-card"><img src="back.jpg" alt=""></div>
+              <div class="deck-card"><img src="back.jpg" alt=""></div>
+              <div class="deck-card"><img src="back.jpg" alt=""></div>
             </div>
             <div class="deck-count" id="deckVisCount">—</div>
             <div class="deck-count-label">残り</div>
@@ -1925,7 +2124,7 @@ select option{background:#080d0b}
           <div class="s-box">
             <div class="s-label">再生札</div>
             <div class="rebirth-card">
-              <img src="/11.jpg" alt="幼きククノチ" style="width:36px;height:36px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(74,173,106,.2));margin-bottom:.1rem">
+              <img src="11.jpg" alt="幼きククノチ" style="width:36px;height:36px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(74,173,106,.2));margin-bottom:.1rem">
               <div class="rb-lv">0</div>
               <div class="rb-nm">幼きククノチ</div>
             </div>
@@ -1948,7 +2147,7 @@ select option{background:#080d0b}
       <div class="omamori-rope"></div>
       <div class="omamori-body">
         <div class="omamori-glow"></div>
-        <img src="/6.jpg" alt="枡職人" class="omamori-img">
+        <img src="6.jpg" alt="枡職人" class="omamori-img">
         <div class="omamori-text">守護</div>
       </div>
     </div>
@@ -1967,12 +2166,20 @@ select option{background:#080d0b}
 .win-tab-content.active{display:block}
 /* Summary */
 .win-summary{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;margin-bottom:.5rem}
+.win-summary.final-numbers{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:.55rem}
+.win-summary-title{grid-column:1/-1;font-family:var(--f-serif);font-size:.72rem;letter-spacing:.18em;color:var(--frond3);margin-bottom:.1rem}
 .win-player{background:rgba(74,173,106,.05);border:1px solid rgba(74,173,106,.1);border-radius:8px;padding:.4rem .6rem;text-align:center;min-width:80px}
+.win-summary.final-numbers .win-player{min-width:0;padding:.55rem .5rem;background:linear-gradient(170deg,rgba(74,173,106,.07),rgba(0,0,0,.12));position:relative;overflow:hidden}
 .win-player.winner{border-color:rgba(74,173,106,.4);background:rgba(74,173,106,.1)}
+.win-summary.final-numbers .win-player.winner{border-color:rgba(74,173,106,.58);box-shadow:0 0 22px rgba(74,173,106,.14),inset 0 1px 0 rgba(255,255,255,.05)}
 .win-player.dead{opacity:.4}
 .win-player-name{font-size:.68rem;font-family:var(--f-serif);color:var(--frond2);margin-bottom:.15rem}
 .win-player-card{font-size:.6rem;color:var(--frond3)}
 .win-player-status{font-size:1rem;margin-bottom:.1rem}
+.win-final-img{width:46px;height:46px;object-fit:contain;display:block;margin:.16rem auto .22rem;filter:drop-shadow(0 3px 10px rgba(0,0,0,.45))}
+.win-final-level{font-family:var(--f-display);font-style:italic;font-size:1.8rem;line-height:1;color:transparent;background:linear-gradient(170deg,var(--dew),var(--mint));-webkit-background-clip:text;background-clip:text}
+.win-final-card{font-size:.62rem;color:var(--frond2);margin-top:.18rem}
+.win-final-note{font-size:.52rem;color:var(--frond4);margin-top:.18rem}
 /* Log */
 .win-log{max-height:200px;overflow-y:auto;text-align:left;padding:.2rem 0}
 .win-log-line{font-size:.68rem;color:var(--frond2);padding:.2rem .4rem;border-bottom:1px solid rgba(74,173,106,.05);line-height:1.5}
@@ -1994,12 +2201,14 @@ select option{background:#080d0b}
     <div class="win-icon" id="winIcon">🌳</div>
     <div class="win-title" id="winTitle">—</div>
     <div class="win-sub" id="winSub">—</div>
+    <div class="win-reason" id="winReason">—</div>
+    <div class="win-key" id="winKey">—</div>
     <!-- Recap tabs -->
     <div class="win-recap">
       <div class="win-tab-bar">
-        <button class="win-tab active" onclick="winTab('summary')">結果</button>
-        <button class="win-tab" onclick="winTab('log')">履歴</button>
-        <button class="win-tab" onclick="winTab('replay')">ハイライト</button>
+        <button class="win-tab active" onclick="winTab('summary', event)">結果</button>
+        <button class="win-tab" onclick="winTab('log', event)">履歴</button>
+        <button class="win-tab" onclick="winTab('replay', event)">ハイライト</button>
       </div>
       <div id="winSummary" class="win-tab-content active"></div>
       <div id="winLog" class="win-tab-content"></div>
@@ -2046,6 +2255,46 @@ select option{background:#080d0b}
     <div class="m-title">🌾 農家の効果</div>
     <div class="m-body">1枚を選んで手札に加えてください</div>
     <div class="farmer-row" id="farmerCards"></div>
+  </div>
+</div>
+
+<div class="overlay" id="ovGuide">
+  <div class="modal-box guide-box">
+    <button class="guide-close" onclick="closeGuide()" aria-label="閉じる">×</button>
+    <div class="m-title">SILVA はじめてガイド</div>
+    <div class="guide-steps">
+      <div class="guide-step"><strong>1. 引く</strong><span>手札1枚から始まり、自分の手番で1枚引きます。</span></div>
+      <div class="guide-step"><strong>2. 出す</strong><span>2枚から1枚を使います。残った1枚があなたの強さです。</span></div>
+      <div class="guide-step"><strong>3. 読む</strong><span>相手の手札を見たり、当てたり、交換したりして生き残ります。</span></div>
+    </div>
+    <div class="guide-rule-grid">
+      <div><b>勝ち方</b><span>最後まで残る。山札切れなら手札レベルが一番高い人が勝ち。</span></div>
+      <div><b>大事</b><span>ククノチ Lv.10 は出せないが、脱落時に再生することがあります。</span></div>
+      <div><b>最初のおすすめ</b><span>コンピューター1人・普通で、カード効果を見ながら1戦だけ遊ぶ。</span></div>
+    </div>
+    <div class="guide-card-list" id="guideCardList"></div>
+    <div class="btn-row guide-actions" style="justify-content:center">
+      <button class="btn filled" onclick="startGuideGame()">練習開始</button>
+      <button class="btn" onclick="closeGuide()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ovRuleBot">
+  <div class="modal-box rulebot-box">
+    <div class="rulebot-head">
+      <div>
+        <div class="rulebot-title">SILVA ルール相談</div>
+        <div class="rulebot-sub">カード効果や勝利条件をその場で確認できます。</div>
+      </div>
+      <button class="rulebot-close" onclick="closeOv('ovRuleBot')" aria-label="閉じる">×</button>
+    </div>
+    <div class="rulebot-body" id="rulebotBody"></div>
+    <div class="rulebot-suggestions" id="rulebotSuggestions"></div>
+    <div class="rulebot-input">
+      <input type="text" id="rulebotInput" placeholder="例：ククノチは出せる？ 守護って何？" onkeydown="if(event.key==='Enter')askRuleBot()">
+      <button class="btn filled" onclick="askRuleBot()">質問</button>
+    </div>
   </div>
 </div>
 
@@ -2992,7 +3241,15 @@ let selectedUid=null,pendingCardUid=null,pendingEffect=null,pendingGuess=false,_
 let _prevAlive=new Set();
 let _lastPlayedCard=null; // {cardId,cardName,cardLevel,cardEffect,cardEmoji,playerName,playerId}
 let _gameRecorded=false; // 同じゲームで二重記録を防ぐ
+let _winShown=false; // 終了画面の多重表示を防ぐ
 let _gameInfo={aiDifficulty:null,isOnline:false}; // ゲーム種別追跡
+let _tutorialHints=false;
+let _defeatBridgeShown=false;
+let _lastTraineeResult=null;
+let _lastKurandoReveal=null;
+let _lastEndgameNotice=null;
+let _thinkingTimer=null;
+let _recentActions=[];
 
 const EFFECT_DESC={
   kukuochi_young:'効果なし',
@@ -3007,49 +3264,79 @@ const EFFECT_DESC={
   sword_girl:'相手にカードを引かせ1枚捨てさせる(即死)',
   kukuochi:'場に出せない。脱落時に再生',
 };
+const CARD_TIPS={
+  kukuochi_young:'効果なし。山札切れで精霊に勝つ特殊な札です。',
+  boy:'1枚目は温存情報。2枚目が出ると相手の手札を捨てさせます。',
+  trainee:'相手の手札名を当てる攻撃。偵察後や終盤に強いです。',
+  scout:'相手の手札を見る安全な一手。次の予言や勝負に使えます。',
+  warrior:'相手に1枚引かせ、裏向きで1枚捨てさせます。',
+  kurando:'残った手札で勝負します。自分の手札が強い時に使います。',
+  masu_craftsman:'2枚目で守護。次の脱落を一度だけ防ぎます。',
+  farmer:'次の手番で複数枚から選べます。手札を整えるカードです。',
+  spirit:'相手と手札交換。自分の残り札が弱い時に逆転できます。',
+  sword_girl:'相手の手札を見て1枚捨てさせる強力な攻撃です。',
+  kukuochi:'出せません。持っているだけで山札切れ勝負に強い札です。',
+};
 
 /* ═══════════════════════════════════
    WS
 ═══════════════════════════════════ */
 function connect(cb){
   const proto=location.protocol==='https:'?'wss:':'ws:';
-  ws=new WebSocket(`${proto}//${location.host}`);
+  const host=location.protocol==='file:'?'127.0.0.1:3050':location.host;
+  ws=new WebSocket(`${proto}//${host}`);
   ws.onopen=()=>{if(cb)cb();};
   ws.onclose=()=>toast('接続が切断されました');
   ws.onmessage=e=>handle(JSON.parse(e.data));
 }
 function send(m){if(ws?.readyState===1)ws.send(JSON.stringify(m));}
 function ensureWS(cb){if(ws?.readyState===1){cb();return;}connect(cb);}
+function getClientToken(){
+  let t=localStorage.getItem('silva_client_token');
+  if(!t){t=(crypto?.randomUUID?.()||String(Date.now())+Math.random()).replace(/[^a-zA-Z0-9-]/g,'');localStorage.setItem('silva_client_token',t);}
+  return t;
+}
 
 function handle(m){
   switch(m.type){
     case 'connected': myId=m.playerId; break;
     case 'room_created':
       myRoomId=m.roomId;isHost=true;goScreen('waiting');
+      localStorage.setItem('silva_room_id',m.roomId);
       document.getElementById('roomIdTxt').textContent=m.roomId;
       document.getElementById('startBtn').disabled=true;
       document.getElementById('aiCtrl').style.display='flex'; break;
     case 'room_joined':
       myRoomId=m.roomId;isHost=false;goScreen('waiting');
+      localStorage.setItem('silva_room_id',m.roomId);
       document.getElementById('roomIdTxt').textContent=m.roomId;
       document.getElementById('startBtn').disabled=true; break;
+    case 'reconnected':
+      myRoomId=m.roomId;localStorage.setItem('silva_room_id',m.roomId);
+      if(m.state){gameState=m.state;goScreen('game');renderGame();toast('対局に復帰しました',2600);}
+      else{goScreen('waiting');document.getElementById('roomIdTxt').textContent=m.roomId;toast('ルームに復帰しました',2600);}
+      break;
     case 'room_update': renderWaiting(m.players); break;
-    case 'matched':
-      toast(`✅ マッチング成立！相手：${m.opponentName}`);
-      myRoomId=m.roomId;
-      document.getElementById('matchWait').classList.add('hidden');
-      document.getElementById('matchStart').classList.remove('hidden'); break;
-    case 'queue_joined':
-      document.getElementById('matchStart').classList.add('hidden');
-      document.getElementById('matchWait').classList.remove('hidden'); break;
-    case 'queue_left':
-      document.getElementById('matchWait').classList.add('hidden');
-      document.getElementById('matchStart').classList.remove('hidden'); break;
+    case 'computer_thinking': showThinking(m.playerName,m.action); break;
+    case 'player_disconnected':
+      toast(`通信切断: ${m.playerName||'相手'}が切断しました。再接続を待っています。`,5000);
+      break;
     case 'game_started':
       document.querySelectorAll('.overlay.show').forEach(o=>o.classList.remove('show'));
       /* リマッチUI リセット */
       const _rb=document.getElementById('rematchBtn');if(_rb){_rb.disabled=false;_rb.textContent='⚔️ 続けて対戦する';}
       const _rs=document.getElementById('rematchStatus');if(_rs){_rs.style.display='none';_rs.textContent='';}
+      _winShown=false;
+      _defeatBridgeShown=false;
+      _lastTraineeResult=null;
+      _lastKurandoReveal=null;
+      _lastEndgameNotice=null;
+      hideThinking();
+      _recentActions=[];
+      renderRecentActions();
+      _prevAlive=new Set();
+      selectedUid=null;pendingCardUid=null;pendingEffect=null;pendingGuess=false;_guessTarget=null;
+      hideCardPop();
       gameState=m.state;goScreen('game');renderGame(); break;
     case 'rematch_vote': {
       const rs=document.getElementById('rematchStatus');
@@ -3057,11 +3344,9 @@ function handle(m){
       break;
     }
     case 'state_update': gameState=m.state;goScreen('game');renderGame(); break;
-    case 'spectating': isSpectator=true;gameState=m.state;goScreen('game');document.getElementById('specBanner').classList.remove('hidden');renderGame(); break;
-    case 'public_rooms': renderRooms(m.rooms); break;
     case 'peek_result': showPeek(m.card); break;
-    case 'kurando_reveal': showKurando(m.myCard,m.theirCard); break;
-    case 'kurando_reveal_all': showKurandoAll(m); break;
+    case 'kurando_reveal': _lastKurandoReveal={myCard:m.myCard,theirCard:m.theirCard};showKurando(m.myCard,m.theirCard); break;
+    case 'kurando_reveal_all': _lastKurandoReveal=m;showKurandoAll(m); break;
     case 'spirit_swap': toast('✨ 精霊の効果で手札が交換された！');FX.playCard('spirit',document.querySelector('.pzone.pz-mine')); break;
     case 'need_target': pendingCardUid=m.cardUid;pendingEffect=m.effect;pendingGuess=!!m.requiresGuess;renderAction(); break;
     case 'waiting_fomus': showFomus(); break;
@@ -3069,13 +3354,20 @@ function handle(m){
     case 'fomus_summoned': showBlast(m.playerName,m.success,m.declaration); break;
     case 'card_played':
       _lastPlayedCard={cardId:m.cardId,cardName:m.cardName,cardLevel:m.cardLevel,cardEffect:m.cardEffect,cardEmoji:m.cardEmoji,playerName:m.playerName,playerId:m.playerId,noEffect:m.noEffect};
+      addRecentAction(_lastPlayedCard);
       if(m.noEffect) showTurnBannerSimple(_lastPlayedCard);
       else showTurnBanner(_lastPlayedCard);
       if(m.cardId&&!m.noEffect&&typeof FX!=='undefined'){const _el=document.querySelector(m.playerId===myId?'.pzone.pz-mine':'.pzone.pz-active');FX.playCard(m.cardId,_el,{hit:m.hit});}
       break;
     case 'player_eliminated': if(typeof FX!=='undefined'){const _pz=document.querySelector(`.pzone[data-pid="${m.playerId}"]`)||document.querySelector('.pzone.pz-dead');FX.eliminate(_pz);} break;
-    case 'shield_blocked': if(typeof FX!=='undefined'){const _sz=document.querySelector(`.pzone[data-pid="${m.playerId}"]`)||document.querySelector('.pzone.pz-mine');FX.shieldBlock(_sz);} break;
+    case 'shield_blocked': {
+      const _sz=document.querySelector(`.pzone[data-pid="${m.playerId}"]`)||document.querySelector('.pzone.pz-mine');
+      if(typeof FX!=='undefined')FX.shieldBlock(_sz);
+      showShieldBlocked(m.playerId);
+      break;
+    }
     case 'trainee_result': {
+      _lastTraineeResult=m;
       const _tel=document.querySelector(`.pzone[data-pid="${m.targetId}"]`)||document.querySelector('.pzone.pz-active');
       if(typeof FX!=='undefined') FX.playCard('trainee',_tel,{hit:m.hit});
       showTraineeResult(m);
@@ -3091,17 +3383,17 @@ function handle(m){
 ═══════════════════════════════════ */
 (function(){
   const CARD_DATA=[
-    {img:'/1.jpg',name:'木こり',desc:'相手1人のカードを当てれば脱落させる'},
-    {img:'/2.jpg',name:'見習い',desc:'お互いの手札を見せ合い、弱い方が脱落'},
-    {img:'/3.jpg',name:'商人',desc:'相手1人と手札を強制交換'},
-    {img:'/4.jpg',name:'農家',desc:'山札から2枚引き、好きな1枚を選べる'},
-    {img:'/5.jpg',name:'鍛冶師',desc:'次の1回、攻撃を無効にするシールド'},
-    {img:'/6.jpg',name:'枡職人',desc:'相手1人の手札を覗き見る'},
-    {img:'/7.jpg',name:'蔵人',desc:'相手1人の手札を覗き見る'},
-    {img:'/8.jpg',name:'少年',desc:'他の2人の手札を強制交換させる'},
-    {img:'/9.jpg',name:'踊り子',desc:'場に出しても何も起こらない — 生存が勝利'},
-    {img:'/10.jpg',name:'ククオチ',desc:'最強カード — 持っていると即脱落'},
-    {img:'/11.jpg',name:'幼きククノチ',desc:'最初の1枚は効果なし — 森の加護'}
+    {img:'1.jpg',name:'少年',desc:'2枚目が場に出ると一閃へ変化する'},
+    {img:'2.jpg',name:'訓練生',desc:'相手の手札を宣言し、当たれば脱落'},
+    {img:'3.jpg',name:'偵察隊',desc:'相手1人の手札を覗き見る'},
+    {img:'4.jpg',name:'戦士',desc:'相手に1枚引かせ、裏向きのまま1枚捨てさせる'},
+    {img:'5.jpg',name:'蔵人',desc:'手札を公開し、レベルが低い方が脱落'},
+    {img:'6.jpg',name:'枡職人',desc:'2枚目で守護を得て脱落を一度防ぐ'},
+    {img:'7.jpg',name:'農家',desc:'次の手番で複数枚引き、1枚を選ぶ'},
+    {img:'8.jpg',name:'精霊',desc:'相手1人と手札を交換する'},
+    {img:'9.jpg',name:'刀の少女',desc:'相手に1枚引かせ、選んだ1枚を斬る'},
+    {img:'10.jpg',name:'ククノチ',desc:'場に出せない最強札。脱落時に再生する'},
+    {img:'11.jpg',name:'幼きククノチ',desc:'再生で現れる特殊札。精霊に勝つことがある'}
   ];
   const msgs=['森の世界を準備しています…','カードをシャッフルしています…','職人たちを呼び集めています…','森の結界を張っています…','もう少しで準備完了です…'];
   const splash=document.getElementById('splash');
@@ -3133,7 +3425,7 @@ function handle(m){
     el.style.left=x+'px';el.style.top=y+'px';
     /* 裏面→一定時間後にめくれる */
     el.style.transform='rotateY(180deg)';el.style.opacity='.4';
-    el.innerHTML=`<img src="/back.jpg" alt="" data-front="${c.img}">`;
+    el.innerHTML=`<img src="back.jpg" alt="" data-front="${c.img}">`;
     el.dataset.idx=i;el.dataset.name=c.name;el.dataset.desc=c.desc;el.dataset.frontImg=c.img;
     ring.appendChild(el);
   });
@@ -3173,17 +3465,20 @@ function handle(m){
   },800);
 
   /* サーバーにpingして起動確認 */
+  function finishSplash(){
+    clearInterval(barTimer);clearInterval(revealTimer);
+    /* 全カードを一斉にめくる */
+    Array.from(ring.children).forEach(c=>{c.style.transform='rotateY(0deg)';c.style.opacity='1';c.querySelector('img').src=c.dataset.frontImg;c.classList.add('sp-reveal');});
+    bar.style.width='100%';status.textContent='準備完了！';
+    flash.classList.add('go');setTimeout(()=>flash.classList.remove('go'),600);
+    tipsArea.innerHTML='<div class="sp-tips-card" style="border-color:var(--sprout);background:rgba(74,173,106,.12)"><div class="sp-tips-txt" style="color:var(--dew);text-align:center"><strong>⚔️ 対戦の準備が整いました</strong></div></div>';
+    setTimeout(()=>splash.classList.add('hide'),1200);
+    setTimeout(()=>splash.remove(),2000);
+    if(!localStorage.getItem('silva_guide_seen'))setTimeout(()=>openGuide(true),2200);
+  }
   function tryPing(){
-    fetch('/ping',{method:'GET',cache:'no-store'}).then(r=>{if(r.ok)return r.text();throw 0;}).then(()=>{
-      clearInterval(barTimer);clearInterval(revealTimer);
-      /* 全カードを一斉にめくる */
-      Array.from(ring.children).forEach(c=>{c.style.transform='rotateY(0deg)';c.style.opacity='1';c.querySelector('img').src=c.dataset.frontImg;c.classList.add('sp-reveal');});
-      bar.style.width='100%';status.textContent='準備完了！';
-      flash.classList.add('go');setTimeout(()=>flash.classList.remove('go'),600);
-      tipsArea.innerHTML='<div class="sp-tips-card" style="border-color:var(--sprout);background:rgba(74,173,106,.12)"><div class="sp-tips-txt" style="color:var(--dew);text-align:center"><strong>⚔️ 対戦の準備が整いました</strong></div></div>';
-      setTimeout(()=>splash.classList.add('hide'),1200);
-      setTimeout(()=>splash.remove(),2000);
-    }).catch(()=>setTimeout(tryPing,2000));
+    if(location.protocol==='file:'){setTimeout(finishSplash,800);return;}
+    fetch('ping',{method:'GET',cache:'no-store'}).then(r=>{if(r.ok)return r.text();throw 0;}).then(finishSplash).catch(()=>setTimeout(tryPing,2000));
   }
   tryPing();
 })();
@@ -3192,40 +3487,39 @@ function handle(m){
    NAV
 ═══════════════════════════════════ */
 function goScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
-function goPanel(id){ensureWS(()=>goScreen(id));}
+function goPanel(id){ensureWS(()=>{hydrateNameFields();goScreen(id);if(id==='panelAI')renderAiProfileChip();});}
 /* 自動ルーム参加: ?room= パラメータ */
 window.addEventListener('load',()=>{
   /* プロフィール名を各入力欄に自動セット */
-  const prof=getProfile();
-  if(prof.name){['aiName','createName','joinName'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=prof.name;});}
+  hydrateNameFields();
   /* URL ?room= パラメータで自動参加 */
+  const prof=getProfile();
   if(window._autoJoinRoom){setTimeout(()=>{goPanel('panelJoin');document.getElementById('joinId').value=window._autoJoinRoom;if(prof.name){document.getElementById('joinName').value=prof.name;}},500);}
+  else if(localStorage.getItem('silva_room_id'))setTimeout(()=>ensureWS(()=>send({type:'reconnect',clientToken:getClientToken()})),900);
 });
 
 /* ═══════════════════════════════════
    LOBBY ACTIONS
 ═══════════════════════════════════ */
 function startVsAI(){
-  myName=document.getElementById('aiName').value.trim()||'プレイヤー';
-  _gameRecorded=false;_gameInfo={aiDifficulty:document.getElementById('aiDiff').value,isOnline:false};
-  ensureWS(()=>send({type:'start_vs_ai',name:myName,difficulty:document.getElementById('aiDiff').value,aiCount:parseInt(document.getElementById('aiCount').value)||1}));
+  myName=getPlayerName('aiName');
+  _gameRecorded=false;_winShown=false;_gameInfo={aiDifficulty:document.getElementById('aiDiff').value,isOnline:false};
+  _tutorialHints=!localStorage.getItem('silva_tutorial_ai_done');
+  ensureWS(()=>send({type:'start_vs_ai',name:myName,difficulty:document.getElementById('aiDiff').value,aiCount:parseInt(document.getElementById('aiCount').value)||1,clientToken:getClientToken()}));
 }
-function doCreateRoom(){myName=document.getElementById('createName').value.trim()||'プレイヤー';_gameRecorded=false;_gameInfo={aiDifficulty:null,isOnline:true};ensureWS(()=>send({type:'create_room',name:myName}));}
+function doCreateRoom(){myName=getPlayerName('createName');_gameRecorded=false;_winShown=false;_tutorialHints=false;_gameInfo={aiDifficulty:null,isOnline:true};ensureWS(()=>send({type:'create_room',name:myName,clientToken:getClientToken()}));}
 function doJoinRoom(){
-  myName=document.getElementById('joinName').value.trim()||'プレイヤー';
+  myName=getPlayerName('joinName');
   const rid=document.getElementById('joinId').value.trim().toUpperCase();
   if(!rid){toast('ルームIDを入力してください');return;}
-  _gameRecorded=false;_gameInfo={aiDifficulty:null,isOnline:true};
-  ensureWS(()=>send({type:'join_room',roomId:rid,name:myName}));
+  _gameRecorded=false;_winShown=false;_tutorialHints=false;_gameInfo={aiDifficulty:null,isOnline:true};
+  ensureWS(()=>send({type:'join_room',roomId:rid,name:myName,clientToken:getClientToken()}));
 }
-function doJoinQueue(){myName=document.getElementById('matchName').value.trim()||'プレイヤー';ensureWS(()=>send({type:'join_queue',name:myName}));}
-function doLeaveQueue(){send({type:'leave_queue'});}
-function loadRooms(){ensureWS(()=>send({type:'get_public_rooms'}));}
 function doAddAI(){send({type:'add_ai',difficulty:document.getElementById('aiAddDiff').value});}
 function doRemoveAI(){send({type:'remove_ai'});}
 function doStartGame(){send({type:'start_game'});}
 function doRematch(){
-  _gameRecorded=false;
+  _gameRecorded=false;_winShown=false;
   send({type:'rematch'});
   /* AI戦は即閉じ、オンラインは投票待ち */
   if(_gameInfo.aiDifficulty){closeOv('ovWin');return;}
@@ -3262,10 +3556,10 @@ const BADGES=[
   {id:'games10',name:'対戦10回',icon:'🎮',desc:'10回対戦した',check:s=>s.total>=10},
   {id:'games50',name:'対戦50回',icon:'🎲',desc:'50回対戦した',check:s=>s.total>=50},
   {id:'games100',name:'対戦100回',icon:'🎯',desc:'100回対戦した',check:s=>s.total>=100},
-  {id:'beat_easy',name:'ゆっくり撃破',icon:'🟢',desc:'ゆっくりAIに勝利',check:s=>s.aiWins?.easy>=1},
-  {id:'beat_normal',name:'策士撃破',icon:'🟡',desc:'策士AIに勝利',check:s=>s.aiWins?.normal>=1},
-  {id:'beat_hard',name:'鬼神撃破',icon:'🔴',desc:'鬼神AIに勝利',check:s=>s.aiWins?.hard>=1},
-  {id:'beat_hard10',name:'鬼神の天敵',icon:'👹',desc:'鬼神AIに10回勝利',check:s=>(s.aiWins?.hard||0)>=10},
+  {id:'beat_easy',name:'ゆっくり撃破',icon:'🟢',desc:'ゆっくりに勝利',check:s=>s.aiWins?.easy>=1},
+  {id:'beat_normal',name:'策士撃破',icon:'🟡',desc:'策士に勝利',check:s=>s.aiWins?.normal>=1},
+  {id:'beat_hard',name:'鬼神撃破',icon:'🔴',desc:'鬼神に勝利',check:s=>s.aiWins?.hard>=1},
+  {id:'beat_hard10',name:'鬼神の天敵',icon:'👹',desc:'鬼神に10回勝利',check:s=>(s.aiWins?.hard||0)>=10},
   {id:'online_win',name:'オンライン勝者',icon:'🌐',desc:'オンライン対戦で勝利',check:s=>s.onlineWins>=1},
 ];
 function getStats(){
@@ -3275,7 +3569,243 @@ function defaultStats(){return{wins:0,losses:0,draws:0,total:0,streak:0,bestStre
 function saveStats(s){localStorage.setItem('silva_stats',JSON.stringify(s));}
 function resetStats(){localStorage.removeItem('silva_stats');localStorage.removeItem('silva_badges');toast('データをリセットしました');openMyPage();}
 function getProfile(){try{return JSON.parse(localStorage.getItem('silva_profile'))||{};}catch{return {};}}
-function saveProfile(){const p={name:document.getElementById('mpName').value.trim(),country:document.getElementById('mpCountry').value,bio:document.getElementById('mpBio').value.trim()};localStorage.setItem('silva_profile',JSON.stringify(p));toast('プロフィールを保存しました');}
+function saveProfile(){
+  const p={name:document.getElementById('mpName').value.trim(),country:document.getElementById('mpCountry').value,bio:document.getElementById('mpBio').value.trim()};
+  localStorage.setItem('silva_profile',JSON.stringify(p));
+  hydrateNameFields();
+  renderAiProfileChip();
+  toast('プロフィールを保存しました');
+}
+function saveProfilePatch(patch){
+  const p=Object.assign({},getProfile(),patch);
+  localStorage.setItem('silva_profile',JSON.stringify(p));
+  return p;
+}
+function makeGuestName(){
+  const existing=localStorage.getItem('silva_guest_name');
+  if(existing)return existing;
+  const seeds=['森の旅人','若木の使い','緑の挑戦者','根の守り手','月森の客'];
+  const name=seeds[Math.floor(Math.random()*seeds.length)]+Math.floor(100+Math.random()*900);
+  localStorage.setItem('silva_guest_name',name);
+  return name;
+}
+function getPlayerName(inputId){
+  if(inputId==='aiName'){
+    const el=document.getElementById(inputId);
+    if(el)el.value='プレイヤー';
+    renderAiProfileChip();
+    return 'プレイヤー';
+  }
+  const el=document.getElementById(inputId);
+  const typed=el?.value.trim();
+  const name=typed||getProfile().name||makeGuestName();
+  if(el&&!el.value.trim())el.value=name;
+  if(name&&getProfile().name!==name)saveProfilePatch({name});
+  hydrateNameFields(name);
+  renderAiProfileChip();
+  return name;
+}
+function hydrateNameFields(name){
+  const prof=getProfile();
+  const displayName=name||prof.name||makeGuestName();
+  const aiEl=document.getElementById('aiName');
+  if(aiEl)aiEl.value='プレイヤー';
+  ['aiName','createName','joinName'].forEach(id=>{
+    if(id==='aiName')return;
+    const el=document.getElementById(id);
+    if(el&&(name||!el.value))el.value=displayName;
+  });
+}
+function rememberNameFrom(inputId){
+  const el=document.getElementById(inputId);
+  const name=el?.value.trim();
+  if(!name)return;
+  saveProfilePatch({name});
+  hydrateNameFields(name);
+  renderAiProfileChip();
+  toast('名前を保存しました');
+}
+function renderAiProfileChip(){
+  const el=document.getElementById('aiProfileChip');
+  if(!el)return;
+  const s=getStats();
+  el.classList.remove('empty');
+  el.innerHTML=`<span>名前</span><strong>プレイヤー</strong><span>${s.total}戦 ${s.wins}勝</span>`;
+}
+function quickStartFromMyPage(){
+  hydrateNameFields();
+  document.getElementById('aiDiff').value='normal';
+  document.getElementById('aiCount').value='1';
+  startVsAI();
+}
+function quickStartFromLobby(){
+  hydrateNameFields();
+  document.getElementById('aiDiff').value='normal';
+  document.getElementById('aiCount').value='1';
+  startVsAI();
+}
+function openGuide(isFirst=false){
+  renderGuideCards();
+  openOv('ovGuide');
+  if(isFirst)localStorage.setItem('silva_guide_seen','1');
+}
+function closeGuide(){
+  localStorage.setItem('silva_guide_seen','1');
+  closeOv('ovGuide');
+}
+function startGuideGame(){
+  closeGuide();
+  hydrateNameFields();
+  document.getElementById('aiDiff').value='easy';
+  document.getElementById('aiCount').value='1';
+  startVsAI();
+}
+function renderGuideCards(){
+  const el=document.getElementById('guideCardList');
+  if(!el||el.dataset.ready)return;
+  el.innerHTML=ALL_CARDS.map(c=>`<div class="guide-card-mini">
+    <img src="${cardImg(c.level)}" alt="${c.name}">
+    <div><strong>${N(c.level)} ${c.name}</strong><span>${CARD_TIPS[c.id]||EFFECT_DESC[c.id]||''}</span></div>
+  </div>`).join('');
+  el.dataset.ready='1';
+}
+
+const RULE_BOT_ALIASES={
+  kukuochi_young:['幼きククノチ','幼いククノチ','若いククノチ','lv0','レベル0','0'],
+  boy:['少年','変革','lv1','レベル1','1'],
+  trainee:['訓練生','特攻','予言','宣言','当てる','lv2','レベル2','2'],
+  scout:['偵察隊','偵察','覗く','見る','手札を見る','lv3','レベル3','3'],
+  warrior:['戦士','格闘','裏向き','捨てさせる','lv4','レベル4','4'],
+  kurando:['蔵人','醸造','勝負','公開','見せ合う','lv5','レベル5','5'],
+  masu_craftsman:['枡職人','枡','守護','シールド','無効','lv6','レベル6','6'],
+  farmer:['農家','栽培','選ぶ','戻す','複数枚','lv7','レベル7','7'],
+  spirit:['精霊','思念','交換','手札交換','lv8','レベル8','8'],
+  sword_girl:['刀の少女','一閃','刀','剣','斬る','lv9','レベル9','9'],
+  kukuochi:['ククノチ','再生','復活','出せない','lv10','レベル10','10'],
+};
+const RULE_BOT_RULES=[
+  {keys:['勝ち','勝利','勝利条件','終わり','山札切れ','判定'],title:'勝利条件',body:'勝ち方は2つです。<ul><li>他のプレイヤーを全員脱落させる。</li><li>山札がなくなった時、生存者の手札レベルが一番高い。</li></ul>同レベルで最高なら引き分けです。1対1で「幼きククノチ」と「精霊」が残った場合だけ、幼きククノチが勝ちます。'},
+  {keys:['流れ','手番','ターン','何する','遊び方','始め方'],title:'手番の流れ',body:'基本は「引く → 出す → 残す」です。手札1枚で始まり、自分の手番で山札から1枚引いて2枚にします。そのうち1枚を場に出して効果を使い、残った1枚が次の手札になります。'},
+  {keys:['枚数','デッキ','何枚','カード数'],title:'カード枚数',body:'通常山札は16枚です。ククノチの再生でだけ「幼きククノチ」が手札に加わります。カード種類は11種類で、プレイ人数は2〜4人です。'},
+  {keys:['対象','ターゲット','相手を選ぶ','選べない'],title:'ターゲット',body:'効果に「相手を1人選ぶ」とあるカードは、生存している相手だけを対象にできます。脱落済みのプレイヤーや自分は対象にできません。'},
+  {keys:['ククノチ','再生','復活','出せる','出せない'],title:'ククノチの再生',body:'ククノチ Lv.10 は場に出せません。脱落するときに手札に持っていれば、手札をすべて捨てて「幼きククノチ Lv.0」として復活します。ただし刀の少女でククノチを捨てさせられた場合は再生しません。'},
+  {keys:['守護','枡','枡職人','シールド','無効'],title:'守護',body:'枡職人は1枚目は効果なし、2枚目が場に出るとそのプレイヤーが守護を得ます。守護は次の脱落効果を1回だけ無効化します。発動後は消えます。'},
+  {keys:['少年','変革','2枚目','一閃'],title:'少年の変革',body:'少年は1枚目が場に出ても効果なしです。2枚目の少年が場に出ると、刀の少女の「一閃」と同じように、相手の手札を見て1枚捨てさせます。'},
+  {keys:['農家','栽培','何枚引く','戻す'],title:'農家の栽培',body:'農家を使うと、次の自分の手番で山札から複数枚引き、その中から1枚を選んで手札にします。選ばなかったカードは山札に戻してシャッフルされます。1枚目の農家なら2枚、2枚目なら3枚引きます。'},
+  {keys:['刀','刀の少女','一閃','戦士','違い'],title:'戦士と刀の少女の違い',body:'どちらも相手に1枚引かせてから1枚捨てさせます。戦士は裏向きで選びます。刀の少女は相手の手札を見て選べ、ククノチを捨てさせると再生させずに脱落させられます。'},
+  {keys:['偵察','訓練生','コンボ','当てる','予言'],title:'偵察隊と訓練生',body:'偵察隊で相手の手札を見て、その情報を訓練生の特攻に使うのが基本コンボです。訓練生は宣言が当たれば相手を脱落させます。'},
+  {keys:['おすすめ','戦略','初心者','最初','コツ'],title:'初心者のコツ',body:'最初は安全に情報を取るカードが分かりやすいです。偵察隊で手札を見る、農家で手札を整える、蔵人は自分の残り手札が強い時に使う、という意識で遊ぶと流れが掴みやすいです。'},
+];
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function openRuleBot(prefill=''){
+  openOv('ovRuleBot');
+  initRuleBot();
+  const input=document.getElementById('rulebotInput');
+  if(prefill){input.value=prefill;askRuleBot();}
+  else input.focus();
+}
+function initRuleBot(){
+  const body=document.getElementById('rulebotBody');
+  if(body.dataset.ready)return;
+  addRuleBotMessage('bot','こんにちは。SILVAのルールで迷ったら質問してください。<br>例：「ククノチは出せる？」「守護って何？」「戦士と刀の少女の違いは？」');
+  renderRuleBotSuggestions(['ククノチは出せる？','守護って何？','勝利条件は？','今なにをすればいい？']);
+  body.dataset.ready='1';
+}
+function renderRuleBotSuggestions(items){
+  const el=document.getElementById('rulebotSuggestions');
+  el.innerHTML=items.map(q=>`<button class="rulebot-chip" onclick="askRuleBot('${escapeHtml(q)}')">${escapeHtml(q)}</button>`).join('');
+}
+function addRuleBotMessage(role,html){
+  const body=document.getElementById('rulebotBody');
+  const div=document.createElement('div');
+  div.className=`rulebot-msg ${role}`;
+  div.innerHTML=html;
+  body.appendChild(div);
+  body.scrollTop=body.scrollHeight;
+}
+function askRuleBot(forced){
+  const input=document.getElementById('rulebotInput');
+  const q=(forced||input.value||'').trim();
+  if(!q)return;
+  addRuleBotMessage('user',escapeHtml(q));
+  input.value='';
+  const answer=answerRuleQuestion(q);
+  addRuleBotMessage('bot',answer.html);
+  renderRuleBotSuggestions(answer.suggestions||['ククノチは出せる？','カード一覧を教えて','初心者のコツは？']);
+}
+function answerRuleQuestion(raw){
+  const q=raw.toLowerCase().replace(/\s+/g,'');
+  if(/今|どうすれば|何すれば|なにすれば|次/.test(q)&&gameState){
+    return {html:currentRuleAdvice(),suggestions:['このカードの効果は？','勝利条件は？','初心者のコツは？']};
+  }
+  const card=matchRuleCard(q);
+  const rule=matchRuleEntry(q);
+  if(rule&&/違い|比較|どっち|差/.test(q)){
+    return {html:`<strong>${rule.entry.title}</strong><br>${rule.entry.body}`,suggestions:['ククノチを捨てたら？','守護で防げる？','初心者のコツは？']};
+  }
+  if(card&&(!rule||card.score>=rule.score)){
+    return {html:cardAnswer(card.card),suggestions:relatedSuggestions(card.card)};
+  }
+  if(rule)return {html:`<strong>${rule.entry.title}</strong><br>${rule.entry.body}`,suggestions:['関連カードは？','初心者のコツは？','山札切れは？']};
+  const cardList=ALL_CARDS.map(c=>`${N(c.level)} ${c.name}`).join(' / ');
+  return {html:`該当するルールを特定できませんでした。カード名や効果名で聞くと答えやすいです。<br><br><strong>カード一覧</strong><br>${cardList}`,suggestions:['ククノチは出せる？','戦士と刀の少女の違いは？','農家は何枚引く？']};
+}
+function matchRuleCard(q){
+  let best=null;
+  for(const c of ALL_CARDS){
+    const aliases=[c.name,c.effect,String(c.level),`lv${c.level}`,`レベル${c.level}`,...(RULE_BOT_ALIASES[c.id]||[])];
+    let score=0;
+    aliases.forEach(a=>{const k=String(a).toLowerCase().replace(/\s+/g,'');if(k&&q.includes(k))score+=k.length>=3?4:1;});
+    if(score&&(!best||score>best.score))best={card:c,score};
+  }
+  return best;
+}
+function matchRuleEntry(q){
+  let best=null;
+  for(const entry of RULE_BOT_RULES){
+    let score=0;
+    entry.keys.forEach(k=>{const kk=k.toLowerCase().replace(/\s+/g,'');if(q.includes(kk))score+=kk.length>=3?3:1;});
+    if(score&&(!best||score>best.score))best={entry,score};
+  }
+  return best;
+}
+function cardAnswer(c){
+  const counts={kukuochi_young:'特殊',boy:2,trainee:2,scout:2,warrior:2,kurando:1,masu_craftsman:2,farmer:2,spirit:2,sword_girl:1,kukuochi:1};
+  return `<strong>${N(c.level)} ${c.name}（${c.effect}）</strong><br>${CARD_TIPS[c.id]||EFFECT_DESC[c.id]||''}<ul><li>レベル: ${c.level}</li><li>枚数: ${counts[c.id]}</li><li>${detailedCardRule(c.id)}</li></ul>`;
+}
+function detailedCardRule(id){
+  const map={
+    kukuochi_young:'通常山札には入らず、ククノチの再生で手札に来ます。',
+    boy:'1枚目は効果なし。2枚目が出た時だけ一閃になります。',
+    trainee:'当てる対象は相手1人。カード名が外れると脱落は起きません。',
+    scout:'見た情報は自分だけが確認できます。',
+    warrior:'捨てさせるカードは見ずに選びます。ククノチを捨てさせると再生します。',
+    kurando:'残った手札同士で比べます。同レベルなら両者脱落です。',
+    masu_craftsman:'守護は脱落効果を1回だけ防ぎ、使うと消えます。',
+    farmer:'効果は次の自分の手番に発動します。',
+    spirit:'手札を交換します。弱い手札を渡す使い方が強いです。',
+    sword_girl:'相手の手札を見て選べます。ククノチを斬ると再生しません。',
+    kukuochi:'場に出せません。山札切れでは高レベル勝負に強いです。',
+  };
+  return map[id]||'';
+}
+function relatedSuggestions(c){
+  if(c.id==='kukuochi')return ['刀の少女で斬られたら？','山札切れは？','幼きククノチとは？'];
+  if(c.id==='warrior'||c.id==='sword_girl')return ['戦士と刀の少女の違いは？','ククノチを捨てたら？','守護で防げる？'];
+  if(c.id==='scout'||c.id==='trainee')return ['偵察隊と訓練生のコンボは？','訓練生が外れたら？','初心者のコツは？'];
+  return ['勝利条件は？','初心者のコツは？','カード一覧を教えて'];
+}
+function currentRuleAdvice(){
+  const {players,currentPlayerId,phase,pendingAction,deckCount}=gameState;
+  const me=players.find(p=>p.id===myId);
+  const selected=me?.hand?.find(c=>c.uid===selectedUid);
+  if(pendingAction?.fromPlayerId===myId)return '<strong>今やること</strong><br>相手の手札から捨てさせる1枚を選びます。刀の少女なら見えているカードから選べます。戦士なら裏向きなので推理です。';
+  if(currentPlayerId!==myId)return `<strong>今やること</strong><br>相手の手番です。捨て札と山札残り ${deckCount}枚を見て、相手の手札を予想しましょう。`;
+  if(phase==='draw')return '<strong>今やること</strong><br>カードを1枚引いてください。手札が2枚になったら、1枚を場に出します。';
+  if(phase==='farmer_select')return '<strong>今やること</strong><br>農家の効果です。残したいカードを1枚選んでください。';
+  if(selected)return `<strong>選択中: ${selected.name}</strong><br>${CARD_TIPS[selected.id]||EFFECT_DESC[selected.id]||''}`;
+  return '<strong>今やること</strong><br>手札から1枚選んで使います。残したカードが次の勝負札になるので、効果だけでなく残り手札のレベルも大事です。';
+}
 function recordGame(result,opts={}){
   /* result: 'win','loss','draw' / opts: {aiDifficulty,isOnline} */
   const s=getStats();
@@ -3314,7 +3844,7 @@ function openMyPage(){
   goScreen('panelMyPage');
   const s=getStats();
   const prof=getProfile();
-  /* プロフィール欄に値をセット */
+  /* プレイヤー設定欄に値をセット */
   document.getElementById('mpName').value=prof.name||'';
   document.getElementById('mpCountry').value=prof.country||'';
   document.getElementById('mpBio').value=prof.bio||'';
@@ -3349,11 +3879,11 @@ function openMyPage(){
     {label:'オンライン',val:`${s.onlineWins||0}勝 ${s.onlineLosses||0}敗`,icon:'🌐'},
     s.lastPlayed?{label:'最終プレイ',val:new Date(s.lastPlayed).toLocaleDateString('ja-JP'),icon:'📅'}:null,
   ].filter(Boolean).map(r=>`<div class="mp-record-line"><span>${r.icon} ${r.label}</span><span class="mp-record-val">${r.val}</span></div>`).join('');
-  /* AI別 */
+  /* コンピューター別 */
   document.getElementById('mpAiStats').innerHTML=[
-    {name:'ゆっくりAI',color:'#4aad6a',w:s.aiWins?.easy||0,l:s.aiLosses?.easy||0},
-    {name:'策士AI',color:'#e0c040',w:s.aiWins?.normal||0,l:s.aiLosses?.normal||0},
-    {name:'鬼神AI',color:'#e07070',w:s.aiWins?.hard||0,l:s.aiLosses?.hard||0},
+    {name:'ゆっくり',color:'#4aad6a',w:s.aiWins?.easy||0,l:s.aiLosses?.easy||0},
+    {name:'策士',color:'#e0c040',w:s.aiWins?.normal||0,l:s.aiLosses?.normal||0},
+    {name:'鬼神',color:'#e07070',w:s.aiWins?.hard||0,l:s.aiLosses?.hard||0},
   ].map(a=>`<div class="mp-ai-row"><div class="mp-ai-dot" style="background:${a.color}"></div><div class="mp-ai-name">${a.name}</div><div class="mp-ai-score">${a.w}W ${a.l}L</div></div>`).join('');
   /* バッジ */
   const earned=JSON.parse(localStorage.getItem('silva_badges')||'[]');
@@ -3367,9 +3897,18 @@ function openMyPage(){
   }).join('');
 }
 
-function shareRoomUrl(){const id=document.getElementById('roomIdTxt').textContent;const url=location.origin+'/?room='+id;if(navigator.share){navigator.share({title:'SILVA対戦',text:'SILVAで対戦しよう！',url}).catch(()=>{});}else{navigator.clipboard.writeText(url).then(()=>toast('招待URLをコピーしました'));}}
+function roomShareUrl(){
+  const id=document.getElementById('roomIdTxt').textContent;
+  const base=location.protocol==='file:'?'http://127.0.0.1:3050':location.origin;
+  return `${base}/?room=${encodeURIComponent(id)}`;
+}
+function shareRoomUrl(){
+  const url=roomShareUrl();
+  if(navigator.share){navigator.share({title:'SILVA対戦',text:'SILVAで対戦しよう！',url}).catch(()=>{});}
+  else{navigator.clipboard.writeText(url).then(()=>toast('招待URLをコピーしました'));}
+}
 function toggleQR(){const area=document.getElementById('qrArea');if(area.style.display==='none'){area.style.display='block';generateQR();}else{area.style.display='none';}}
-function generateQR(){const id=document.getElementById('roomIdTxt').textContent;const url=location.origin+'/?room='+id;const canvas=document.getElementById('qrCanvas');drawQR(canvas,url,200);}
+function generateQR(){const canvas=document.getElementById('qrCanvas');drawQR(canvas,roomShareUrl(),200);}
 /* 軽量QRコード生成（Google Charts API利用） */
 function drawQR(canvas,text,size){const img=new Image();img.crossOrigin='anonymous';img.onload=function(){canvas.width=size;canvas.height=size;const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,size,size);ctx.drawImage(img,0,0,size,size);};img.onerror=function(){canvas.width=size;canvas.height=size;const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,size,size);ctx.fillStyle='#333';ctx.font='12px sans-serif';ctx.textAlign='center';ctx.fillText('QR生成エラー',size/2,size/2);};img.src='https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='+encodeURIComponent(text);}
 /* URL ?room= パラメータで自動参加 */
@@ -3380,32 +3919,22 @@ function renderWaiting(players){
     <div class="player-item${p.isAI?' ai-item':''}">
       <div class="p-dot${p.isAI?' ai':''}"></div>
       <span>${p.name}${p.id===myId?' <span style="font-size:.6rem;color:var(--sprout)">(あなた)</span>':''}</span>
-      ${p.isAI?'<span class="ai-chip">[AI]</span>':''}
+      ${p.isAI?'<span class="ai-chip">コンピューター</span>':''}
     </div>`).join('');
   /* ホストなら2人以上で開始ボタン有効化 */
   if(isHost) document.getElementById('startBtn').disabled=players.length<2;
 }
-function renderRooms(rooms){
-  const el=document.getElementById('specList');
-  if(!rooms.length){el.innerHTML='<p style="font-family:var(--f-serif);font-size:.73rem;color:var(--frond4);text-align:center;padding:1.2rem">進行中の対局がありません</p>';return;}
-  el.innerHTML=rooms.map(r=>`
-    <div class="spec-item">
-      <div><div class="spec-vs">${r.players.join(' vs ')}</div><div class="spec-meta">T${r.turn} · 観戦 ${r.spectators}人</div></div>
-      <button class="btn" style="font-size:.7rem;padding:.36rem .72rem" onclick="doSpectate('${r.id}')">観戦</button>
-    </div>`).join('');
-}
-function doSpectate(roomId){ensureWS(()=>send({type:'spectate',roomId,name:document.getElementById('specName').value.trim()||'観戦者'}));}
-
 /* ═══════════════════════════════════
    GAME RENDER
 ═══════════════════════════════════ */
-function cardImg(level){return level===0?'/11.jpg':`/${level}.jpg`;}
+function cardImg(level){return level===0?'11.jpg':`${level}.jpg`;}
 
 function renderGame(){
   if(!gameState)return;
   const{players,deckCount,currentPlayerId,phase,log,winner,pendingAction}=gameState;
   const cur=players.find(p=>p.id===currentPlayerId);
   const isMy=currentPlayerId===myId;
+  if(!cur?.isAI||phase==='ended')hideThinking();
   let t='';
   if(phase==='ended'){
     if(winner===myId)t='🏆 あなたの勝利';
@@ -3414,6 +3943,7 @@ function renderGame(){
   } else t=isMy?'⚡ あなたの手番':`${cur?.name||'—'} の手番`;
   document.getElementById('gTurn').textContent=t;
   document.getElementById('gDeck').textContent=`🃏 ${deckCount}枚`;
+  renderEndgameCountdown(deckCount,phase);
   /* Update masu counter */
   const me=players.find(p=>p.id===myId);
   if(me){
@@ -3434,6 +3964,7 @@ function renderGame(){
   renderPlayers(players,currentPlayerId,phase,pendingAction);
   renderLog(log);
   renderAction();
+  renderRuleCoach();
   /* Detect eliminations and trigger FX */
   if(typeof FX!=='undefined'){
     const nowAlive=new Set(players.filter(p=>p.alive).map(p=>p.id));
@@ -3446,7 +3977,100 @@ function renderGame(){
     }
     _prevAlive=nowAlive;
   }
-  if(phase==='ended')setTimeout(()=>{document.querySelectorAll('.overlay.show').forEach(o=>o.classList.remove('show'));showWin(winner,players);},3000);
+  if(phase==='ended'&&!_winShown){
+    _winShown=true;
+    const winDelay=computerDefeatDelay(players,winner);
+    if(winDelay>1200)setTimeout(()=>showComputerDefeatBridge(players,winner),1800);
+    setTimeout(()=>{document.querySelectorAll('.overlay.show').forEach(o=>o.classList.remove('show'));showWin(winner,players);},winDelay);
+  }
+}
+
+function computerDefeatDelay(players,winner){
+  const me=players.find(p=>p.id===myId);
+  if(!_gameInfo.aiDifficulty||!me||me.alive||winner===myId)return 1200;
+  const cardId=_lastPlayedCard?.cardId;
+  if(cardId==='trainee')return 4800;
+  if(cardId==='kurando')return 5000;
+  return 3400;
+}
+
+function showComputerDefeatBridge(players,winner){
+  const me=players.find(p=>p.id===myId);
+  if(_defeatBridgeShown||!_gameInfo.aiDifficulty||!me||me.alive||winner===myId)return;
+  _defeatBridgeShown=true;
+  const card=_lastPlayedCard;
+  const opponent=card?.playerName||players.find(p=>p.id===winner)?.name||'相手';
+  let title='あなたは脱落しました';
+  let text='相手の効果で脱落したため、対局が終了します。';
+  if(card?.cardId==='trainee'){
+    title='手札を言い当てられました';
+    const guess=_lastTraineeResult?.guessName;
+    text=`${opponent}の「訓練生」が${guess?`「${guess}」を宣言し、`:''}あなたの手札を当てたため脱落しました。`;
+  }else if(card?.cardId==='kurando'){
+    title='手札勝負で敗れました';
+    const reveal=_lastKurandoReveal||{};
+    const myCard=reveal.theirName===me.name?reveal.theirCard:reveal.myName===me.name?reveal.myCard:null;
+    const theirCard=reveal.myName===opponent?reveal.myCard:reveal.theirName===opponent?reveal.theirCard:null;
+    const detail=myCard&&theirCard?`あなたの${myCard.name}（Lv.${myCard.level}）より、相手の${theirCard.name}（Lv.${theirCard.level}）が高かったため脱落しました。`:'残った手札のレベルを比べ、あなたの手札が下回ったため脱落しました。';
+    text=`${opponent}の「蔵人」で手札を公開。${detail}`;
+  }else if(card?.cardName){
+    title=`「${card.cardName}」で脱落しました`;
+    text=`${opponent}のカード効果であなたが脱落し、最後まで残った相手の勝利になります。`;
+  }
+  const el=document.createElement('div');
+  el.className='defeat-bridge';
+  el.innerHTML=`<div class="defeat-bridge-kicker">脱落理由</div><div class="defeat-bridge-title">${title}</div><div class="defeat-bridge-text">${text}</div>`;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),3200);
+}
+
+function showShieldBlocked(playerId){
+  const player=gameState?.players?.find(p=>p.id===playerId);
+  const isMe=playerId===myId;
+  const name=isMe?'あなた':(player?.name||'相手');
+  const last=_lastPlayedCard?.cardName ? `「${_lastPlayedCard.cardName}」の脱落効果` : '脱落効果';
+  const el=document.createElement('div');
+  el.className='shield-notice';
+  el.innerHTML=`
+    <div class="shield-notice-icon">🛡</div>
+    <div class="shield-notice-title">守護で護られた</div>
+    <div class="shield-notice-text">${name}はFOMUSの守護により、${last}を1回だけ無効化しました。</div>`;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),2800);
+}
+
+function showThinking(playerName,action){
+  const el=document.getElementById('thinkingStrip');
+  const text=document.getElementById('thinkingText');
+  if(!el||!text)return;
+  text.textContent=`${playerName||'相手'}が${action||'考えています'}...`;
+  el.classList.remove('hidden');
+  if(_thinkingTimer)clearTimeout(_thinkingTimer);
+  _thinkingTimer=setTimeout(()=>hideThinking(),3600);
+}
+function hideThinking(){
+  const el=document.getElementById('thinkingStrip');
+  if(el)el.classList.add('hidden');
+  if(_thinkingTimer){clearTimeout(_thinkingTimer);_thinkingTimer=null;}
+}
+
+function renderEndgameCountdown(deckCount,phase){
+  const el=document.getElementById('endgameCountdown');
+  if(!el)return;
+  if(phase==='ended'||deckCount>2||deckCount<=0){
+    el.classList.add('hidden');
+    if(deckCount<=0)_lastEndgameNotice=null;
+    return;
+  }
+  const key=deckCount===1?'last':'two';
+  const title=deckCount===1?'ラストターン':'残り2ターン';
+  const detail=deckCount===1?'この山札を引き切ると、残った手札の数字で勝負です。':'数字勝負が近づいています。残すカードの強さを意識しましょう。';
+  el.innerHTML=`<span>山札残り ${deckCount}枚</span><strong>${title}</strong><span>${detail}</span>`;
+  el.classList.remove('hidden');
+  if(_lastEndgameNotice!==key){
+    _lastEndgameNotice=key;
+    toast(deckCount===1?'ラストターンです。次は数字勝負に備えましょう。':'残り2ターンです。終盤の数字勝負が近づいています。',2800);
+  }
 }
 
 function renderPlayers(players,curId,phase,pending){
@@ -3484,18 +4108,18 @@ function renderPlayers(players,curId,phase,pending){
         if(e.target.closest('.card')||e.target.closest('.tgt-btn')||e.target.closest('button'))return;
         const pid=p.id;
         /* ターゲット選択待ちの場合 */
-        if(pendingCardUid&&!pendingGuess){playCardWithFX(pendingCardUid,{targetId:pid});pendingCardUid=null;pendingEffect=null;selectedUid=null;return;}
+        if(pendingCardUid&&!pendingGuess){playCardWithFX(pendingCardUid,{targetId:pid});pendingCardUid=null;pendingEffect=null;selectedUid=null;hideCardPop();return;}
         if(pendingGuess&&!_guessTarget){_guessTarget=pid;renderGuessFlow();return;}
-        if(selectedUid&&gameState){const me2=gameState.players.find(pp=>pp.id===myId);const card=me2?.hand?.find(c=>c.uid===selectedUid);if(card&&NEEDS_TGT.has(card.id)){playCardWithFX(selectedUid,{targetId:pid});selectedUid=null;return;}}
+        if(selectedUid&&gameState){const me2=gameState.players.find(pp=>pp.id===myId);const card=me2?.hand?.find(c=>c.uid===selectedUid);if(card&&NEEDS_TGT.has(card.id)){playCardWithFX(selectedUid,{targetId:pid});selectedUid=null;hideCardPop();return;}}
       });
     }
     const tags=[
       isMe?'<span class="tag t-you">あなた</span>':'',
-      isSpectator?'<span class="tag t-spec">観戦</span>':'',
       isAct&&p.alive?'<span class="tag t-turn">手番</span>':'',
       !p.alive?'<span class="tag t-dead">脱落</span>':'',
       p.shield?'<span class="tag t-shield">🛡 守護</span>':'',
-      p.isAI?'<span class="tag t-ai">AI</span>':'',
+      p.isAI?'<span class="tag t-ai">相手</span>':'',
+      p.connected===false?'<span class="tag t-offline">通信切断</span>':'',
       isWarriorTarget?'<span class="tag t-warrior">⚔ 格闘対象</span>':'',
     ].filter(Boolean).join('');
 
@@ -3506,7 +4130,7 @@ function renderPlayers(players,curId,phase,pending){
         if(c.hidden){
           const canPick=isWarriorTarget&&!isSpectator;
           return `<div class="card c-back${canPick?'':' no-act'}" ${canPick?`onclick="warriorDiscard('${c.uid}')" style="cursor:pointer"`:''}>
-            <img class="c-back-img" src="/back.jpg" alt="">
+            <img class="c-back-img" src="back.jpg" alt="">
             ${canPick?'<div class="c-pick-hint">?</div>':''}
           </div>`;
         }
@@ -3523,7 +4147,7 @@ function renderPlayers(players,curId,phase,pending){
         return `<div class="${cls}" ${oc?`onclick="${oc}"`:''}><div class="c-lv">${N(c.level)}</div><img class="c-img" src="${cardImg(c.level)}" alt="${c.name}"><div class="c-nm">${c.name}</div><div class="c-ef">${c.effect}</div></div>`;
       }).join('');
     } else {
-      hand=Array(p.handCount).fill('<div class="card c-back no-act"><img class="c-back-img" src="/back.jpg" alt=""></div>').join('');
+      hand=Array(p.handCount).fill('<div class="card c-back no-act"><img class="c-back-img" src="back.jpg" alt=""></div>').join('');
     }
 
     const discArr=(p.discard||[]).slice(-12);
@@ -3554,6 +4178,22 @@ function renderLog(log){
   if(ml) ml.innerHTML=(log||[]).slice(0,10).map(l=>`<div class="log-line">${l}</div>`).join('');
 }
 
+function addRecentAction(info){
+  if(!info?.cardName)return;
+  _recentActions.unshift(info);
+  _recentActions=_recentActions.slice(0,3);
+  renderRecentActions();
+}
+function renderRecentActions(){
+  const el=document.getElementById('recentActions');
+  if(!el)return;
+  el.innerHTML=_recentActions.map(a=>`<div class="recent-action">
+    <img src="${cardImg(a.cardLevel)}" alt="${a.cardName}">
+    <span>${a.playerName||''}</span>
+    <b>${a.cardName}</b>
+  </div>`).join('');
+}
+
 /* ═══════════════════════════════════
    ACTION
 ═══════════════════════════════════ */
@@ -3562,8 +4202,7 @@ function renderAction(){
   const{players,currentPlayerId,phase,pendingAction}=gameState;
   const hint=document.getElementById('aHint');
   const btns=document.getElementById('aBtns');btns.innerHTML='';
-  document.querySelectorAll('.zone-tgt-wrap').forEach(e=>e.remove());
-  if(isSpectator){hint.textContent='観戦中...';return;}
+  clearZoneControls();
   const isMy=currentPlayerId===myId;
   const me=players.find(p=>p.id===myId);
   const attackerMe=(pendingAction?.type==='warrior_discard'||pendingAction?.type==='sword_girl_discard'||pendingAction?.type==='boy_discard') && pendingAction?.fromPlayerId===myId;
@@ -3574,21 +4213,23 @@ function renderAction(){
     else hint.textContent=`🗡 ${tgtName}の手札から捨てるカードを選んでください`;
     return;
   }
-  if(!isMy||!me?.alive){hint.textContent=`${players.find(p=>p.id===currentPlayerId)?.name||'—'} の手番を待っています...`;pendingCardUid=null;pendingEffect=null;selectedUid=null;return;}
+  if(!isMy||!me?.alive){hint.textContent=`${players.find(p=>p.id===currentPlayerId)?.name||'—'} の手番を待っています...`;pendingCardUid=null;pendingEffect=null;selectedUid=null;hideCardPop();return;}
   if(phase==='draw'){hint.textContent='カードを引いてください';return;}
   if(phase==='farmer_select'){hint.textContent='🌾 農家の効果 — 手札から1枚選んでください';return;}
   if(phase==='action'){
     if(!pendingCardUid){
       if(!selectedUid){hint.textContent='手札からカードを選んでください';return;}
       const card=me.hand?.find(c=>c.uid===selectedUid);
-      if(!card){selectedUid=null;return;}
+      if(!card){selectedUid=null;hideCardPop();return;}
       if(NEEDS_TGT.has(card.id)){
-        hint.textContent=`「${card.name}」— ターゲットを選択`;
+        hint.textContent='手札の下で対象を選んでください';
         renderTgtBtns(false);
       } else {
-        hint.textContent=`「${card.name}」を使用しますか？`;
-        btns.appendChild(mkBtn('使用する','btn filled',()=>playCardWithFX(selectedUid)));
-        btns.appendChild(mkBtn('キャンセル','btn',()=>{selectedUid=null;renderGame();}));
+        hint.textContent='手札の下で使用を確認してください';
+        renderZoneActions(`「${card.name}」を使用しますか？`,[
+          mkBtn('使用する','btn filled',()=>playCardWithFX(selectedUid)),
+          mkBtn('キャンセル','btn',()=>{selectedUid=null;hideCardPop();renderGame();})
+        ]);
       }
     } else {
       if(pendingGuess)renderGuessFlow();
@@ -3597,9 +4238,86 @@ function renderAction(){
   }
 }
 
+function renderRuleCoach(){
+  const el=document.getElementById('ruleCoach');
+  if(!el||!gameState)return;
+  const {players,currentPlayerId,phase,pendingAction,deckCount}=gameState;
+  const me=players.find(p=>p.id===myId);
+  if(phase==='ended'){
+    el.innerHTML='<span class="coach-pill">終了</span><span>結果画面で最後の手札と履歴を確認できます。</span><button onclick="openGuide(false)">要点</button>';
+    return;
+  }
+  const isMy=currentPlayerId===myId;
+  const selected=me?.hand?.find(c=>c.uid===selectedUid);
+  let pill='待機', text=`山札残り ${deckCount}枚。相手の捨て札から残り札を読んでください。`;
+  if(pendingAction?.fromPlayerId===myId){
+    pill='選択';
+    text='相手の手札から捨てさせる1枚を選びます。ククノチをどう扱うかが勝負です。';
+  }else if(isMy&&phase==='draw'){
+    pill='引く';
+    text='まず山札から1枚引きます。手札が2枚になったら1枚を使います。';
+  }else if(isMy&&phase==='farmer_select'){
+    pill='選ぶ';
+    text='農家の効果です。残したい1枚を選び、ほかは山札へ戻ります。';
+  }else if(isMy&&selected){
+    pill='出す';
+    text=`${selected.name}: ${CARD_TIPS[selected.id]||EFFECT_DESC[selected.id]||'このカードを使います。'}`;
+  }else if(isMy&&phase==='action'){
+    pill='出す';
+    text='手札から1枚選びます。残ったカードが次の勝負札になります。';
+  }
+  const rec=_tutorialHints?tutorialRecommendation(me,phase,selected,pendingAction):'';
+  if(rec) text=`${rec}<br>${text}`;
+  el.innerHTML=`<span class="coach-pill">${pill}</span><span>${text}</span><button onclick="openRuleBot()">質問</button>`;
+}
+
+function clearZoneControls(){
+  document.querySelectorAll('.zone-tgt-wrap,.zone-action-wrap').forEach(e=>e.remove());
+}
+
+function renderZoneActions(labelText,buttons){
+  clearZoneControls();
+  const myZone=document.querySelector('.pzone.pz-mine');
+  if(!myZone)return;
+  const wrap=document.createElement('div');wrap.className='zone-action-wrap';
+  const label=document.createElement('div');label.className='zone-action-label';label.textContent=labelText;
+  const row=document.createElement('div');row.className='zone-action-row';
+  buttons.forEach(b=>row.appendChild(b));
+  wrap.appendChild(label);wrap.appendChild(row);myZone.appendChild(wrap);
+}
+
+function tutorialRecommendation(me,phase,selected,pendingAction){
+  if(!me?.alive||pendingAction?.fromPlayerId===myId)return '';
+  if(phase==='draw')return 'おすすめ: まずカードを引きましょう。';
+  if(phase!=='action')return '';
+  const hand=me.hand||[];
+  if(selected)return `おすすめ: ${selected.name}の効果を確認してから使いましょう。`;
+  if(hand.some(c=>c.id==='scout'))return 'おすすめ: まずは偵察隊で相手の手札を見てみましょう。';
+  if(hand.some(c=>c.id==='farmer'))return 'おすすめ: 農家で次の手札を整えると安全です。';
+  if(hand.some(c=>c.id==='trainee'))return 'おすすめ: 訓練生は相手の札に心当たりがある時に使いましょう。';
+  return 'おすすめ: 使うカードを選ぶと、残った1枚が次の勝負札になります。';
+}
+
+function showCardPop(card){
+  const el=document.getElementById('cardPop');
+  if(!el||!card)return;
+  el.innerHTML=`
+    <div class="card-pop-lv">${N(card.level)}</div>
+    <div>
+      <div class="card-pop-name">${card.name}</div>
+      <div class="card-pop-text">${CARD_TIPS[card.id]||EFFECT_DESC[card.id]||'このカードを使います。'}</div>
+    </div>
+    <button class="card-pop-close" onclick="hideCardPop()" aria-label="閉じる">×</button>`;
+  el.classList.remove('hidden');
+}
+function hideCardPop(){
+  const el=document.getElementById('cardPop');
+  if(el)el.classList.add('hidden');
+}
+
 function renderTgtBtns(isPending){
   /* Remove old target buttons if any */
-  document.querySelectorAll('.zone-tgt-wrap').forEach(e=>e.remove());
+  clearZoneControls();
   const myZone=document.querySelector('.pzone.pz-mine');
   if(!myZone) return;
   const wrap=document.createElement('div');wrap.className='zone-tgt-wrap';
@@ -3609,11 +4327,11 @@ function renderTgtBtns(isPending){
   gameState.players.filter(p=>p.id!==myId&&p.alive).forEach(t=>{
     const b=document.createElement('button');b.className='tgt-btn';
     b.innerHTML=`<span class="tgt-icon">${t.isAI?'🤖':'👤'}</span>${t.name}`;
-    b.onclick=()=>{playCardWithFX(isPending?pendingCardUid:selectedUid,{targetId:t.id});pendingCardUid=null;pendingEffect=null;selectedUid=null;};
+    b.onclick=()=>{playCardWithFX(isPending?pendingCardUid:selectedUid,{targetId:t.id});pendingCardUid=null;pendingEffect=null;selectedUid=null;hideCardPop();};
     row.appendChild(b);
   });
   const cb=document.createElement('button');cb.className='btn';cb.textContent='キャンセル';
-  cb.onclick=()=>{pendingCardUid=null;pendingEffect=null;selectedUid=null;renderGame();};
+  cb.onclick=()=>{pendingCardUid=null;pendingEffect=null;selectedUid=null;hideCardPop();renderGame();};
   row.appendChild(cb);
   wrap.appendChild(row);
   myZone.appendChild(wrap);
@@ -3621,7 +4339,7 @@ function renderTgtBtns(isPending){
 
 function renderGuessFlow(){
   const hint=document.getElementById('aHint');const btns=document.getElementById('aBtns');btns.innerHTML='';
-  document.querySelectorAll('.zone-tgt-wrap').forEach(e=>e.remove());
+  clearZoneControls();
   if(!_guessTarget){
     hint.textContent='まずターゲットを選択してください';
     const myZone=document.querySelector('.pzone.pz-mine');
@@ -3639,23 +4357,33 @@ function renderGuessFlow(){
     }
     return;
   }
-  hint.textContent='相手の手札を予言してください';
+  hint.textContent='手札の下で予言するカードを選んでください';
+  const guessButtons=[];
   ALL_CARDS.filter(c=>c.id!=='kukuochi_young').forEach(c=>{
     const b=document.createElement('button');b.className='guess-btn';
     b.innerHTML=`<span class="g-lv">${N(c.level)}</span><img src="${cardImg(c.level)}" alt="${c.name}"><span class="g-nm">${c.name}</span>`;
-    b.onclick=()=>{playCardWithFX(pendingCardUid,{targetId:_guessTarget,guess:c.id});pendingCardUid=null;pendingEffect=null;pendingGuess=false;_guessTarget=null;};
-    btns.appendChild(b);
+    b.onclick=()=>{playCardWithFX(pendingCardUid,{targetId:_guessTarget,guess:c.id});pendingCardUid=null;pendingEffect=null;pendingGuess=false;_guessTarget=null;hideCardPop();};
+    guessButtons.push(b);
   });
-  btns.appendChild(mkBtn('キャンセル','btn',()=>{_guessTarget=null;pendingCardUid=null;pendingEffect=null;pendingGuess=false;renderGame();}));
+  guessButtons.push(mkBtn('キャンセル','btn',()=>{_guessTarget=null;pendingCardUid=null;pendingEffect=null;pendingGuess=false;hideCardPop();renderGame();}));
+  renderZoneActions('相手の手札を予言してください',guessButtons);
 }
 
 function mkBtn(l,c,f){const b=document.createElement('button');b.className=c;b.textContent=l;b.onclick=f;return b;}
-function selectCard(u){selectedUid=selectedUid===u?null:u;renderGame();renderAction();}
+function selectCard(u){
+  const next=selectedUid===u?null:u;
+  selectedUid=next;
+  const me=gameState?.players?.find(p=>p.id===myId);
+  const card=me?.hand?.find(c=>c.uid===next);
+  if(card)showCardPop(card);else hideCardPop();
+  renderGame();renderAction();
+}
 function discardCard(u){send({type:'target_discard',cardUid:u});}
 function warriorDiscard(u){send({type:'target_discard',cardUid:u});}
 
 /* FX hook: trigger card effect when playing a card locally */
 function playCardWithFX(cardUid, extra){
+  hideCardPop();
   if(typeof FX!=='undefined' && gameState){
     const me=gameState.players.find(p=>p.id===myId);
     const card=me?.hand?.find(c=>c.uid===cardUid);
@@ -3741,13 +4469,36 @@ let _replayLog=[];
 let _replayIdx=0;
 let _replayTimer=null;
 
+function resultReason(wid,players){
+  const me=players.find(p=>p.id===myId);
+  const winner=players.find(p=>p.id===wid);
+  const alive=players.filter(p=>p.alive);
+  const deckEnded=gameState?.deckCount===0;
+  if(!wid)return '最後に残った強さが並び、勝敗がつきませんでした。';
+  if(deckEnded){
+    const card=winner?.hand?.[0];
+    if(wid===myId)return `${card?`${card.name}（Lv.${card.level}）`:'手札'}が最後の比べ合いで一番強く、勝利しました。`;
+    return `${winner?.name||'相手'}の手札が最後の比べ合いで上回りました。`;
+  }
+  if(me&&!me.alive&&wid!==myId)return `あなたが脱落し、${winner?.name||'相手'}だけが最後まで残りました。`;
+  if(alive.length===1)return `${winner?.name||'勝者'}だけが脱落せずに残りました。`;
+  return wid===myId?'読み合いで相手を脱落させ、最後まで残りました。':'相手に先に勝ち筋を通されました。';
+}
+
 function showWin(wid,players){
+  hideCardPop();
   const icon=document.getElementById('winIcon');
   const title=document.getElementById('winTitle');
   const sub=document.getElementById('winSub');
+  const reason=document.getElementById('winReason');
+  const key=document.getElementById('winKey');
   if(!wid){icon.textContent='\uD83E\uDD1D';title.textContent='引き分け';sub.textContent='同時脱落による引き分け';}
   else if(wid===myId){icon.textContent='\uD83C\uDF33';title.textContent='Victory';sub.textContent='あなたの勝利です';FX.victory();}
   else{const w=players.find(p=>p.id===wid);icon.textContent='\uD83C\uDF42';title.textContent='敗北';sub.textContent=`${w?.name||'\u2014'} の勝利`;}
+  if(reason)reason.textContent=resultReason(wid,players);
+  if(key)key.innerHTML=resultKey(wid,players);
+  if(_tutorialHints)localStorage.setItem('silva_tutorial_ai_done','1');
+  _tutorialHints=false;
   /* 戦績記録 */
   if(!_gameRecorded&&!isSpectator){
     _gameRecorded=true;
@@ -3756,18 +4507,7 @@ function showWin(wid,players){
   }
   /* 結果サマリー */
   const summaryEl=document.getElementById('winSummary');
-  summaryEl.innerHTML='<div class="win-summary">'+players.map(p=>{
-    const isW=p.id===wid;
-    const statusIcon=isW?'👑':(!p.alive?'💀':'🌿');
-    const lastCard=p.discard&&p.discard.length?p.discard[p.discard.length-1]:null;
-    const handCard=p.hand&&p.hand.length?p.hand[0]:null;
-    const cardInfo=handCard?`手札: ${handCard.name}(Lv.${handCard.level})`:(p.alive?'':'脱落');
-    return `<div class="win-player${isW?' winner':''}${!p.alive&&!isW?' dead':''}">
-      <div class="win-player-status">${statusIcon}</div>
-      <div class="win-player-name">${p.name}</div>
-      <div class="win-player-card">${cardInfo}</div>
-    </div>`;
-  }).join('')+'</div>';
+  summaryEl.innerHTML=renderWinSummary(players,wid);
   /* 履歴ログ（逆順→時系列順に） */
   const log=(gameState?.log||[]).slice().reverse();
   document.getElementById('winLog').innerHTML='<div class="win-log">'+
@@ -3778,7 +4518,7 @@ function showWin(wid,players){
   _replayIdx=0;
   if(_replayTimer){clearInterval(_replayTimer);_replayTimer=null;}
   updateReplayDisplay();
-  /* 再戦ボタン（観戦者以外は常に表示） */
+  /* 再戦ボタン */
   const rb=document.getElementById('rematchBtn');
   rb.style.display=isSpectator?'none':'inline-flex';
   rb.disabled=false;rb.textContent='⚔️ 続けて対戦する';
@@ -3789,12 +4529,70 @@ function showWin(wid,players){
   openOv('ovWin');
 }
 
-function winTab(tab){
+function resultKey(wid,players){
+  if(!wid)return '<strong>決め手:</strong> 最後の手札レベルが並び、勝者なしになりました。';
+  const winner=players.find(p=>p.id===wid);
+  if(gameState?.deckCount===0){
+    const card=winner?.hand?.[0];
+    return `<strong>決め手:</strong> 山札切れ。${winner?.name||'勝者'}の${card?`${card.name}（Lv.${card.level}）`:'手札'}が最後の数字勝負を上回りました。`;
+  }
+  const log=(gameState?.log||[]);
+  const shield=log.find(l=>l.includes('守護発動'));
+  if(shield)return `<strong>決め手:</strong> ${shield.replace(/^.+? /,'')}`;
+  if(_lastPlayedCard?.cardName){
+    return `<strong>決め手:</strong> ${_lastPlayedCard.playerName||'相手'}の「${_lastPlayedCard.cardName}」が勝敗を動かしました。`;
+  }
+  const lastElim=log.find(l=>l.includes('脱落'));
+  if(lastElim)return `<strong>決め手:</strong> ${lastElim.replace(/^.+? /,'')}`;
+  return `<strong>決め手:</strong> ${winner?.name||'勝者'}が最後まで残りました。`;
+}
+
+function renderWinSummary(players,wid){
+  const deckEnded=gameState?.deckCount===0;
+  if(deckEnded){
+    return '<div class="win-summary final-numbers"><div class="win-summary-title">最後の数字勝負</div>'+
+      players.map(p=>{
+        const isW=p.id===wid;
+        const handCard=p.hand&&p.hand.length?p.hand[0]:null;
+        const statusIcon=isW?'👑':(!p.alive?'💀':'🌿');
+        const deadClass=!p.alive&&!isW?' dead':'';
+        if(!handCard){
+          return `<div class="win-player${isW?' winner':''}${deadClass}">
+            <div class="win-player-status">${statusIcon}</div>
+            <div class="win-player-name">${p.name}</div>
+            <div class="win-player-card">手札なし</div>
+          </div>`;
+        }
+        return `<div class="win-player${isW?' winner':''}${deadClass}">
+          <div class="win-player-status">${statusIcon}</div>
+          <div class="win-player-name">${p.name}</div>
+          <img class="win-final-img" src="${cardImg(handCard.level)}" alt="${handCard.name}">
+          <div class="win-final-level">${N(handCard.level)}</div>
+          <div class="win-final-card">${handCard.name}</div>
+          <div class="win-final-note">Lv.${handCard.level}</div>
+        </div>`;
+      }).join('')+'</div>';
+  }
+  return '<div class="win-summary">'+players.map(p=>{
+    const isW=p.id===wid;
+    const statusIcon=isW?'👑':(!p.alive?'💀':'🌿');
+    const handCard=p.hand&&p.hand.length?p.hand[0]:null;
+    const cardInfo=handCard?`手札: ${handCard.name}(Lv.${handCard.level})`:(p.alive?'':'脱落');
+    return `<div class="win-player${isW?' winner':''}${!p.alive&&!isW?' dead':''}">
+      <div class="win-player-status">${statusIcon}</div>
+      <div class="win-player-name">${p.name}</div>
+      <div class="win-player-card">${cardInfo}</div>
+    </div>`;
+  }).join('')+'</div>';
+}
+
+function winTab(tab, ev){
   document.querySelectorAll('.win-tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.win-tab-content').forEach(t=>t.classList.remove('active'));
   const tabs={summary:'winSummary',log:'winLog',replay:'winReplay'};
   document.getElementById(tabs[tab]).classList.add('active');
-  event.target?event.target.classList.add('active'):document.querySelector(`.win-tab`).classList.add('active');
+  const clicked=ev?.target || (typeof event!=='undefined' ? event.target : null);
+  if(clicked?.classList?.contains('win-tab')) clicked.classList.add('active');
   /* タブボタンのactive */
   document.querySelectorAll('.win-tab').forEach(t=>{
     if(t.textContent==={'summary':'結果','log':'履歴','replay':'ハイライト'}[tab])t.classList.add('active');
@@ -3923,15 +4721,14 @@ function farmerPick(uid){send({type:'farmer_select',keepCardUid:uid});closeOv('o
 
 // FOMUS: タップで即宣言（入力不要）
 function showFomus(){
-  // アクションバーにFOMUSボタンを表示
-  document.getElementById('aHint').textContent='🏺 枡職人2枚目 — タップで召喚';
+  document.getElementById('aHint').textContent='手札の下でFOMUSを召喚してください';
   const btns=document.getElementById('aBtns');btns.innerHTML='';
   const b=document.createElement('button');
   b.className='btn filled';
   b.style.cssText='font-size:.95rem;letter-spacing:.3em;padding:.8rem 1.8rem;border-color:var(--sprout);animation:fomusBtnPulse 1s ease-in-out infinite';
   b.textContent='🏺 FOMUS！';
   b.onclick=declareFomus;
-  btns.appendChild(b);
+  renderZoneActions('枡職人2枚目 — タップで召喚',[b]);
 }
 function declareFomus(){
   // 常に'FOMUS'を送信 → サーバー側で成功判定される
@@ -3971,7 +4768,7 @@ function toast(msg,dur=3500){
 </html>
 <script>
 // Service Worker 登録
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then(r => console.log('SW:', r.scope))
