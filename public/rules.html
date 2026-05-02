@@ -63,7 +63,8 @@ a:hover{text-decoration:underline}
 .card-table tr:hover{background:rgba(74,173,106,.04)}
 .card-table .lv{font-family:var(--f-display);font-weight:700;font-size:1rem;color:var(--sprout);text-align:center;width:36px}
 .card-table .name{font-family:var(--f-serif);font-weight:600;white-space:nowrap}
-.card-table .emoji{font-size:1.1rem;text-align:center;width:30px}
+.card-table .card-img-cell{text-align:center;width:64px;padding:.3rem .3rem}
+.card-thumb{width:54px;height:76px;object-fit:cover;border-radius:5px;display:block;margin:0 auto;box-shadow:0 2px 10px rgba(0,0,0,.5),0 0 8px rgba(74,173,106,.1)}
 .card-table .count{text-align:center;width:30px}
 .card-table .effect-name{color:var(--mint);font-weight:500;white-space:nowrap}
 .card-table .effect-desc{color:var(--frond2);font-size:.76rem;line-height:1.6}
@@ -93,7 +94,9 @@ a:hover{text-decoration:underline}
   .container{padding:1rem .8rem 3rem}
   .header h1{font-size:2rem}
   .card-table{font-size:.72rem}
-  .card-table th,.card-table td{padding:.35rem .4rem}
+  .card-table th,.card-table td{padding:.3rem .35rem}
+  .card-img-cell{width:46px;padding:.2rem .2rem}
+  .card-thumb{width:40px;height:57px}
 }
 </style>
 </head>
@@ -168,7 +171,7 @@ a:hover{text-decoration:underline}
     </thead>
     <tbody>
       <tr>
-        <td class="emoji">🌱</td>
+        <td class="card-img-cell"><img src="11.jpg" alt="幼きククノチ" class="card-thumb"></td>
         <td class="lv">0</td>
         <td class="name">幼きククノチ</td>
         <td class="count">※</td>
@@ -176,7 +179,7 @@ a:hover{text-decoration:underline}
         <td class="effect-desc">ククノチ(Lv.10)の再生で手札に加わる特殊カード。効果なし。精霊(Lv.8)に対して勝利する特殊ルールあり。</td>
       </tr>
       <tr>
-        <td class="emoji">⚡</td>
+        <td class="card-img-cell"><img src="1.jpg" alt="少年" class="card-thumb"></td>
         <td class="lv">1</td>
         <td class="name">少年</td>
         <td class="count">2</td>
@@ -184,7 +187,7 @@ a:hover{text-decoration:underline}
         <td class="effect-desc">1枚目は効果なし。2枚目が場に出ると<strong>「一閃」</strong>と同じ効果が発動（相手の手札を見て1枚捨てさせる）。</td>
       </tr>
       <tr>
-        <td class="emoji">🎯</td>
+        <td class="card-img-cell"><img src="2.jpg" alt="訓練生" class="card-thumb"></td>
         <td class="lv">2</td>
         <td class="name">訓練生</td>
         <td class="count">2</td>
@@ -192,7 +195,7 @@ a:hover{text-decoration:underline}
         <td class="effect-desc">相手を1人選び、手札のカード名を宣言。当たれば相手は脱落。</td>
       </tr>
       <tr>
-        <td class="emoji">🔍</td>
+        <td class="card-img-cell"><img src="3.jpg" alt="偵察隊" class="card-thumb"></td>
         <td class="lv">3</td>
         <td class="name">偵察隊</td>
         <td class="count">2</td>
@@ -200,7 +203,7 @@ a:hover{text-decoration:underline}
         <td class="effect-desc">相手を1人選び、手札を覗き見る。</td>
       </tr>
       <tr>
-        <td class="emoji">⚔️</td>
+        <td class="card-img-cell"><img src="4.jpg" alt="戦士" class="card-thumb"></td>
         <td class="lv">4</td>
         <td class="name">戦士</td>
         <td class="count">2</td>
@@ -208,7 +211,7 @@ a:hover{text-decoration:underline}
         <td class="effect-desc">相手を1人選ぶ。相手は山札から1枚引き、あなたが相手の手札から1枚を裏向きのまま選んで捨てさせる。</td>
       </tr>
       <tr>
-        <td class="emoji">🍶</td>
+        <td class="card-img-cell"><img src="5.jpg" alt="蔵人" class="card-thumb"></td>
         <td class="lv">5</td>
         <td class="name">蔵人</td>
         <td class="count">1</td>
@@ -216,7 +219,7 @@ a:hover{text-decoration:underline}
         <td class="effect-desc">相手を1人選び、互いに手札を公開。レベルが低い方が脱落。同レベルなら両者脱落。</td>
       </tr>
       <tr>
-        <td class="emoji">🏺</td>
+        <td class="card-img-cell"><img src="6.jpg" alt="枡職人" class="card-thumb"></td>
         <td class="lv">6</td>
         <td class="name">枡職人</td>
         <td class="count">2</td>
@@ -224,7 +227,7 @@ a:hover{text-decoration:underline}
         <td class="effect-desc">1枚目は効果なし。2枚目が場に出ると<strong>「守護」</strong>を獲得。次に脱落する効果を1回だけ無効化する。</td>
       </tr>
       <tr>
-        <td class="emoji">🌾</td>
+        <td class="card-img-cell"><img src="7.jpg" alt="農家" class="card-thumb"></td>
         <td class="lv">7</td>
         <td class="name">農家</td>
         <td class="count">2</td>
@@ -232,7 +235,7 @@ a:hover{text-decoration:underline}
         <td class="effect-desc">次の手番で山札から2枚引き（2枚目は3枚）、1枚を選んで残りを山札に戻す。</td>
       </tr>
       <tr>
-        <td class="emoji">✨</td>
+        <td class="card-img-cell"><img src="8.jpg" alt="精霊" class="card-thumb"></td>
         <td class="lv">8</td>
         <td class="name">精霊</td>
         <td class="count">2</td>
@@ -240,7 +243,7 @@ a:hover{text-decoration:underline}
         <td class="effect-desc">相手を1人選び、手札を交換する。</td>
       </tr>
       <tr>
-        <td class="emoji">🗡️</td>
+        <td class="card-img-cell"><img src="9.jpg" alt="刀の少女" class="card-thumb"></td>
         <td class="lv">9</td>
         <td class="name">刀の少女</td>
         <td class="count">1</td>
@@ -248,7 +251,7 @@ a:hover{text-decoration:underline}
         <td class="effect-desc">相手を1人選ぶ。相手は山札から1枚引き、あなたが相手の手札を見て1枚を選んで捨てさせる。ククノチを捨てさせた場合、再生は発動しない。</td>
       </tr>
       <tr>
-        <td class="emoji">🌳</td>
+        <td class="card-img-cell"><img src="10.jpg" alt="ククノチ" class="card-thumb"></td>
         <td class="lv">10</td>
         <td class="name">ククノチ</td>
         <td class="count">1</td>
