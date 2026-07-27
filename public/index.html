@@ -2068,6 +2068,7 @@ select option{background:#080d0b}
     <div class="win-actions" style="display:flex;flex-direction:column;align-items:center;gap:.5rem;margin-top:.5rem">
       <button class="btn filled" id="rematchBtn" style="display:none" onclick="doRematch()">⚔️ 続けて対戦する</button>
       <div id="rematchStatus" style="display:none;font-size:.65rem;color:var(--sprout);text-align:center"></div>
+      <button class="btn" id="shareResultBtn" onclick="shareResult()">📤 結果を画像で共有</button>
       <button class="btn" onclick="location.reload()">ロビーへ戻る</button>
     </div>
   </div>
@@ -3013,9 +3014,9 @@ const FX = (function(){
 <!-- ルールエンジン（サーバーと共有）・多言語辞書・ブラウザ内AI対戦
      ⚠ これらを変更したらリリース時に ?v= を上げること。
         上げないと、古いキャッシュを持つ端末が古いルールで動いてしまう -->
-<script src="/game-core.js?v=9"></script>
-<script src="/i18n.js?v=9"></script>
-<script src="/local-game.js?v=9"></script>
+<script src="/game-core.js?v=11"></script>
+<script src="/i18n.js?v=11"></script>
+<script src="/local-game.js?v=11"></script>
 
 <script>
 /* ═══════════════════════════════════
@@ -3930,6 +3931,110 @@ let _replayLog=[];
 let _replayIdx=0;
 let _replayTimer=null;
 
+/* ═══════════════════════════════════
+   結果画像の共有 — SNSに貼れる1200x630のカードを生成する。
+   拡散はここが起点になるので、OGP画像と同じトーンで仕上げる
+═══════════════════════════════════ */
+async function buildResultCanvas(){
+  const g=gameState; if(!g) return null;
+  const W=1200,H=630;
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;
+  const x=cv.getContext('2d');
+
+  /* Webフォントが未ロードだと serif 代替になるので先に読み込む（失敗しても続行） */
+  try{await Promise.all([
+    document.fonts.load('700 120px Philosopher'),
+    document.fonts.load('600 30px "Shippori Mincho"'),
+  ]);}catch{}
+
+  /* 背景 — 深い森のグラデーション＋淡い光 */
+  const bg=x.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#04140b');bg.addColorStop(.55,'#03080a');bg.addColorStop(1,'#02100c');
+  x.fillStyle=bg;x.fillRect(0,0,W,H);
+  const glow=x.createRadialGradient(W*.78,H*.42,40,W*.78,H*.42,430);
+  glow.addColorStop(0,'rgba(74,173,106,.20)');glow.addColorStop(1,'rgba(74,173,106,0)');
+  x.fillStyle=glow;x.fillRect(0,0,W,H);
+
+  /* 右側にカードを扇状に（勝者の最終手札を中央に据える） */
+  const loadImg=src=>new Promise(res=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>res(null);im.src=src;});
+  const winner=g.players.find(p=>p.id===g.winner);
+  const centerCard=winner?.hand?.[0]?cardImg(winner.hand[0].level):'/back.webp';
+  const sides=g.players.filter(p=>p.id!==g.winner&&(p.hand?.[0]||p.discard?.length))
+    .map(p=>p.hand?.[0]?cardImg(p.hand[0].level):cardImg(p.discard[p.discard.length-1].level));
+  const arts=[sides[0]||'/back.webp',centerCard,sides[1]||'/back.webp'];
+  const imgs=await Promise.all(arts.map(loadImg));
+  const CW=225, CH=CW*1039/744;
+  [[-14,W*.615,H*.53],[14,W*.915,H*.53],[0,W*.765,H*.485]].forEach((pos,i)=>{
+    const im=imgs[[0,2,1][i]]; if(!im)return;
+    const[ang,cx2,cy]=pos;
+    x.save();x.translate(cx2,cy);x.rotate(ang*Math.PI/180);
+    x.shadowColor='rgba(0,0,0,.75)';x.shadowBlur=34;x.shadowOffsetY=14;
+    x.drawImage(im,-CW/2,-CH/2,CW,CH);
+    x.shadowColor='transparent';
+    x.strokeStyle='rgba(74,173,106,.35)';x.lineWidth=2;x.strokeRect(-CW/2,-CH/2,CW,CH);
+    x.restore();
+  });
+  /* 左に向かって暗くして文字を立たせる */
+  const fade=x.createLinearGradient(0,0,W*.62,0);
+  fade.addColorStop(0,'rgba(2,7,6,.96)');fade.addColorStop(.75,'rgba(2,7,6,.72)');fade.addColorStop(1,'rgba(2,7,6,0)');
+  x.fillStyle=fade;x.fillRect(0,0,W*.62,H);
+
+  /* タイトル */
+  x.textBaseline='alphabetic';
+  x.shadowColor='rgba(74,173,106,.55)';x.shadowBlur=44;
+  x.fillStyle='#e2f4e7';x.font='700 116px Philosopher, serif';
+  x.fillText('SILVA',68,196);
+  x.shadowColor='transparent';
+  x.fillStyle='rgba(74,173,106,.9)';x.fillRect(72,224,74,3);
+
+  /* 勝敗 */
+  const iWon=g.winner===myId, draw=!g.winner;
+  x.fillStyle=draw?'#b2e8c5':iWon?'#7dcf9a':'#c9a86a';
+  x.font='600 46px "Shippori Mincho", Philosopher, serif';
+  x.fillText(draw?t('ui.drawResult'):iWon?`🏆 ${t('ui.win')}`:t('ui.lose'),68,300);
+
+  /* 対戦カード（名前 vs 名前） */
+  const names=g.players.map(p=>dn(p.name));
+  x.fillStyle='rgba(218,240,223,.85)';
+  x.font='400 30px "Noto Sans JP", sans-serif';
+  x.fillText(names.join('  vs  ').slice(0,44),68,352);
+  if(g.winner){
+    x.fillStyle='rgba(178,232,197,.65)';
+    x.font='400 25px "Noto Sans JP", sans-serif';
+    x.fillText(t('ui.someoneWins',{name:dn(g.players.find(p=>p.id===g.winner)?.name)}),68,394);
+  }
+
+  /* フッター：URL（読んだ人が来られるように） */
+  x.fillStyle='rgba(138,184,153,.9)';
+  x.font='400 22px Georgia, serif';
+  x.fillText(location.host,68,556);
+  x.fillStyle='rgba(138,184,153,.55)';
+  x.font='400 19px Georgia, serif';
+  x.fillText(t('ui.shareTagline'),68,588);
+  return cv;
+}
+
+async function shareResult(){
+  const btn=document.getElementById('shareResultBtn');
+  try{
+    if(btn)btn.disabled=true;
+    const cv=await buildResultCanvas(); if(!cv)return;
+    const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
+    const file=new File([blob],'silva-result.png',{type:'image/png'});
+    const url=location.origin;
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:'SILVA',text:t('ui.shareText',{url})}).catch(()=>{});
+    }else{
+      /* 共有APIが無い環境（PCブラウザ等）はダウンロードに切り替える */
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);a.download='silva-result.png';a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+      toast(t('ui.shareSaved'));
+    }
+  }catch(e){console.error('[share]',e);}
+  finally{if(btn)btn.disabled=false;}
+}
+
 function showWin(wid,players){
   const icon=document.getElementById('winIcon');
   const title=document.getElementById('winTitle');
@@ -3950,19 +4055,19 @@ function showWin(wid,players){
     const statusIcon=isW?'👑':(!p.alive?'💀':'🌿');
     const lastCard=p.discard&&p.discard.length?p.discard[p.discard.length-1]:null;
     const handCard=p.hand&&p.hand.length?p.hand[0]:null;
-    const cardInfo=handCard?t('ui.handIs',{card:cardName(handCard.id),level:handCard.level}):(p.alive?'':'脱落');
+    const cardInfo=handCard?t('ui.handIs',{card:cardName(handCard.id),level:handCard.level}):(p.alive?'':L('脱落'));
     return `<div class="win-player${isW?' winner':''}${!p.alive&&!isW?' dead':''}">
       <div class="win-player-status">${statusIcon}</div>
       <div class="win-player-name">${esc(dn(p.name))}</div>
-      <div class="win-player-card">${cardInfo}</div>
+      <div class="win-player-card">${esc(cardInfo)}</div>
     </div>`;
   }).join('')+'</div>';
-  /* 履歴ログ（逆順→時系列順に） */
-  const log=(gameState?.log||[]).slice().reverse();
+  /* 履歴ログ（逆順→時系列順に）。ログは構造化データなので現在の言語で文章化する */
+  const log=(gameState?.log||[]).slice().reverse().map(l=>I18.logLine(l));
   document.getElementById('winLog').innerHTML='<div class="win-log">'+
-    log.map((l,i)=>`<div class="win-log-line"><span style="color:var(--frond4);font-size:.6rem;margin-right:.3rem">${i+1}.</span>${l}</div>`).join('')+
+    log.map((l,i)=>`<div class="win-log-line"><span style="color:var(--frond4);font-size:.6rem;margin-right:.3rem">${i+1}.</span>${esc(l)}</div>`).join('')+
   '</div>';
-  /* ハイライトリプレイ準備 */
+  /* ハイライトリプレイ準備（文章化済みの文字列を使う） */
   _replayLog=log;
   _replayIdx=0;
   if(_replayTimer){clearInterval(_replayTimer);_replayTimer=null;}
@@ -3979,12 +4084,11 @@ function showWin(wid,players){
 }
 
 function winTab(tab){
-  document.querySelectorAll('.win-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.win-tab-content').forEach(t=>t.classList.remove('active'));
+  /* showWin からもプログラム的に呼ばれるので event には依存しない */
+  document.querySelectorAll('.win-tab').forEach(t2=>t2.classList.remove('active'));
+  document.querySelectorAll('.win-tab-content').forEach(t2=>t2.classList.remove('active'));
   const tabs={summary:'winSummary',log:'winLog',replay:'winReplay'};
   document.getElementById(tabs[tab]).classList.add('active');
-  event.target?event.target.classList.add('active'):document.querySelector(`.win-tab`).classList.add('active');
-  /* タブボタンのactive */
   document.querySelectorAll('.win-tab').forEach((el,i)=>{
     if(['summary','log','replay'][i]===tab) el.classList.add('active');
   });

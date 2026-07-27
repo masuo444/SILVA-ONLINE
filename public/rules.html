@@ -107,6 +107,10 @@ a:hover{text-decoration:underline}
 </style>
 </head>
 <body>
+
+<!-- 言語切替（index.html と同じ保存キーを共有する） -->
+<div id="langSwitch" style="position:fixed;top:.7rem;right:.8rem;z-index:100;display:flex;gap:1px;background:rgba(12,20,14,.72);border:1px solid rgba(74,173,106,.14);border-radius:3px;overflow:hidden;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)"></div>
+
 <div class="container">
 
 <div class="header">
@@ -315,5 +319,38 @@ a:hover{text-decoration:underline}
 </div>
 
 </div>
+
+<!-- 多言語化：index.html と同じ辞書・同じ保存キーで切り替える -->
+<script src="/i18n.js?v=11"></script>
+<script>
+(function(){
+  let LANG=(function(){
+    const q=new URLSearchParams(location.search).get('lang');
+    if(q&&SILVA_I18N.LANGS[q]) return q;
+    try{const s=localStorage.getItem('silva_lang'); if(s&&SILVA_I18N.LANGS[s]) return s;}catch{}
+    return (navigator.language||'ja').toLowerCase().startsWith('ja') ? 'ja' : 'en';
+  })();
+  const I18=SILVA_I18N.makeT(()=>LANG);
+
+  function renderSwitch(){
+    const el=document.getElementById('langSwitch'); el.innerHTML='';
+    for(const [code,meta] of Object.entries(SILVA_I18N.LANGS)){
+      const b=document.createElement('button');
+      b.textContent=meta.label;
+      b.style.cssText='background:'+(code===LANG?'rgba(74,173,106,.16)':'none')+
+        ';border:none;cursor:pointer;padding:.32rem .6rem;font-size:.66rem;letter-spacing:.06em;color:'+
+        (code===LANG?'#b2e8c5':'rgba(218,240,223,.38)');
+      b.onclick=()=>{LANG=code;try{localStorage.setItem('silva_lang',code);}catch{};apply();renderSwitch();};
+      el.appendChild(b);
+    }
+  }
+  function apply(){
+    I18.applyStatic();
+    document.title=LANG==='ja'?'SILVA — ルール説明':'SILVA — Rules';
+  }
+  renderSwitch();
+  if(LANG!=='ja') apply();
+})();
+</script>
 </body>
 </html>

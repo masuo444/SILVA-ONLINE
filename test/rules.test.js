@@ -261,6 +261,17 @@ console.log('\n▸ 多言語辞書の網羅性（翻訳漏れの検出）');
   ok(vers.length === modules.length && new Set(vers).size === 1,
      '共有スクリプトのバージョンが揃っている', vers.join(','));
 
+  /* sw.js のプリキャッシュと index.html の ?v= がズレると、
+     オフライン初回にコアJSが無くてAI戦が起動できない */
+  const sw = fs.readFileSync(path.join(__dirname, '..', 'public', 'sw.js'), 'utf8');
+  const swVer = (sw.match(/ASSET_VER = '(\d+)'/) || [])[1];
+  ok(swVer === vers[0], `sw.js の ASSET_VER が index.html の ?v= と一致（sw=${swVer} / html=${vers[0]}）`);
+
+  /* rules.html も同じ辞書を読むので、バージョンを揃える */
+  const rulesHtml = fs.readFileSync(path.join(__dirname, '..', 'public', 'rules.html'), 'utf8');
+  const rulesVer = (rulesHtml.match(/src="\/i18n\.js\?v=(\d+)"/) || [])[1];
+  ok(rulesVer === vers[0], `rules.html の i18n バージョンが一致（rules=${rulesVer} / html=${vers[0]}）`);
+
   /* クライアントが独自にカード定義を持っていないこと */
   ok(!/ALL_CARDS\s*=\s*\[\s*\{\s*id:/.test(html),
      'クライアントがカード定義を二重に持っていない');
@@ -286,6 +297,19 @@ console.log('\n▸ 多言語辞書の網羅性（翻訳漏れの検出）');
 
   /* 変数を埋め込む日本語テンプレートは対訳表では拾えないので、
      t('ui.xxx') のキー化を強制する（英語のまま日本語が出るのを防ぐ） */
+  /* rules.html の静的テキストも全て対訳表にあること */
+  const rBody = rulesHtml.slice(rulesHtml.indexOf('<body'));
+  const rFound = new Set();
+  for (const m of rBody.matchAll(/>([^<>]+?)</g)) {
+    const t2 = m[1].trim();
+    if (t2 && jp.test(t2) && !t2.includes('${') && !t2.includes('=')) rFound.add(t2);
+  }
+  const knownNames = new Set([...Object.values(I18N.DICT.ja.card), ...Object.values(I18N.DICT.ja.effect)]);
+  const rMissing = [...rFound].filter(t2 => !en[t2] && !knownNames.has(t2));
+  ok(rMissing.length === 0,
+     `rules.html に未対訳の日本語が残っていない（${rFound.size}件中）`,
+     rMissing.length ? `→ ${rMissing.length}件: ${rMissing.slice(0, 5).join(' / ')}` : '');
+
   const interpolated = [...html.matchAll(/`([^`]*)`/g)]
     .map(m => m[1])
     .filter(s2 => jp.test(s2) && s2.includes('${') && !s2.includes('\n'));
