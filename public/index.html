@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>SILVA — 心理戦カードゲーム</title>
 
+<!-- オンライン対戦サーバー。静的配信を別ホスト（Cloudflare Pages等）に置く場合だけ、
+     ここに wss://... を書く。同一ホストで動かすなら空のままでよい -->
+<meta name="silva-ws" content="">
+
 <!-- PWA -->
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#05080a">
@@ -16,15 +20,25 @@
 <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png">
 <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png">
 
-<!-- OGP -->
+<!-- SEO -->
+<meta name="description" content="手札はたった1枚。相手の手札を読み、生き残れ。インストール不要・無料で今すぐ遊べる心理戦カードゲーム SILVA。ひとりでAI対戦、友達と招待URLで対戦。">
+<link rel="canonical" href="__ORIGIN__/">
+
+<!-- OGP（SNSでの見た目。og:imageは絶対URLでないと拾われない） -->
+<meta property="og:site_name" content="SILVA">
 <meta property="og:title" content="SILVA — 心理戦カードゲーム">
-<meta property="og:description" content="FOMUS × KUKU PROJECT — 日本の職人文化をテーマにした心理戦カードゲーム">
+<meta property="og:description" content="手札はたった1枚。相手を読み、生き残れ。無料・インストール不要。A free game of bluff and deduction.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="/icons/icon-512.png">
-<meta name="twitter:card" content="summary">
+<meta property="og:url" content="__ORIGIN__/">
+<meta property="og:image" content="__ORIGIN__/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="SILVA — 心理戦カードゲーム">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="SILVA — 心理戦カードゲーム">
-<meta name="twitter:description" content="FOMUS × KUKU PROJECT — 日本の職人文化をテーマにした心理戦カードゲーム">
-<meta name="twitter:image" content="/icons/icon-512.png">
+<meta name="twitter:description" content="手札はたった1枚。相手を読み、生き残れ。無料・インストール不要。">
+<meta name="twitter:image" content="__ORIGIN__/og-image.jpg">
 
 <link href="https://fonts.googleapis.com/css2?family=Philosopher:ital,wght@0,400;0,700;1,400&family=Shippori+Mincho:wght@400;500;600;700&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -944,6 +958,35 @@ select option{background:#080d0b}
 .draw-btn:active{transform:translateY(1px);box-shadow:0 1px 4px rgba(0,0,0,.3)}
 
 /* Spectator banner */
+/* 言語切替 — 右上に常駐 */
+.lang-switch{
+  position:fixed;top:.7rem;right:.8rem;z-index:9000;display:flex;gap:1px;
+  background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:3px;
+  backdrop-filter:blur(var(--glass-blur));-webkit-backdrop-filter:blur(var(--glass-blur));
+  overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.4)
+}
+.lang-switch button{
+  background:none;border:none;cursor:pointer;padding:.32rem .6rem;
+  font-family:var(--f-body);font-size:.66rem;letter-spacing:.06em;
+  color:var(--frond3);transition:color .2s,background .2s
+}
+.lang-switch button:hover{color:var(--mint);background:rgba(74,173,106,.08)}
+.lang-switch button.on{color:var(--dew);background:rgba(74,173,106,.16)}
+@media(max-width:640px){.lang-switch{top:.5rem;right:.5rem}.lang-switch button{padding:.28rem .5rem;font-size:.62rem}}
+
+/* 接続状態バナー — 切断/再接続をプレイヤーに必ず伝える */
+.net-banner{
+  position:fixed;top:0;left:0;right:0;z-index:9999;
+  padding:.5rem 1rem;text-align:center;
+  background:linear-gradient(90deg,rgba(90,45,10,.92),rgba(120,62,14,.94),rgba(90,45,10,.92));
+  border-bottom:1px solid rgba(184,137,15,.5);
+  font-family:var(--f-body);font-size:.74rem;letter-spacing:.04em;color:#f6e6c4;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  box-shadow:0 4px 18px rgba(0,0,0,.45);
+  animation:fadeUp .25s ease both;
+}
+.net-banner.hidden{display:none}
+
 .spec-banner{
   background:linear-gradient(90deg,rgba(0,0,0,.3),rgba(0,0,0,.4),rgba(0,0,0,.3));
   border-bottom:1px solid rgba(74,173,106,.15);
@@ -1517,6 +1560,12 @@ select option{background:#080d0b}
 </head>
 <body>
 
+<!-- 言語切替 -->
+<div id="langSwitch" class="lang-switch"></div>
+
+<!-- 接続状態（切断・再接続・相手の離脱）を常に伝える -->
+<div id="netBanner" class="net-banner hidden"></div>
+
 <!-- FX Canvas overlay for particle effects -->
 <canvas id="fxCanvas"></canvas>
 
@@ -1915,9 +1964,9 @@ select option{background:#080d0b}
           <div class="s-box">
             <div class="s-label">山札</div>
             <div class="deck-stack" id="deckStack">
-              <div class="deck-card"><img src="/back.jpg" alt=""></div>
-              <div class="deck-card"><img src="/back.jpg" alt=""></div>
-              <div class="deck-card"><img src="/back.jpg" alt=""></div>
+              <div class="deck-card"><img src="/back.webp" alt=""></div>
+              <div class="deck-card"><img src="/back.webp" alt=""></div>
+              <div class="deck-card"><img src="/back.webp" alt=""></div>
             </div>
             <div class="deck-count" id="deckVisCount">—</div>
             <div class="deck-count-label">残り</div>
@@ -1925,7 +1974,7 @@ select option{background:#080d0b}
           <div class="s-box">
             <div class="s-label">再生札</div>
             <div class="rebirth-card">
-              <img src="/11.jpg" alt="幼きククノチ" style="width:36px;height:36px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(74,173,106,.2));margin-bottom:.1rem">
+              <img src="/11.webp" alt="幼きククノチ" style="width:36px;height:36px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(74,173,106,.2));margin-bottom:.1rem">
               <div class="rb-lv">0</div>
               <div class="rb-nm">幼きククノチ</div>
             </div>
@@ -1948,7 +1997,7 @@ select option{background:#080d0b}
       <div class="omamori-rope"></div>
       <div class="omamori-body">
         <div class="omamori-glow"></div>
-        <img src="/6.jpg" alt="枡職人" class="omamori-img">
+        <img src="/6.webp" alt="枡職人" class="omamori-img">
         <div class="omamori-text">守護</div>
       </div>
     </div>
@@ -2961,6 +3010,13 @@ const FX = (function(){
 })();
 </script>
 
+<!-- ルールエンジン（サーバーと共有）・多言語辞書・ブラウザ内AI対戦
+     ⚠ これらを変更したらリリース時に ?v= を上げること。
+        上げないと、古いキャッシュを持つ端末が古いルールで動いてしまう -->
+<script src="/game-core.js?v=9"></script>
+<script src="/i18n.js?v=9"></script>
+<script src="/local-game.js?v=9"></script>
+
 <script>
 /* ═══════════════════════════════════
    CONSTANTS
@@ -2968,19 +3024,56 @@ const FX = (function(){
 const CIRC=['⓪','①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
 const N=n=>CIRC[n]??n;
 
-const ALL_CARDS=[
-  {id:'kukuochi_young',name:'幼きククノチ',level:0,emoji:'🌱',effect:'光合成'},
-  {id:'boy',           name:'少年',        level:1,emoji:'⚡',effect:'変革'},
-  {id:'trainee',       name:'訓練生',      level:2,emoji:'🎯',effect:'特攻'},
-  {id:'scout',         name:'偵察隊',      level:3,emoji:'🔍',effect:'偵察'},
-  {id:'warrior',       name:'戦士',        level:4,emoji:'⚔️',effect:'格闘'},
-  {id:'kurando',       name:'蔵人',        level:5,emoji:'🍶',effect:'醸造'},
-  {id:'masu_craftsman',name:'枡職人',      level:6,emoji:'🏺',effect:'守護'},
-  {id:'farmer',        name:'農家',        level:7,emoji:'🌾',effect:'栽培'},
-  {id:'spirit',        name:'精霊',        level:8,emoji:'✨',effect:'思念'},
-  {id:'sword_girl',    name:'刀の少女',    level:9,emoji:'🗡️',effect:'一閃'},
-  {id:'kukuochi',      name:'ククノチ',    level:10,emoji:'🌳',effect:'再生'},
-];
+/* ═══════════════════════════════════
+   I18N — 言語は ?lang= → 保存値 → ブラウザ設定 の順で決める
+═══════════════════════════════════ */
+let LANG=(function(){
+  const q=new URLSearchParams(location.search).get('lang');
+  if(q&&SILVA_I18N.LANGS[q]) return q;
+  try{const s=localStorage.getItem('silva_lang'); if(s&&SILVA_I18N.LANGS[s]) return s;}catch{}
+  return (navigator.language||'ja').toLowerCase().startsWith('ja') ? 'ja' : 'en';
+})();
+const I18=SILVA_I18N.makeT(()=>LANG);
+const t=(k,a)=>I18.t(k,a);            // ui.xxx を引く
+const L=s=>I18.L(s);                  // 日本語原文から訳を引く
+const dn=n=>I18.displayName(n);       // AI名など表示用の名前
+function setLang(lang){
+  if(!SILVA_I18N.LANGS[lang]||lang===LANG) return;
+  LANG=lang;
+  try{localStorage.setItem('silva_lang',lang);}catch{}
+  I18.applyStatic();
+  renderLangSwitch();
+  if(typeof gameState!=='undefined'&&gameState) renderGame();
+}
+function renderLangSwitch(){
+  const el=document.getElementById('langSwitch'); if(!el) return;
+  el.innerHTML='';
+  for(const [code,meta] of Object.entries(SILVA_I18N.LANGS)){
+    const b=document.createElement('button');
+    b.textContent=meta.label;
+    b.className=code===LANG?'on':'';
+    b.setAttribute('aria-label',meta.label);
+    b.onclick=()=>setLang(code);
+    el.appendChild(b);
+  }
+}
+/* DOM構築後に一度だけ静的テキストを訳す */
+/* 起動処理。1つが失敗しても残りを止めない（言語切替は常に出したい） */
+function initI18n(){
+  for(const fn of [renderLangSwitch, ()=>I18.applyStatic(), ()=>I18.autoApply()]){
+    try{ fn(); }catch(e){ console.error('[i18n]', e); }
+  }
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',initI18n);
+else initI18n();
+
+/* カード定義はエンジンから受け取り、名前だけ言語で解決する */
+const ALL_CARDS=SILVA_CORE.CARDS.map(c=>({
+  id:c.id, level:c.level, emoji:c.emoji,
+  get name(){ return I18.cardName(c.id); },
+  get effect(){ return I18.effectName(c.id); },
+}));
+const cardName=id=>I18.cardName(id);
 const NEEDS_TGT=new Set(['scout','warrior','kurando','spirit','sword_girl','trainee','boy','boy_sword']);
 
 /* ═══════════════════════════════════
@@ -2994,49 +3087,139 @@ let _lastPlayedCard=null; // {cardId,cardName,cardLevel,cardEffect,cardEmoji,pla
 let _gameRecorded=false; // 同じゲームで二重記録を防ぐ
 let _gameInfo={aiDifficulty:null,isOnline:false}; // ゲーム種別追跡
 
-const EFFECT_DESC={
-  kukuochi_young:'効果なし',
-  boy:'2枚目で刀の少女と同じ効果',
-  trainee:'相手の手札を予言する',
-  scout:'相手の手札を覗く',
-  warrior:'相手にカードを引かせ1枚捨てさせる',
-  kurando:'相手と手札を見せ合い弱い方が脱落',
-  masu_craftsman:'2枚目で自動的に守護を得る',
-  farmer:'次の手番で複数枚引いて1枚選ぶ',
-  spirit:'相手と手札を交換する',
-  sword_girl:'相手にカードを引かせ1枚捨てさせる(即死)',
-  kukuochi:'場に出せない。脱落時に再生',
-};
+/* 効果説明は辞書から引く（EFFECT_DESC[id] で従来どおり使える） */
+const EFFECT_DESC=new Proxy({},{ get:(_,id)=>I18.effectDesc(String(id)) });
 
 /* ═══════════════════════════════════
-   WS
+   WS — 自動再接続つき
+   モバイルはタブを裏に回すと切断されるため、復帰時に必ず繋ぎ直す
 ═══════════════════════════════════ */
-function connect(cb){
-  const proto=location.protocol==='https:'?'wss:':'ws:';
-  ws=new WebSocket(`${proto}//${location.host}`);
-  ws.onopen=()=>{if(cb)cb();};
-  ws.onclose=()=>toast('接続が切断されました');
-  ws.onmessage=e=>handle(JSON.parse(e.data));
+let myToken=null, _reconnectTries=0, _reconnectTimer=null, _intentionalClose=false, _rejoinPending=false;
+
+/* 対局中のみ復帰対象。sessionStorage なのでタブを閉じれば消える */
+function saveSession(){
+  try{
+    if(myId&&myToken&&myRoomId) sessionStorage.setItem('silva_session',JSON.stringify({playerId:myId,token:myToken,roomId:myRoomId}));
+  }catch{}
 }
-function send(m){if(ws?.readyState===1)ws.send(JSON.stringify(m));}
+function loadSession(){ try{return JSON.parse(sessionStorage.getItem('silva_session'))||null;}catch{return null;} }
+function clearSession(){ try{sessionStorage.removeItem('silva_session');}catch{} }
+
+/* 静的配信（Cloudflare Pagesなど）とWSサーバーを別ホストに置けるようにする。
+   同一ホストで動かす場合は設定不要 —
+   分離するときは index.html の <meta name="silva-ws"> か ?ws= で指定する */
+function wsEndpoint(){
+  const q=new URLSearchParams(location.search).get('ws');
+  const meta=document.querySelector('meta[name="silva-ws"]')?.content?.trim();
+  const custom=q||(meta&&!meta.startsWith('__')?meta:'');
+  if(custom) return custom.replace(/^http/,'ws');
+  return `${location.protocol==='https:'?'wss:':'ws:'}//${location.host}`;
+}
+
+function connect(cb){
+  _intentionalClose=false;
+  ws=new WebSocket(wsEndpoint());
+  ws.onopen=()=>{
+    _reconnectTries=0;
+    const banner=document.getElementById('netBanner'); if(banner) banner.classList.add('hidden');
+    const s=loadSession();
+    if(s&&s.playerId&&s.token&&s.roomId){
+      _rejoinPending=true;
+      send({type:'rejoin',playerId:s.playerId,token:s.token,roomId:s.roomId});
+      /* 応答が来ないまま固まらないよう保険をかける（サーバー再起動時など） */
+      setTimeout(()=>{ if(_rejoinPending){_rejoinPending=false;clearSession();} },4000);
+    }
+    if(cb)cb();
+  };
+  ws.onclose=()=>{ if(!_intentionalClose) scheduleReconnect(); };
+  ws.onerror=()=>{};
+  ws.onmessage=e=>{ try{ handle(JSON.parse(e.data)); }catch{} };
+}
+
+function scheduleReconnect(){
+  const banner=document.getElementById('netBanner');
+  if(banner){ banner.classList.remove('hidden'); banner.textContent='📡 接続が切れました — 再接続しています…'; }
+  clearTimeout(_reconnectTimer);
+  const delay=Math.min(1000*Math.pow(1.6,_reconnectTries++),15000);
+  _reconnectTimer=setTimeout(()=>connect(),delay);
+}
+
+/* 復帰のきっかけ：タブに戻った / オンラインに戻った */
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&ws?.readyState!==1){_reconnectTries=0;connect();} });
+window.addEventListener('online',()=>{ if(ws?.readyState!==1){_reconnectTries=0;connect();} });
+
+/* ═══════════════════════════════════
+   送信経路の切り替え
+   AI戦はブラウザ内のエンジン（local-game.js）で完結するのでサーバーに繋がない。
+   → 一人プレイはサーバー費用ゼロ・オフラインでも遊べる
+═══════════════════════════════════ */
+let localGame=null;
+function isLocalMode(){ return !!(localGame&&localGame.active); }
+
+function startLocalAIGame(opts){
+  if(ws&&ws.readyState===1){ _intentionalClose=true; try{ws.close();}catch{} }
+  clearSession();
+  if(!localGame) localGame=SILVA_LOCAL.makeLocalGame(m=>handle(m));
+  myId='me';
+  localGame.send({type:'start_vs_ai',...opts});
+  const b=document.getElementById('netBanner');
+  if(b){ b.classList.remove('hidden'); b.textContent=t('ui.offlineMode'); setTimeout(()=>b.classList.add('hidden'),2600); }
+}
+function stopLocalGame(){ if(localGame){localGame.stop();localGame=null;} }
+
+function send(m){
+  if(isLocalMode()){ localGame.send(m); return; }
+  if(ws?.readyState===1) ws.send(JSON.stringify(m));
+}
 function ensureWS(cb){if(ws?.readyState===1){cb();return;}connect(cb);}
+
+/* HTMLに化ける文字を落とす。サーバー側でもサニタイズしているが二重に守る */
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 function handle(m){
   switch(m.type){
-    case 'connected': myId=m.playerId; break;
+    /* 復帰要求を出している最中の 'connected' は「新しい仮ID」なので採用してはいけない。
+       採用すると自分の席を見失い、手番判定が壊れる */
+    case 'connected':
+      if(_rejoinPending) break;
+      myId=m.playerId; myToken=m.token; saveSession(); break;
+
+    case 'rejoined':
+      _rejoinPending=false;
+      myId=m.playerId; myToken=m.token; myRoomId=m.roomId; saveSession();
+      break;
+
+    case 'rejoin_failed':
+      _rejoinPending=false;
+      clearSession();
+      myRoomId=null;
+      toast('対局に復帰できませんでした');
+      break;
+
+    case 'opponent_disconnected': {
+      const b=document.getElementById('netBanner');
+      if(b){ b.classList.remove('hidden'); b.textContent=t('ui.netOpponentGone',{name:dn(m.playerName),sec:Math.round((m.graceMs||60000)/1000)}); }
+      break;
+    }
+    case 'opponent_reconnected': {
+      const b=document.getElementById('netBanner');
+      if(b) b.classList.add('hidden');
+      toast(t('ui.netOpponentBack',{name:dn(m.playerName)}));
+      break;
+    }
     case 'room_created':
-      myRoomId=m.roomId;isHost=true;goScreen('waiting');
+      myRoomId=m.roomId;saveSession();isHost=true;goScreen('waiting');
       document.getElementById('roomIdTxt').textContent=m.roomId;
       document.getElementById('startBtn').disabled=true;
       document.getElementById('aiCtrl').style.display='flex'; break;
     case 'room_joined':
-      myRoomId=m.roomId;isHost=false;goScreen('waiting');
+      myRoomId=m.roomId;saveSession();isHost=false;goScreen('waiting');
       document.getElementById('roomIdTxt').textContent=m.roomId;
       document.getElementById('startBtn').disabled=true; break;
     case 'room_update': renderWaiting(m.players); break;
     case 'matched':
-      toast(`✅ マッチング成立！相手：${m.opponentName}`);
-      myRoomId=m.roomId;
+      toast(t('ui.matched',{name:dn(m.opponentName)}));
+      myRoomId=m.roomId;saveSession();
       document.getElementById('matchWait').classList.add('hidden');
       document.getElementById('matchStart').classList.remove('hidden'); break;
     case 'queue_joined':
@@ -3045,15 +3228,18 @@ function handle(m){
     case 'queue_left':
       document.getElementById('matchWait').classList.add('hidden');
       document.getElementById('matchStart').classList.remove('hidden'); break;
-    case 'game_started':
+    case 'game_started': {
       document.querySelectorAll('.overlay.show').forEach(o=>o.classList.remove('show'));
       /* リマッチUI リセット */
       const _rb=document.getElementById('rematchBtn');if(_rb){_rb.disabled=false;_rb.textContent='⚔️ 続けて対戦する';}
       const _rs=document.getElementById('rematchStatus');if(_rs){_rs.style.display='none';_rs.textContent='';}
+      const _nb=document.getElementById('netBanner');if(_nb)_nb.classList.add('hidden');
+      if(m.roomId){myRoomId=m.roomId;saveSession();}
       gameState=m.state;goScreen('game');renderGame(); break;
+    }
     case 'rematch_vote': {
       const rs=document.getElementById('rematchStatus');
-      if(rs){rs.style.display='block';rs.textContent=`${m.votedCount}/${m.totalHumans} 人が同意`;}
+      if(rs){rs.style.display='block';rs.textContent=t('ui.rematchVotes',{voted:m.votedCount,total:m.totalHumans});}
       break;
     }
     case 'state_update': gameState=m.state;goScreen('game');renderGame(); break;
@@ -3062,13 +3248,13 @@ function handle(m){
     case 'peek_result': showPeek(m.card); break;
     case 'kurando_reveal': showKurando(m.myCard,m.theirCard); break;
     case 'kurando_reveal_all': showKurandoAll(m); break;
-    case 'spirit_swap': toast('✨ 精霊の効果で手札が交換された！');FX.playCard('spirit',document.querySelector('.pzone.pz-mine')); break;
+    case 'spirit_swap': toast(L('✨ 精霊の効果で手札が交換された！'));FX.playCard('spirit',document.querySelector('.pzone.pz-mine')); break;
     case 'need_target': pendingCardUid=m.cardUid;pendingEffect=m.effect;pendingGuess=!!m.requiresGuess;renderAction(); break;
     case 'waiting_fomus': showFomus(); break;
     case 'farmer_draw': showFarmer(m.cards);FX.playCard('farmer',document.querySelector('.pzone.pz-mine')); break;
-    case 'fomus_summoned': showBlast(m.playerName,m.success,m.declaration); break;
+    case 'fomus_summoned': showBlast(dn(m.playerName),m.success,m.declaration); break;
     case 'card_played':
-      _lastPlayedCard={cardId:m.cardId,cardName:m.cardName,cardLevel:m.cardLevel,cardEffect:m.cardEffect,cardEmoji:m.cardEmoji,playerName:m.playerName,playerId:m.playerId,noEffect:m.noEffect};
+      _lastPlayedCard={cardId:m.cardId,cardName:cardName(m.cardId),cardLevel:m.cardLevel,cardEffect:I18.effectName(m.cardId),cardEmoji:(SILVA_CORE.CARD_BY_ID[m.cardId]||{}).emoji,playerName:m.playerName,playerId:m.playerId,noEffect:m.noEffect};
       if(m.noEffect) showTurnBannerSimple(_lastPlayedCard);
       else showTurnBanner(_lastPlayedCard);
       if(m.cardId&&!m.noEffect&&typeof FX!=='undefined'){const _el=document.querySelector(m.playerId===myId?'.pzone.pz-mine':'.pzone.pz-active');FX.playCard(m.cardId,_el,{hit:m.hit});}
@@ -3081,8 +3267,8 @@ function handle(m){
       showTraineeResult(m);
       break;
     }
-    case 'rebirth': toast(`🌱 ${m.playerName}のククノチが再生！幼きククノチとして復活！`);if(typeof FX!=='undefined'){const _rz=document.querySelector(`.pzone[data-pid="${m.playerId}"]`);FX.playCard('kukuochi',_rz);} break;
-    case 'error': toast('⚠ '+m.msg); break;
+    case 'rebirth': toast(I18.logLine({k:'rebirth',name:m.playerName}));if(typeof FX!=='undefined'){const _rz=document.querySelector(`.pzone[data-pid="${m.playerId}"]`);FX.playCard('kukuochi',_rz);} break;
+    case 'error': toast('⚠ '+(m.code?I18.err(m.code):m.msg||'')); break;
   }
 }
 
@@ -3090,20 +3276,16 @@ function handle(m){
    SPLASH — サーバーwake-up待ち
 ═══════════════════════════════════ */
 (function(){
-  const CARD_DATA=[
-    {img:'/1.jpg',name:'木こり',desc:'相手1人のカードを当てれば脱落させる'},
-    {img:'/2.jpg',name:'見習い',desc:'お互いの手札を見せ合い、弱い方が脱落'},
-    {img:'/3.jpg',name:'商人',desc:'相手1人と手札を強制交換'},
-    {img:'/4.jpg',name:'農家',desc:'山札から2枚引き、好きな1枚を選べる'},
-    {img:'/5.jpg',name:'鍛冶師',desc:'次の1回、攻撃を無効にするシールド'},
-    {img:'/6.jpg',name:'枡職人',desc:'相手1人の手札を覗き見る'},
-    {img:'/7.jpg',name:'蔵人',desc:'相手1人の手札を覗き見る'},
-    {img:'/8.jpg',name:'少年',desc:'他の2人の手札を強制交換させる'},
-    {img:'/9.jpg',name:'踊り子',desc:'場に出しても何も起こらない — 生存が勝利'},
-    {img:'/10.jpg',name:'ククオチ',desc:'最強カード — 持っていると即脱落'},
-    {img:'/11.jpg',name:'幼きククノチ',desc:'最初の1枚は効果なし — 森の加護'}
-  ];
-  const msgs=['森の世界を準備しています…','カードをシャッフルしています…','職人たちを呼び集めています…','森の結界を張っています…','もう少しで準備完了です…'];
+  /* カード紹介はエンジンと辞書から生成する。
+     手書きのリストを持たないので、実装とズレようがない */
+  const CARD_DATA=SILVA_CORE.CARDS.map(c=>({
+    img: cardImg(c.level),
+    id: c.id,
+    get name(){ return `${cardName(c.id)} Lv.${c.level}`; },
+    get desc(){ return I18.effectDesc(c.id); },
+  }));
+  const MSG_KEYS=['森の世界を準備しています…','カードをシャッフルしています…','職人たちを呼び集めています…','森の結界を張っています…','もう少しで準備完了です…'];
+  const msgs=MSG_KEYS.map(m=>L(m));
   const splash=document.getElementById('splash');
   if(!splash)return;
   const bar=document.getElementById('spBarFill');
@@ -3133,8 +3315,8 @@ function handle(m){
     el.style.left=x+'px';el.style.top=y+'px';
     /* 裏面→一定時間後にめくれる */
     el.style.transform='rotateY(180deg)';el.style.opacity='.4';
-    el.innerHTML=`<img src="/back.jpg" alt="" data-front="${c.img}">`;
-    el.dataset.idx=i;el.dataset.name=c.name;el.dataset.desc=c.desc;el.dataset.frontImg=c.img;
+    el.innerHTML=`<img src="/back.webp" alt="" data-front="${c.img}">`;
+    el.dataset.idx=i;el.dataset.cid=c.id;el.dataset.name=c.name;el.dataset.desc=c.desc;el.dataset.frontImg=c.img;
     ring.appendChild(el);
   });
 
@@ -3206,19 +3388,21 @@ window.addEventListener('load',()=>{
    LOBBY ACTIONS
 ═══════════════════════════════════ */
 function startVsAI(){
-  myName=document.getElementById('aiName').value.trim()||'プレイヤー';
-  _gameRecorded=false;_gameInfo={aiDifficulty:document.getElementById('aiDiff').value,isOnline:false};
-  ensureWS(()=>send({type:'start_vs_ai',name:myName,difficulty:document.getElementById('aiDiff').value,aiCount:parseInt(document.getElementById('aiCount').value)||1}));
+  myName=document.getElementById('aiName').value.trim()||t('ui.namePlaceholderDefault');
+  const diff=document.getElementById('aiDiff').value;
+  _gameRecorded=false;_gameInfo={aiDifficulty:diff,isOnline:false};
+  /* AI戦はサーバーを介さずブラウザ内で完結させる */
+  startLocalAIGame({name:myName,difficulty:diff,aiCount:parseInt(document.getElementById('aiCount').value)||1});
 }
-function doCreateRoom(){myName=document.getElementById('createName').value.trim()||'プレイヤー';_gameRecorded=false;_gameInfo={aiDifficulty:null,isOnline:true};ensureWS(()=>send({type:'create_room',name:myName}));}
+function doCreateRoom(){myName=document.getElementById('createName').value.trim()||t('ui.namePlaceholderDefault');_gameRecorded=false;_gameInfo={aiDifficulty:null,isOnline:true};ensureWS(()=>send({type:'create_room',name:myName}));}
 function doJoinRoom(){
-  myName=document.getElementById('joinName').value.trim()||'プレイヤー';
+  myName=document.getElementById('joinName').value.trim()||t('ui.namePlaceholderDefault');
   const rid=document.getElementById('joinId').value.trim().toUpperCase();
   if(!rid){toast('ルームIDを入力してください');return;}
   _gameRecorded=false;_gameInfo={aiDifficulty:null,isOnline:true};
   ensureWS(()=>send({type:'join_room',roomId:rid,name:myName}));
 }
-function doJoinQueue(){myName=document.getElementById('matchName').value.trim()||'プレイヤー';ensureWS(()=>send({type:'join_queue',name:myName}));}
+function doJoinQueue(){myName=document.getElementById('matchName').value.trim()||t('ui.namePlaceholderDefault');ensureWS(()=>send({type:'join_queue',name:myName}));}
 function doLeaveQueue(){send({type:'leave_queue'});}
 function loadRooms(){ensureWS(()=>send({type:'get_public_rooms'}));}
 function doAddAI(){send({type:'add_ai',difficulty:document.getElementById('aiAddDiff').value});}
@@ -3298,7 +3482,7 @@ function recordGame(result,opts={}){
   if(newBadges.length){
     const all=[...prev,...newBadges.map(b=>b.id)];
     localStorage.setItem('silva_badges',JSON.stringify(all));
-    newBadges.forEach(b=>toast(`🏅 バッジ獲得！「${b.name}」`));
+    newBadges.forEach(b=>toast(t('ui.badgeEarned',{name:L(b.name)})));
   }
 }
 function getRank(wins){
@@ -3331,7 +3515,7 @@ function openMyPage(){
     const prevRank=RANKS[RANKS.indexOf(rank)]||{minWins:0};
     const progress=Math.min(100,Math.round((s.wins-prevRank.minWins)/(next.minWins-prevRank.minWins)*100));
     document.getElementById('mpRankFill').style.width=progress+'%';
-    document.getElementById('mpRankNext').textContent=`${next.icon} ${next.name} まであと ${next.minWins-s.wins}勝`;
+    document.getElementById('mpRankNext').textContent=`${next.icon} `+t('ui.rankProgress',{rank:L(next.name),n:next.minWins-s.wins});
   }else{
     document.getElementById('mpRankFill').style.width='100%';
     document.getElementById('mpRankNext').textContent='最高ランク到達！';
@@ -3341,12 +3525,12 @@ function openMyPage(){
   document.getElementById('mpLosses').textContent=s.losses;
   document.getElementById('mpDraws').textContent=s.draws;
   const rate=s.total>0?Math.round(s.wins/s.total*100):0;
-  document.getElementById('mpRate').innerHTML=`勝率 <strong>${rate}%</strong>（${s.total}戦）`;
+  document.getElementById('mpRate').innerHTML=t('ui.winRate',{rate,total:s.total});
   /* 記録 */
   document.getElementById('mpRecords').innerHTML=[
     {label:'現在の連勝',val:s.streak,icon:'🔥'},
     {label:'最高連勝記録',val:s.bestStreak,icon:'⛓'},
-    {label:'オンライン',val:`${s.onlineWins||0}勝 ${s.onlineLosses||0}敗`,icon:'🌐'},
+    {label:'オンライン',val:t('ui.winLoss',{w:s.onlineWins||0,l:s.onlineLosses||0}),icon:'🌐'},
     s.lastPlayed?{label:'最終プレイ',val:new Date(s.lastPlayed).toLocaleDateString('ja-JP'),icon:'📅'}:null,
   ].filter(Boolean).map(r=>`<div class="mp-record-line"><span>${r.icon} ${r.label}</span><span class="mp-record-val">${r.val}</span></div>`).join('');
   /* AI別 */
@@ -3379,7 +3563,7 @@ function renderWaiting(players){
   document.getElementById('playerList').innerHTML=players.map(p=>`
     <div class="player-item${p.isAI?' ai-item':''}">
       <div class="p-dot${p.isAI?' ai':''}"></div>
-      <span>${p.name}${p.id===myId?' <span style="font-size:.6rem;color:var(--sprout)">(あなた)</span>':''}</span>
+      <span>${esc(dn(p.name))}${p.id===myId?' <span style="font-size:.6rem;color:var(--sprout)">(あなた)</span>':''}</span>
       ${p.isAI?'<span class="ai-chip">[AI]</span>':''}
     </div>`).join('');
   /* ホストなら2人以上で開始ボタン有効化 */
@@ -3399,34 +3583,34 @@ function doSpectate(roomId){ensureWS(()=>send({type:'spectate',roomId,name:docum
 /* ═══════════════════════════════════
    GAME RENDER
 ═══════════════════════════════════ */
-function cardImg(level){return level===0?'/11.jpg':`/${level}.jpg`;}
+function cardImg(level){return level===0?'/11.webp':`/${level}.webp`;}
 
 function renderGame(){
   if(!gameState)return;
   const{players,deckCount,currentPlayerId,phase,log,winner,pendingAction}=gameState;
   const cur=players.find(p=>p.id===currentPlayerId);
   const isMy=currentPlayerId===myId;
-  let t='';
+  let turnTxt='';
   if(phase==='ended'){
-    if(winner===myId)t='🏆 あなたの勝利';
-    else if(winner)t=`${players.find(p=>p.id===winner)?.name||'—'} の勝利`;
-    else t='引き分け';
-  } else t=isMy?'⚡ あなたの手番':`${cur?.name||'—'} の手番`;
-  document.getElementById('gTurn').textContent=t;
-  document.getElementById('gDeck').textContent=`🃏 ${deckCount}枚`;
+    if(winner===myId)turnTxt=L('🏆 あなたの勝利');
+    else if(winner)turnTxt=t('ui.someoneWins',{name:dn(players.find(p=>p.id===winner)?.name)||'—'});
+    else turnTxt=t('ui.drawResult');
+  } else turnTxt=isMy?L('⚡ あなたの手番'):t('ui.waitingTurn',{name:dn(cur?.name)||'—'});
+  document.getElementById('gTurn').textContent=turnTxt;
+  document.getElementById('gDeck').textContent=`🃏 ${deckCount} ${t('ui.cards')}`;
   /* Update masu counter */
   const me=players.find(p=>p.id===myId);
   if(me){
     const myMasuCount=me.discard.filter(c=>c.id==='masu_craftsman').length;
     const gm=document.getElementById('gMasu');
-    gm.textContent=me.shield?'🏺 枡 守護中🛡':`🏺 枡 ${myMasuCount}/2`;
+    gm.textContent=me.shield?L('🏺 枡 守護中🛡'):`🏺 ${t('ui.masu')} ${myMasuCount}/2`;
     gm.classList.toggle('has-shield',!!me.shield);
     /* お守り表示 */
     const omamori=document.getElementById('masuOmamori');
     if(omamori) omamori.classList.toggle('hidden',!me.shield);
   }
   /* Update deck visual */
-  const dv=document.getElementById('deckVisCount');if(dv)dv.textContent=deckCount+'枚';
+  const dv=document.getElementById('deckVisCount');if(dv)dv.textContent=deckCount+' '+t('ui.cards');
   const ds=document.getElementById('deckStack');
   if(ds){ds.style.opacity=deckCount>0?'1':'.25';}
   /* Clear turn banner when it's my turn or on draw phase */
@@ -3434,6 +3618,9 @@ function renderGame(){
   renderPlayers(players,currentPlayerId,phase,pendingAction);
   renderLog(log);
   renderAction();
+  /* 描画直後に同期で訳す。MutationObserver 任せだと、
+     非表示タブでは setTimeout が絞られて表示が一瞬日本語のままになる */
+  if(LANG!=='ja'){ try{ I18.applyStatic(); }catch(e){ console.error('[i18n]',e); } }
   /* Detect eliminations and trigger FX */
   if(typeof FX!=='undefined'){
     const nowAlive=new Set(players.filter(p=>p.alive).map(p=>p.id));
@@ -3506,7 +3693,7 @@ function renderPlayers(players,curId,phase,pending){
         if(c.hidden){
           const canPick=isWarriorTarget&&!isSpectator;
           return `<div class="card c-back${canPick?'':' no-act'}" ${canPick?`onclick="warriorDiscard('${c.uid}')" style="cursor:pointer"`:''}>
-            <img class="c-back-img" src="/back.jpg" alt="">
+            <img class="c-back-img" src="/back.webp" alt="">
             ${canPick?'<div class="c-pick-hint">?</div>':''}
           </div>`;
         }
@@ -3520,21 +3707,21 @@ function renderPlayers(players,curId,phase,pending){
         if(canWarriorPick)oc=`warriorDiscard('${c.uid}')`;
         else if(canDisc)oc=`discardCard('${c.uid}')`;
         else if(canPlay)oc=`selectCard('${c.uid}')`;
-        return `<div class="${cls}" ${oc?`onclick="${oc}"`:''}><div class="c-lv">${N(c.level)}</div><img class="c-img" src="${cardImg(c.level)}" alt="${c.name}"><div class="c-nm">${c.name}</div><div class="c-ef">${c.effect}</div></div>`;
+        return `<div class="${cls}" ${oc?`onclick="${oc}"`:''}><div class="c-lv">${N(c.level)}</div><img class="c-img" src="${cardImg(c.level)}" alt="${cardName(c.id)}"><div class="c-nm">${cardName(c.id)}</div><div class="c-ef">${I18.effectName(c.id)}</div></div>`;
       }).join('');
     } else {
-      hand=Array(p.handCount).fill('<div class="card c-back no-act"><img class="c-back-img" src="/back.jpg" alt=""></div>').join('');
+      hand=Array(p.handCount).fill('<div class="card c-back no-act"><img class="c-back-img" src="/back.webp" alt=""></div>').join('');
     }
 
     const discArr=(p.discard||[]).slice(-12);
     const disc=discArr.map((c,i)=>{
       const isLatest=i===discArr.length-1;
       const imgSz=isLatest?'28px':'22px';
-      return `<div class="d-card${isLatest?' d-latest':''}"><div class="d-lv">${N(c.level)}</div><img src="${cardImg(c.level)}" style="width:${imgSz};height:${imgSz};object-fit:contain;opacity:${isLatest?'.8':'.5'}"><div class="d-nm">${c.name}</div></div>`;
+      return `<div class="d-card${isLatest?' d-latest':''}"><div class="d-lv">${N(c.level)}</div><img src="${cardImg(c.level)}" style="width:${imgSz};height:${imgSz};object-fit:contain;opacity:${isLatest?'.8':'.5'}"><div class="d-nm">${cardName(c.id)}</div></div>`;
     }).join('');
 
     z.innerHTML=`
-      <div class="pz-head"><span class="pz-name">${p.name}</span><span class="tags">${tags}</span></div>
+      <div class="pz-head"><span class="pz-name">${esc(dn(p.name))}</span><span class="tags">${tags}</span></div>
       <div class="cards-row">${hand||'<span style="font-size:.7rem;color:var(--frond4)">手札なし</span>'}</div>
       ${disc?`<div class="disc-label">使用済み</div><div class="disc-row">${disc}</div>`:''}`;
 
@@ -3549,9 +3736,11 @@ function renderPlayers(players,curId,phase,pending){
 }
 
 function renderLog(log){
-  document.getElementById('logItems').innerHTML=(log||[]).map(l=>`<div class="log-line">${l}</div>`).join('');
+  /* ログは {k:キー, ...引数} で届くので、現在の言語で組み立てる */
+  const line=l=>`<div class="log-line">${esc(I18.logLine(l))}</div>`;
+  document.getElementById('logItems').innerHTML=(log||[]).map(line).join('');
   const ml=document.getElementById('mobileLog');
-  if(ml) ml.innerHTML=(log||[]).slice(0,10).map(l=>`<div class="log-line">${l}</div>`).join('');
+  if(ml) ml.innerHTML=(log||[]).slice(0,10).map(line).join('');
 }
 
 /* ═══════════════════════════════════
@@ -3569,24 +3758,24 @@ function renderAction(){
   const attackerMe=(pendingAction?.type==='warrior_discard'||pendingAction?.type==='sword_girl_discard'||pendingAction?.type==='boy_discard') && pendingAction?.fromPlayerId===myId;
   if(attackerMe){
     const tgtName=players.find(p=>p.id===pendingAction.targetId)?.name||'相手';
-    if(pendingAction.type==='warrior_discard') hint.textContent=`⚔ ${tgtName}の手札から1枚選んで捨てさせてください（裏向き）`;
-    else if(pendingAction.type==='boy_discard') hint.textContent=`⚡ ${tgtName}の手札から捨てるカードを選んでください（変革）`;
-    else hint.textContent=`🗡 ${tgtName}の手札から捨てるカードを選んでください`;
+    if(pendingAction.type==='warrior_discard') hint.textContent=t('ui.discardBlind',{name:tgtName});
+    else if(pendingAction.type==='boy_discard') hint.textContent=t('ui.discardOpenBoy',{name:tgtName});
+    else hint.textContent=t('ui.discardOpen',{name:tgtName});
     return;
   }
-  if(!isMy||!me?.alive){hint.textContent=`${players.find(p=>p.id===currentPlayerId)?.name||'—'} の手番を待っています...`;pendingCardUid=null;pendingEffect=null;selectedUid=null;return;}
+  if(!isMy||!me?.alive){hint.textContent=t('ui.waitingFor',{name:dn(players.find(p=>p.id===currentPlayerId)?.name)||'—'});pendingCardUid=null;pendingEffect=null;selectedUid=null;return;}
   if(phase==='draw'){hint.textContent='カードを引いてください';return;}
   if(phase==='farmer_select'){hint.textContent='🌾 農家の効果 — 手札から1枚選んでください';return;}
   if(phase==='action'){
     if(!pendingCardUid){
-      if(!selectedUid){hint.textContent='手札からカードを選んでください';return;}
+      if(!selectedUid){hint.textContent=L('手札からカードを選んでください');return;}
       const card=me.hand?.find(c=>c.uid===selectedUid);
       if(!card){selectedUid=null;return;}
       if(NEEDS_TGT.has(card.id)){
-        hint.textContent=`「${card.name}」— ターゲットを選択`;
+        hint.textContent=t('ui.pickTargetFor',{card:cardName(card.id)});
         renderTgtBtns(false);
       } else {
-        hint.textContent=`「${card.name}」を使用しますか？`;
+        hint.textContent=t('ui.confirmPlay',{card:cardName(card.id)});
         btns.appendChild(mkBtn('使用する','btn filled',()=>playCardWithFX(selectedUid)));
         btns.appendChild(mkBtn('キャンセル','btn',()=>{selectedUid=null;renderGame();}));
       }
@@ -3606,10 +3795,10 @@ function renderTgtBtns(isPending){
   const label=document.createElement('div');label.className='zone-tgt-label';label.textContent='ターゲットを選択';
   wrap.appendChild(label);
   const row=document.createElement('div');row.className='zone-tgt-row';
-  gameState.players.filter(p=>p.id!==myId&&p.alive).forEach(t=>{
+  gameState.players.filter(p=>p.id!==myId&&p.alive).forEach(tp=>{
     const b=document.createElement('button');b.className='tgt-btn';
-    b.innerHTML=`<span class="tgt-icon">${t.isAI?'🤖':'👤'}</span>${t.name}`;
-    b.onclick=()=>{playCardWithFX(isPending?pendingCardUid:selectedUid,{targetId:t.id});pendingCardUid=null;pendingEffect=null;selectedUid=null;};
+    b.innerHTML=`<span class="tgt-icon">${tp.isAI?'🤖':'👤'}</span>${esc(dn(tp.name))}`;
+    b.onclick=()=>{playCardWithFX(isPending?pendingCardUid:selectedUid,{targetId:tp.id});pendingCardUid=null;pendingEffect=null;selectedUid=null;};
     row.appendChild(b);
   });
   const cb=document.createElement('button');cb.className='btn';cb.textContent='キャンセル';
@@ -3630,10 +3819,10 @@ function renderGuessFlow(){
       const label=document.createElement('div');label.className='zone-tgt-label';label.textContent='ターゲットを選択';
       wrap.appendChild(label);
       const row=document.createElement('div');row.className='zone-tgt-row';
-      gameState.players.filter(p=>p.id!==myId&&p.alive).forEach(t=>{
+      gameState.players.filter(p=>p.id!==myId&&p.alive).forEach(tp=>{
         const b=document.createElement('button');b.className='tgt-btn';
-        b.innerHTML=`<span class="tgt-icon">${t.isAI?'🤖':'👤'}</span>${t.name}`;
-        b.onclick=()=>{_guessTarget=t.id;renderGuessFlow();};row.appendChild(b);
+        b.innerHTML=`<span class="tgt-icon">${tp.isAI?'🤖':'👤'}</span>${esc(dn(tp.name))}`;
+        b.onclick=()=>{_guessTarget=tp.id;renderGuessFlow();};row.appendChild(b);
       });
       wrap.appendChild(row);myZone.appendChild(wrap);
     }
@@ -3642,7 +3831,7 @@ function renderGuessFlow(){
   hint.textContent='相手の手札を予言してください';
   ALL_CARDS.filter(c=>c.id!=='kukuochi_young').forEach(c=>{
     const b=document.createElement('button');b.className='guess-btn';
-    b.innerHTML=`<span class="g-lv">${N(c.level)}</span><img src="${cardImg(c.level)}" alt="${c.name}"><span class="g-nm">${c.name}</span>`;
+    b.innerHTML=`<span class="g-lv">${N(c.level)}</span><img src="${cardImg(c.level)}" alt="${cardName(c.id)}"><span class="g-nm">${cardName(c.id)}</span>`;
     b.onclick=()=>{playCardWithFX(pendingCardUid,{targetId:_guessTarget,guess:c.id});pendingCardUid=null;pendingEffect=null;pendingGuess=false;_guessTarget=null;};
     btns.appendChild(b);
   });
@@ -3677,7 +3866,7 @@ function cardEl(c,clickable,uid){
   const d=document.createElement('div');
   d.className='card'+(clickable?'':' no-act');
   if(clickable&&uid){d.style.cursor='pointer';d.onclick=()=>farmerPick(uid);}
-  d.innerHTML=`<div class="c-lv">${N(c.level)}</div><img class="c-img" src="${cardImg(c.level)}" alt="${c.name}"><div class="c-nm">${c.name}</div><div class="c-ef">${c.effect}</div>`;
+  d.innerHTML=`<div class="c-lv">${N(c.level)}</div><img class="c-img" src="${cardImg(c.level)}" alt="${cardName(c.id)}"><div class="c-nm">${cardName(c.id)}</div><div class="c-ef">${I18.effectName(c.id)}</div>`;
   return d;
 }
 
@@ -3698,7 +3887,7 @@ function showTurnBanner(info){
       </div>
     </div>
     <div class="turn-banner-info" id="tbInfo" style="opacity:0">
-      <div class="turn-banner-who">${info.playerName||''}が「${info.cardName||''}」を使用</div>
+      <div class="turn-banner-who">${esc(t('ui.playedCard',{name:dn(info.playerName||''),card:info.cardName||''}))}</div>
       <div class="turn-banner-effect">${info.cardEmoji||''} ${info.cardEffect||''}</div>
       <div class="turn-banner-desc">${desc}</div>
     </div>
@@ -3723,7 +3912,7 @@ function showTurnBannerSimple(info){
       </div>
     </div>
     <div class="turn-banner-info">
-      <div class="turn-banner-who">${info.playerName||''}が「${info.cardName||''}」を使用</div>
+      <div class="turn-banner-who">${esc(t('ui.playedCard',{name:dn(info.playerName||''),card:info.cardName||''}))}</div>
       <div class="turn-banner-effect" style="color:var(--frond3)">効果なし</div>
     </div>
   </div>`;
@@ -3746,8 +3935,8 @@ function showWin(wid,players){
   const title=document.getElementById('winTitle');
   const sub=document.getElementById('winSub');
   if(!wid){icon.textContent='\uD83E\uDD1D';title.textContent='引き分け';sub.textContent='同時脱落による引き分け';}
-  else if(wid===myId){icon.textContent='\uD83C\uDF33';title.textContent='Victory';sub.textContent='あなたの勝利です';FX.victory();}
-  else{const w=players.find(p=>p.id===wid);icon.textContent='\uD83C\uDF42';title.textContent='敗北';sub.textContent=`${w?.name||'\u2014'} の勝利`;}
+  else if(wid===myId){icon.textContent='\uD83C\uDF33';title.textContent=t('ui.win');sub.textContent=t('ui.youWin');FX.victory();}
+  else{const w=players.find(p=>p.id===wid);icon.textContent='\uD83C\uDF42';title.textContent=t('ui.lose');sub.textContent=t('ui.someoneWins',{name:dn(w?.name)||'\u2014'});}
   /* 戦績記録 */
   if(!_gameRecorded&&!isSpectator){
     _gameRecorded=true;
@@ -3761,10 +3950,10 @@ function showWin(wid,players){
     const statusIcon=isW?'👑':(!p.alive?'💀':'🌿');
     const lastCard=p.discard&&p.discard.length?p.discard[p.discard.length-1]:null;
     const handCard=p.hand&&p.hand.length?p.hand[0]:null;
-    const cardInfo=handCard?`手札: ${handCard.name}(Lv.${handCard.level})`:(p.alive?'':'脱落');
+    const cardInfo=handCard?t('ui.handIs',{card:cardName(handCard.id),level:handCard.level}):(p.alive?'':'脱落');
     return `<div class="win-player${isW?' winner':''}${!p.alive&&!isW?' dead':''}">
       <div class="win-player-status">${statusIcon}</div>
-      <div class="win-player-name">${p.name}</div>
+      <div class="win-player-name">${esc(dn(p.name))}</div>
       <div class="win-player-card">${cardInfo}</div>
     </div>`;
   }).join('')+'</div>';
@@ -3796,10 +3985,10 @@ function winTab(tab){
   document.getElementById(tabs[tab]).classList.add('active');
   event.target?event.target.classList.add('active'):document.querySelector(`.win-tab`).classList.add('active');
   /* タブボタンのactive */
-  document.querySelectorAll('.win-tab').forEach(t=>{
-    if(t.textContent==={'summary':'結果','log':'履歴','replay':'ハイライト'}[tab])t.classList.add('active');
+  document.querySelectorAll('.win-tab').forEach((el,i)=>{
+    if(['summary','log','replay'][i]===tab) el.classList.add('active');
   });
-  if(tab==='replay'&&_replayTimer){clearInterval(_replayTimer);_replayTimer=null;document.getElementById('replayPlay').textContent='▶ 再生';}
+  if(tab==='replay'&&_replayTimer){clearInterval(_replayTimer);_replayTimer=null;document.getElementById('replayPlay').textContent=L('▶ 再生');}
 }
 
 function updateReplayDisplay(){
@@ -3853,7 +4042,7 @@ function showPeek(card){
   /* 少し待ってからフリップ開始 */
   setTimeout(()=>{flipper.classList.add('do-flip');},400);
   /* フリップ完了後にカード名を表示 */
-  setTimeout(()=>{document.getElementById('peekTxt').textContent=`相手の手札は「${card.name}」(Lv.${card.level})`;},1200);
+  setTimeout(()=>{document.getElementById('peekTxt').textContent=t('ui.peekResult',{card:cardName(card.id),level:card.level});},1200);
 }
 
 function showKurando(myCard,theirCard){
@@ -3941,8 +4130,8 @@ function declareFomus(){
 function showBlast(name,success,declaration){
   const el=document.createElement('div');el.className='fomus-blast';
   el.innerHTML=success
-    ?`<div class="blast-bg"></div><div class="blast-word" data-t="FOMUS">FOMUS</div><div class="blast-sub">\uD83C\uDF33 ${name} が枡を召喚 — 守護を得た</div>`
-    :`<div class="blast-fail">「${declaration||'\u2026'}」— 宣言失敗</div>`;
+    ?`<div class="blast-bg"></div><div class="blast-word" data-t="FOMUS">FOMUS</div><div class="blast-sub">\uD83C\uDF33 ${esc(t('ui.masuSummoned',{name}))}</div>`
+    :`<div class="blast-fail">${esc(t('ui.declareFail',{v:declaration||'\u2026'}))}</div>`;
   document.body.appendChild(el);setTimeout(()=>el.remove(),3300);
   if(success && typeof FX!=='undefined') FX.fomus();
 }
@@ -3951,10 +4140,10 @@ function showTraineeResult(m){
   const el=document.createElement('div');
   el.className='trainee-result';
   if(m.hit){
-    el.innerHTML=`<div class="tr-icon">🎯</div><div class="tr-text">的中！</div><div class="tr-detail">${m.playerName}が「${m.guessName}」を言い当てた！</div>`;
+    el.innerHTML=`<div class="tr-icon">🎯</div><div class="tr-text">${esc(t('ui.hit'))}</div><div class="tr-detail">${esc(t('ui.traineeHit',{name:dn(m.playerName),card:cardName(m.guess)}))}</div>`;
     el.classList.add('tr-hit');
   } else {
-    el.innerHTML=`<div class="tr-icon">❌</div><div class="tr-text">外れ...</div><div class="tr-detail">${m.playerName}の予言「${m.guessName}」は外れた</div>`;
+    el.innerHTML=`<div class="tr-icon">❌</div><div class="tr-text">${esc(t('ui.miss'))}</div><div class="tr-detail">${esc(t('ui.traineeMiss',{name:dn(m.playerName),card:cardName(m.guess)}))}</div>`;
     el.classList.add('tr-miss');
   }
   document.body.appendChild(el);
@@ -3997,9 +4186,7 @@ if ('serviceWorker' in navigator) {
     ].join(';');
     el.innerHTML = `
       <div style="color:#7dcf9a;font-size:.62rem;letter-spacing:.45em;margin-bottom:.5rem">アプリとして追加</div>
-      Safariの <strong style="color:#7dcf9a">共有</strong> ボタン →
-      <strong style="color:#7dcf9a">「ホーム画面に追加」</strong>
-      でアプリとして遊べます 🌳
+      <div>Safariの共有ボタンから「ホーム画面に追加」でアプリとして遊べます 🌳</div>
       <div style="margin-top:.7rem">
         <button onclick="this.closest('div[style]').remove();localStorage.setItem('silva-pwa-dismissed','1')"
           style="background:none;border:1px solid rgba(74,173,106,.3);color:rgba(74,173,106,.6);
