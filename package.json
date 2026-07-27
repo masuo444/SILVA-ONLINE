@@ -4,7 +4,8 @@
   "description": "SILVA — 心理戦カードゲーム",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node test/rules.test.js && node test/server.test.js && node test/online.test.js"
   },
   "dependencies": {
     "express": "^5.2.1",
