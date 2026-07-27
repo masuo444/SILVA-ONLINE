@@ -1,48 +1,113 @@
+/* ============================================================
+   SILVA — オンライン対戦サーバー
+   ------------------------------------------------------------
+   ルールは public/game-core.js（ブラウザと共有）が持つ。
+   このファイルはネットワーク層だけを担当する：
+   ルーム管理・マッチング・切断復帰・AIの手番進行。
+
+   AI対戦はブラウザ側で完結するようになったので、
+   ここに来るのは基本的にオンライン対戦だけになる。
+   ============================================================ */
 const express = require('express');
 const { WebSocketServer } = require('ws');
 const { createServer } = require('http');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
+const fs = require('fs');
+
+const CORE = require('./public/game-core.js');
+const {
+  createGame, cp, alivePlayers, processPlay, processDraw, processTargetDiscard,
+  processFarmerSelect, stateFor, stateForSpectator, aiChoose, aiPickDiscard,
+  addLog, drainEvents, forfeit,
+} = CORE;
 
 const app = express();
 const server = createServer(app);
-const wss = new WebSocketServer({ server });
-app.use(express.static(path.join(__dirname, 'public')));
-app.get('/ping', (req, res) => res.send('pong'));
+
+/* ALLOWED_ORIGINS を設定すると、そのオリジンからのWS接続だけを受け付ける。
+   静的配信を別ドメインに分けたとき、勝手に他サイトから使われるのを防ぐ。
+   未設定なら従来どおり全許可（同一ホスト運用ではこれでよい） */
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
+  .split(',').map(s => s.trim()).filter(Boolean);
+const wss = new WebSocketServer({
+  server,
+  verifyClient: ALLOWED_ORIGINS.length
+    ? info => !info.origin || ALLOWED_ORIGINS.includes(info.origin)
+    : undefined,
+});
+
+/* OGPは絶対URLでないとSNSが画像を拾わない。デプロイ先ドメインを固定したくないので、
+   配信時に実際のホスト名を差し込む（__ORIGIN__ プレースホルダ） */
+const PAGES = ['index.html', 'rules.html'];
+const pageCache = new Map();
+function servePage(file) {
+  return (req, res, next) => {
+    const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'https').split(',')[0];
+    const host  = req.headers.host;
+    if (!host || !/^[A-Za-z0-9.\-:]+$/.test(host)) return next();
+    const full = path.join(__dirname, 'public', file);
+    /* ファイルが更新されたらキャッシュを捨てる（編集が反映されないのを防ぐ） */
+    let mtime;
+    try { mtime = fs.statSync(full).mtimeMs; } catch { return next(); }
+    const key = `${file}|${proto}://${host}`;
+    const hit = pageCache.get(key);
+    let html = hit && hit.mtime === mtime ? hit.html : null;
+    if (!html) {
+      try { html = fs.readFileSync(full, 'utf8'); } catch { return next(); }
+      html = html.split('__ORIGIN__').join(`${proto}://${host}`);
+      pageCache.set(key, { html, mtime });
+    }
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.set('Cache-Control', 'no-cache');
+    res.send(html);
+  };
+}
+app.get('/', servePage('index.html'));
+PAGES.forEach(f => app.get('/' + f, servePage(f)));
+
+/* 画像は中身が変わらないので長期キャッシュしてよいが、
+   JS/JSON を長期キャッシュするとデプロイしても古いコードが残り続ける。
+   スクリプト類は必ず再検証させる（ETagで実際の転送は起きない） */
+app.use(express.static(path.join(__dirname, 'public'), {
+  etag: true,
+  setHeaders(res, filePath) {
+    if (/\.(webp|jpg|png|svg|ico|woff2?)$/i.test(filePath)) res.set('Cache-Control', 'public, max-age=604800');
+    else res.set('Cache-Control', 'no-cache');
+  },
+}));
+/* 静的配信をCloudflare Pages等に分離した場合、疎通確認は別オリジンから来る。
+   ALLOWED_ORIGINS 未設定なら誰でも叩ける単なる ping なので緩めてよい */
+app.get('/ping', (req, res) => {
+  const allow = (process.env.ALLOWED_ORIGINS || '*').split(',').map(s => s.trim());
+  const origin = req.headers.origin;
+  if (allow.includes('*')) res.set('Access-Control-Allow-Origin', '*');
+  else if (origin && allow.includes(origin)) res.set('Access-Control-Allow-Origin', origin);
+  res.send('pong');
+});
 
 // ============================================================
-// Cards
+// Input hardening
 // ============================================================
-const CARDS = [
-  { id:'kukuochi_young', name:'幼きククノチ', level:0,  count:1, effect:'光合成', emoji:'🌱' },
-  { id:'boy',            name:'少年',         level:1,  count:2, effect:'変革',   emoji:'⚡' },
-  { id:'trainee',        name:'訓練生',       level:2,  count:2, effect:'特攻',   emoji:'🎯' },
-  { id:'scout',          name:'偵察隊',       level:3,  count:2, effect:'偵察',   emoji:'🔍' },
-  { id:'warrior',        name:'戦士',         level:4,  count:2, effect:'格闘',   emoji:'⚔️' },
-  { id:'kurando',        name:'蔵人',         level:5,  count:1, effect:'醸造',   emoji:'🍶' },
-  { id:'masu_craftsman', name:'枡職人',       level:6,  count:2, effect:'守護',   emoji:'🏺' },
-  { id:'farmer',         name:'農家',         level:7,  count:2, effect:'栽培',   emoji:'🌾' },
-  { id:'spirit',         name:'精霊',         level:8,  count:2, effect:'思念',   emoji:'✨' },
-  { id:'sword_girl',     name:'刀の少女',     level:9,  count:1, effect:'一閃',   emoji:'🗡️' },
-  { id:'kukuochi',       name:'ククノチ',     level:10, count:1, effect:'再生',   emoji:'🌳' },
-];
+const MAX_NAME = 16;
 
-function buildDeck() {
-  const deck = [];
-  for (const c of CARDS) {
-    if (c.id === 'kukuochi_young') continue;
-    for (let i = 0; i < c.count; i++) deck.push({ ...c, uid: uuidv4() });
-  }
-  return shuffle(deck);
+/* 表示名はログにもそのまま埋まるため、HTMLに化けうる文字を根元で落とす。
+   '#' はAI名の予約接頭辞（#AI:normal）なので、なりすまし防止で人間からは弾く */
+function sanitizeName(raw, fallback = 'Player') {
+  if (typeof raw !== 'string') return fallback;
+  const cleaned = raw
+    .replace(/[<>&"'`\\#]/g, '')
+    .replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060\ufeff]/g, '')
+    .trim()
+    .slice(0, MAX_NAME);
+  return cleaned || fallback;
 }
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
+function sanitizeRoomId(raw) {
+  if (typeof raw !== 'string') return null;
+  const id = raw.trim().toUpperCase();
+  return /^[A-Z0-9]{5}$/.test(id) ? id : null;
 }
+function sanitizeDifficulty(d) { return ['easy','normal','hard'].includes(d) ? d : 'normal'; }
 
 // ============================================================
 // State
@@ -50,748 +115,478 @@ function shuffle(arr) {
 const rooms = {};
 const playerMap = new Map();   // playerId -> ws
 const clientInfo = new Map();  // ws -> { playerId, roomId, spectator }
+const sessionTokens = new Map();// playerId -> 再接続用シークレット
 const matchQueue = [];
 
-function sendWs(ws, msg)       { if (ws?.readyState === 1) ws.send(JSON.stringify(msg)); }
-function sendTo(pid, msg)      { const ws = playerMap.get(pid); if (ws) sendWs(ws, msg); }
+function sendWs(ws, msg)  { if (ws?.readyState === 1) ws.send(JSON.stringify(msg)); }
+function sendTo(pid, msg) { const ws = playerMap.get(pid); if (ws) sendWs(ws, msg); }
 
 function broadcastToRoom(roomId, msg, exceptId = null) {
   const room = rooms[roomId]; if (!room) return;
-  [...room.players, ...(room.spectators||[])].forEach(p => { if (p.id !== exceptId) sendTo(p.id, msg); });
+  [...room.players, ...(room.spectators || [])].forEach(p => { if (p.id !== exceptId) sendTo(p.id, msg); });
 }
 function broadcastStateUpdate(roomId) {
   const room = rooms[roomId]; if (!room?.game) return;
   room.players.forEach(p => { if (!p.isAI) sendTo(p.id, { type:'state_update', state: stateFor(room.game, p.id) }); });
-  (room.spectators||[]).forEach(s => sendTo(s.id, { type:'state_update', state: stateForSpectator(room.game) }));
+  (room.spectators || []).forEach(s => sendTo(s.id, { type:'state_update', state: stateForSpectator(room.game) }));
+}
+/* エンジンが溜めた演出イベントをまとめて配信する */
+function flush(roomId) {
+  const room = rooms[roomId]; if (!room?.game) return;
+  for (const ev of drainEvents(room.game)) broadcastToRoom(roomId, ev);
+  broadcastStateUpdate(roomId);
 }
 
 function createRoom(opts = {}) {
-  const id = Math.random().toString(36).substring(2,7).toUpperCase();
-  rooms[id] = { id, players:[], spectators:[], state:'waiting', game:null, isPublic: opts.isPublic||false };
+  let id;
+  do { id = Math.random().toString(36).substring(2, 7).toUpperCase(); } while (rooms[id]);
+  rooms[id] = { id, players: [], spectators: [], state: 'waiting', game: null,
+                isPublic: !!opts.isPublic, timers: new Map(), createdAt: Date.now(), touchedAt: Date.now() };
   return id;
 }
+function touchRoom(roomId) { const r = rooms[roomId]; if (r) r.touchedAt = Date.now(); }
+
+function startGame(room) {
+  room.game = createGame(room.players);
+  room.state = 'playing';
+  return room.game;
+}
 
 // ============================================================
-// Game init
+// Room lifecycle — 放置ルームを確実に消す（これが無いとメモリが増え続ける）
 // ============================================================
-function initGame(room) {
-  const deck = buildDeck();
-  const rebirthCard = { ...CARDS.find(c => c.id==='kukuochi_young'), uid: uuidv4() };
-  const gamePlayers = room.players.map(p => ({
-    id: p.id, name: p.name, isAI: p.isAI||false,
-    difficulty: p.difficulty||'normal',
-    hand:[], discard:[], alive:true, shield:false, nextTurnBonus:null,
-  }));
-  const game = { players: gamePlayers, deck, rebirthCard, currentPlayerIndex:0, phase:'draw', pendingAction:null, winner:null, log:[], turn:1 };
-  gamePlayers.forEach(p => p.hand.push(game.deck.shift()));
-  room.game = game; room.state = 'playing';
-  return game;
-}
+const ROOM_TTL_ENDED   = 5  * 60 * 1000;
+const ROOM_TTL_IDLE    = 30 * 60 * 1000;
+const DISCONNECT_GRACE = 60 * 1000;
 
-function cp(game)    { return game.players[game.currentPlayerIndex]; }
-function addLog(game, msg) { game.log.unshift(msg); if (game.log.length>40) game.log.pop(); }
-
-function nextTurn(game) {
-  const alive = game.players.filter(p => p.alive);
-  if (alive.length <= 1) { endGame(game, alive[0]?.id??null); return null; }
-  if (!game.deck.length) { checkDeckEmpty(game); return null; }
-  let next = (game.currentPlayerIndex + 1) % game.players.length;
-  while (!game.players[next].alive) next = (next+1) % game.players.length;
-  game.currentPlayerIndex = next; game.phase = 'draw'; game.turn++;
-  return null;
-}
-
-function drawCard(game, player) {
-  if (!game.deck.length) return null;
-  const card = game.deck.shift(); player.hand.push(card); return card;
-}
-
-function eliminatePlayer(game, playerId, byKill=false) {
-  const player = game.players.find(p => p.id===playerId);
-  if (!player || !player.alive) return {};
-  // 守護優先
-  if (player.shield && !byKill) {
-    player.shield = false;
-    addLog(game, `🛡 ${player.name}の守護発動！脱落を無効化（ククノチは手札に残る）`);
-    return { shieldBlocked:true };
-  }
-  // ククノチ再生
-  const kIdx = player.hand.findIndex(c => c.id==='kukuochi');
-  if (kIdx !== -1 && !byKill) {
-    const others = player.hand.filter((_,i) => i!==kIdx);
-    player.discard.push(...others, player.hand[kIdx]);
-    player.hand = [{ ...game.rebirthCard, uid:uuidv4() }];
-    addLog(game, `🌱 ${player.name}のククノチが再生！幼きククノチとして復活！`);
-    return { rebirth:true };
-  }
-  player.alive = false; player.discard.push(...player.hand); player.hand = [];
-  addLog(game, `💀 ${player.name}が脱落`);
-  return { eliminated:true };
-}
-
-function checkDeckEmpty(game) {
-  const alive = game.players.filter(p => p.alive);
-  if (alive.length <= 1) { endGame(game, alive[0]?.id??null); return; }
-  addLog(game, '📦 山札が無くなりました！手札を公開して勝負！');
-  // 各プレイヤーの手札をログに表示
-  alive.forEach(p => {
-    const c = p.hand[0];
-    addLog(game, `🃏 ${p.name}の手札：${c ? `${c.name}（Lv.${c.level}）` : '無し'}`);
+function destroyRoom(roomId) {
+  const room = rooms[roomId];
+  if (!room) return;
+  for (const t of room.timers?.values() ?? []) clearTimeout(t);
+  [...room.players, ...(room.spectators || [])].forEach(p => {
+    const ws = playerMap.get(p.id);
+    if (ws && clientInfo.get(ws)?.roomId === roomId) clientInfo.set(ws, { ...clientInfo.get(ws), roomId: null });
   });
-  // 1v1 幼きククノチ vs 精霊特殊ルール
-  if (alive.length === 2) {
-    const [a, b] = alive;
-    if (a.hand[0]?.id==='kukuochi_young' && b.hand[0]?.id==='spirit') { addLog(game,'✨ 幼きククノチが精霊に勝利！'); endGame(game,a.id); return; }
-    if (b.hand[0]?.id==='kukuochi_young' && a.hand[0]?.id==='spirit') { addLog(game,'✨ 幼きククノチが精霊に勝利！'); endGame(game,b.id); return; }
+  delete rooms[roomId];
+}
+function roomHasLiveHuman(room) {
+  return room.players.some(p => !p.isAI && playerMap.has(p.id))
+      || (room.spectators || []).some(s => playerMap.has(s.id));
+}
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, room] of Object.entries(rooms)) {
+    const ended = room.game?.phase === 'ended';
+    if (ended && now - room.touchedAt > ROOM_TTL_ENDED) { destroyRoom(id); continue; }
+    if (now - room.touchedAt > ROOM_TTL_IDLE) { destroyRoom(id); continue; }
+    if (!roomHasLiveHuman(room) && now - room.touchedAt > DISCONNECT_GRACE) destroyRoom(id);
   }
-  let max=-1, winners=[];
-  alive.forEach(p => { const lv=p.hand[0]?.level??-1; if(lv>max){max=lv;winners=[p];}else if(lv===max)winners.push(p); });
-  if (winners.length===1) addLog(game, `👑 最大レベル Lv.${max} — ${winners[0].name}の勝利！`);
-  else addLog(game, `⚖️ 同レベル Lv.${max} — 引き分け！`);
-  endGame(game, winners.length===1 ? winners[0].id : null);
-}
-
-function endGame(game, winnerId) {
-  game.phase='ended'; game.winner=winnerId;
-  const w = game.players.find(p => p.id===winnerId);
-  addLog(game, winnerId ? `🏆 ${w.name}の勝利！` : `🤝 引き分け！`);
-}
+}, 60 * 1000).unref?.();
 
 // ============================================================
-// Card Effects
+// AI（オンラインルームに混ざっているAIの手番を進める）
 // ============================================================
-function processPlay(roomId, playerId, cardUid, targetId=null, guess=null) {
-  const room = rooms[roomId]; if (!room?.game) return { error:'ゲームなし' };
-  const game = room.game;
-  const player = game.players.find(p => p.id===playerId);
-  if (!player?.alive) return { error:'無効なプレイヤー' };
-  if (cp(game).id !== playerId) return { error:'手番ではありません' };
-  if (game.phase !== 'action') return { error:'手番フェーズではありません' };
-  const cardIndex = player.hand.findIndex(c => c.uid===cardUid);
-  if (cardIndex === -1) return { error:'カードが見つかりません' };
-  const card = player.hand[cardIndex];
-  if (card.id === 'kukuochi') return { error:'ククノチは場に出せません' };
-
-  player.hand.splice(cardIndex,1); player.discard.push(card);
-  addLog(game, `🃏 ${player.name}が「${card.name}」を使用`);
-
-  const allD = game.players.flatMap(p => p.discard);
-  const prevMasu   = allD.filter(c => c.id==='masu_craftsman').length - 1;
-  const prevBoy    = allD.filter(c => c.id==='boy').length - 1;
-
-  // 効果なしカードかどうか判定
-  const noEffect = card.id==='kukuochi_young' || (card.id==='masu_craftsman' && prevMasu < 1) || (card.id==='boy' && prevBoy < 1);
-
-  // Broadcast card play FX event to all players
-  broadcastToRoom(roomId, { type:'card_played', cardId:card.id, playerId, playerName:player.name, cardName:card.name, cardLevel:card.level, cardEffect:card.effect, cardEmoji:card.emoji, noEffect });
-  const prevFarmer = allD.filter(c => c.id==='farmer').length - 1;
-
-  let result = { ok:true };
-
-  switch(card.id) {
-    case 'kukuochi_young':
-      addLog(game, `🌿 ${player.name}が「幼きククノチ」を使用（効果なし）`); break;
-
-    case 'boy': {
-      if (prevBoy >= 1) {
-        if (!targetId) { player.hand.push(card); player.discard.pop(); return { needTarget:true, cardUid, effect:'boy_sword' }; }
-        result = swordEffect(game, player, targetId, false);
-      } else addLog(game, `⚡ ${player.name}が「少年」を使用（1枚目：効果なし）`);
-      break;
-    }
-
-    case 'trainee': {
-      if (!targetId||!guess) { player.hand.push(card); player.discard.pop(); return { needTarget:true, cardUid, effect:'trainee', requiresGuess:true }; }
-      const tgt = game.players.find(p => p.id===targetId && p.alive);
-      if (!tgt) { result={error:'ターゲットが無効'}; break; }
-      if (tgt.hand[0]?.id === guess) {
-        addLog(game, `🎯 ${player.name}が「${tgt.name}」の手札を言い当てた！`);
-        const elimResult = eliminatePlayer(game, targetId, false);
-        if (elimResult.eliminated) broadcastToRoom(roomId, { type:'player_eliminated', playerId:targetId });
-        if (elimResult.shieldBlocked) broadcastToRoom(roomId, { type:'shield_blocked', playerId:targetId });
-        if (elimResult.rebirth) broadcastToRoom(roomId, { type:'rebirth', playerId:targetId, playerName:tgt.name });
-        result={hit:true, rebirth:!!elimResult.rebirth};
-      } else { addLog(game, `❌ ${player.name}の特攻は外れた`); result={hit:false}; }
-      const guessCard = CARDS.find(c=>c.id===guess);
-      broadcastToRoom(roomId, { type:'trainee_result', hit:result.hit, playerId, targetId, playerName:player.name, targetName:tgt.name, guessName:guessCard?.name||guess });
-      break;
-    }
-
-    case 'scout': {
-      if (!targetId) { player.hand.push(card); player.discard.pop(); return { needTarget:true, cardUid, effect:'scout' }; }
-      const tgt = game.players.find(p => p.id===targetId && p.alive);
-      if (!tgt) { result={error:'ターゲットが無効'}; break; }
-      addLog(game, `🔍 ${player.name}が「${tgt.name}」の手札を覗いた`);
-      result = { peekedCard: tgt.hand[0], targetId };
-      break;
-    }
-
-    case 'warrior': {
-      if (!targetId) { player.hand.push(card); player.discard.pop(); return { needTarget:true, cardUid, effect:'warrior' }; }
-      const tgt = game.players.find(p => p.id===targetId && p.alive);
-      if (!tgt) { result={error:'ターゲットが無効'}; break; }
-      const drawn = drawCard(game, tgt);
-      if (!drawn) { addLog(game, `⚔️ ${player.name}の戦士は効果不発（山札が空）`); break; }
-      addLog(game, `⚔️ ${player.name}が「戦士」発動。${tgt.name}に迫る`);
-      game.pendingAction = { type:'warrior_discard', fromPlayerId:playerId, targetId, isByKill:false };
-      game.phase = 'waiting_target'; result={ waitingTarget:true, targetId }; break;
-    }
-
-    case 'kurando': {
-      if (!targetId) { player.hand.push(card); player.discard.pop(); return { needTarget:true, cardUid, effect:'kurando' }; }
-      const tgt = game.players.find(p => p.id===targetId && p.alive);
-      if (!tgt) { result={error:'ターゲットが無効'}; break; }
-      const myCard = player.hand[0], theirCard = tgt.hand[0];
-      addLog(game, `🍶 ${player.name}と${tgt.name}が手札を見せ合う`);
-      result = { myCard, theirCard };
-      if (!myCard || !theirCard) break;
-      if (myCard.level < theirCard.level) {
-        const er = eliminatePlayer(game, playerId, true);
-        if (er.eliminated) broadcastToRoom(roomId, { type:'player_eliminated', playerId });
-      } else if (myCard.level > theirCard.level) {
-        const er = eliminatePlayer(game, targetId, false);
-        if (er.eliminated) broadcastToRoom(roomId, { type:'player_eliminated', playerId:targetId });
-        if (er.shieldBlocked) broadcastToRoom(roomId, { type:'shield_blocked', playerId:targetId });
-        if (er.rebirth) broadcastToRoom(roomId, { type:'rebirth', playerId:targetId, playerName:game.players.find(p=>p.id===targetId)?.name });
-      } else {
-        const er1 = eliminatePlayer(game, playerId, true);
-        const er2 = eliminatePlayer(game, targetId, true);
-        if (er1.eliminated) broadcastToRoom(roomId, { type:'player_eliminated', playerId });
-        if (er2.eliminated) broadcastToRoom(roomId, { type:'player_eliminated', playerId:targetId });
-      }
-      break;
-    }
-
-    case 'masu_craftsman': {
-      if (prevMasu >= 1) {
-        player.shield = true;
-        addLog(game, `🏺 ${player.name}が枡職人2枚目！自動的に守護を得た！`);
-        broadcastToRoom(roomId, { type:'fomus_summoned', playerName:player.name, success:true });
-      } else addLog(game, `🏺 ${player.name}が枡職人を使用（1枚目：効果なし）`);
-      break;
-    }
-
-    case 'farmer': {
-      const cnt = prevFarmer >= 1 ? 3 : 2;
-      player.nextTurnBonus = cnt;
-      addLog(game, `🌾 ${player.name}が農家を使用。次の手番で${cnt}枚引く`); break;
-    }
-
-    case 'spirit': {
-      if (!targetId) { player.hand.push(card); player.discard.pop(); return { needTarget:true, cardUid, effect:'spirit' }; }
-      const tgt = game.players.find(p => p.id===targetId && p.alive);
-      if (!tgt) { result={error:'ターゲットが無効'}; break; }
-      [player.hand, tgt.hand] = [tgt.hand, player.hand];
-      addLog(game, `✨ ${player.name}と${tgt.name}が手札を交換`);
-      result = { swapped:true, targetId, myNewCard:player.hand[0], theirNewCard:tgt.hand[0] }; break;
-    }
-
-    case 'sword_girl': {
-      if (!targetId) { player.hand.push(card); player.discard.pop(); return { needTarget:true, cardUid, effect:'sword_girl' }; }
-      result = swordEffect(game, player, targetId, true); break;
-    }
-  }
-
-  if (game.phase !== 'waiting_target' && game.phase !== 'waiting_fomus' && game.phase !== 'ended') nextTurn(game);
-  return result;
+/* 名前は '#AI:難易度[:番号]' の予約形式。表示言語はクライアントが解決する */
+function createAI(difficulty, room) {
+  const d = sanitizeDifficulty(difficulty);
+  const n = (room?.players.filter(p => p.isAI).length ?? 0) + 1;
+  return { id: 'AI_' + uuidv4(), name: `#AI:${d}:${n}`, isAI: true, difficulty: d };
 }
-
-function swordEffect(game, player, targetId, isByKill) {
-  const tgt = game.players.find(p => p.id===targetId && p.alive);
-  if (!tgt) return { error:'ターゲットが無効' };
-  drawCard(game, tgt);
-  addLog(game, `🗡️ ${player.name}が${isByKill?'刀の少女':'少年（変革）'}発動。${tgt.name}の手札を開示`);
-  game.pendingAction = { type: isByKill ? 'sword_girl_discard' : 'boy_discard', fromPlayerId:player.id, targetId, isByKill };
-  game.phase = 'waiting_target';
-  return { waitingTarget:true, targetId, showHand:tgt.hand };
-}
-
-function processTargetDiscard(roomId, playerId, cardUid) {
-  const room = rooms[roomId]; const game = room?.game;
-  if (!game || game.phase !== 'waiting_target') return { error:'無効な操作' };
-  const pending = game.pendingAction;
-  /* warrior & sword_girl: 攻撃者が選ぶ */
-  if (!pending || pending.fromPlayerId !== playerId) return { error:'あなたが選択者ではありません' };
-  const target = game.players.find(p => p.id===pending.targetId);
-  const cardIndex = target.hand.findIndex(c => c.uid===cardUid);
-  if (cardIndex === -1) return { error:'カードが見つかりません' };
-  const card = target.hand[cardIndex];
-  const player = target;
-  if (card.id === 'kukuochi' && pending.type === 'sword_girl_discard') {
-    /* 9（剣の少女）でククノチ捨て → 脱落、復活なし */
-    addLog(game, `🗡 ${target.name}のククノチが刀の少女に斬られた！復活なし！`);
-    target.hand.splice(cardIndex,1); target.discard.push(card);
-    target.alive = false;
-    broadcastToRoom(roomId, { type:'player_eliminated', playerId:pending.targetId });
-    const alive = game.players.filter(p => p.alive);
-    if (alive.length <= 1) endGame(game, alive[0]?.id ?? null);
-  } else if (card.id === 'kukuochi' && (pending.type === 'warrior_discard' || pending.type === 'boy_discard')) {
-    /* 4（戦士）/ 1（変革）でククノチ捨て → 全手札捨て + 幼きククノチ(0)を手札に */
-    addLog(game, `🌱 ${target.name}のククノチが捨てさせられた！幼きククノチとして再生！`);
-    target.hand.splice(cardIndex,1); target.discard.push(card);
-    /* 残りの手札も全て捨てる */
-    const remaining = target.hand.splice(0);
-    target.discard.push(...remaining);
-    /* 幼きククノチを手札に加える */
-    const rebirthCard = { ...CARDS.find(c => c.id==='kukuochi_young'), uid: uuidv4() };
-    target.hand.push(rebirthCard);
-    broadcastToRoom(roomId, { type:'rebirth', playerId:pending.targetId, playerName:target.name });
-  } else {
-    player.hand.splice(cardIndex,1); player.discard.push(card);
-    addLog(game, `🃏 ${player.name}が「${card.name}」を捨てた`);
-  }
-  game.pendingAction = null; game.phase = 'action';
-  nextTurn(game);
-  return { ok:true, discarded:card };
-}
-
-function processFomus(roomId, playerId, declaration) {
-  const room = rooms[roomId]; const game = room?.game;
-  if (!game || game.phase !== 'waiting_fomus') return { error:'無効な操作' };
-  if (game.pendingAction?.fromPlayerId !== playerId) return { error:'宣言者ではありません' };
-  const player = game.players.find(p => p.id===playerId);
-  const success = (declaration||'').trim().toUpperCase() === 'FOMUS';
-  if (success) { player.shield=true; addLog(game, `🏺 ${player.name}が「FOMUS！」と宣言！守護を得た！`); }
-  else addLog(game, `🏺 ${player.name}が枡職人2枚目（宣言失敗：守護なし）`);
-  game.pendingAction=null; game.phase='action'; nextTurn(game);
-  return { ok:true, success };
-}
-
-function processFarmerSelect(roomId, playerId, keepCardUid) {
-  const room = rooms[roomId]; const game = room?.game;
-  if (!game) return { error:'ゲームなし' };
-  const player = game.players.find(p => p.id===playerId);
-  const drawnUids = game.pendingFarmerDrawn || [];
-  if (!drawnUids.includes(keepCardUid)) return { error:'引いたカードから選んでください' };
-  const keepIndex = player.hand.findIndex(c => c.uid===keepCardUid);
-  if (keepIndex === -1) return { error:'カードが見つかりません' };
-  const kept = player.hand.splice(keepIndex,1)[0];
-  /* 引いたカードのうち選ばなかったものだけ山札に戻す */
-  const returnUids = drawnUids.filter(uid => uid !== keepCardUid);
-  const returns = [];
-  for (const uid of returnUids) {
-    const idx = player.hand.findIndex(c => c.uid === uid);
-    if (idx !== -1) returns.push(player.hand.splice(idx, 1)[0]);
-  }
-  game.deck.push(...returns); game.deck = shuffle(game.deck);
-  player.hand.push(kept);
-  addLog(game, `🌾 ${player.name}が農家効果で「${kept.name}」を選択`);
-  game.pendingFarmerDrawn = null;
-  game.phase = 'action';
-  return { ok:true, kept };
-}
-
-// ============================================================
-// State serialization
-// ============================================================
-function stateFor(game, playerId) {
-  const pa = game.pendingAction;
-  const ended = game.phase === 'ended';
-  /* sword_girl: 攻撃者にターゲットの手札を公開 / warrior: uidのみ（裏向き） */
-  const isSwordAttacker = pa && (pa.type==='sword_girl_discard' || pa.type==='boy_discard') && pa.fromPlayerId===playerId;
-  const isWarriorAttacker = pa && pa.type==='warrior_discard' && pa.fromPlayerId===playerId;
-  return {
-    players: game.players.map(p => ({
-      id:p.id, name:p.name, alive:p.alive, shield:p.shield, isAI:p.isAI,
-      handCount:p.hand.length,
-      hand: ended ? p.hand
-        : p.id===playerId ? p.hand
-        : (isSwordAttacker && p.id===pa.targetId) ? p.hand
-        : (isWarriorAttacker && p.id===pa.targetId) ? p.hand.map(c=>({uid:c.uid, hidden:true}))
-        : null,
-      discard:p.discard,
-    })),
-    deckCount:game.deck.length, currentPlayerId:cp(game)?.id,
-    phase:game.phase,
-    pendingAction: pa ? { type:pa.type, targetId:pa.targetId, fromPlayerId:pa.fromPlayerId } : null,
-    log:game.log, winner:game.winner, turn:game.turn,
-  };
-}
-function stateForSpectator(game) {
-  return { ...stateFor(game, null), players: game.players.map(p => ({ id:p.id, name:p.name, alive:p.alive, shield:p.shield, isAI:p.isAI, handCount:p.hand.length, hand:p.hand, discard:p.discard })), isSpectator:true };
-}
-
-// ============================================================
-// AI
-// ============================================================
-function createAI(difficulty) {
-  const labels = { easy:'ゆっくりAI', normal:'策士AI', hard:'鬼神AI' };
-  return { id:'AI_'+uuidv4(), name:`[${labels[difficulty]||'AI'}]`, isAI:true, difficulty };
-}
-
-function scheduleAI(roomId, delay=2000) { setTimeout(() => aiTurn(roomId), delay); }
+function scheduleAI(roomId, delay = 1800) { setTimeout(() => aiTurn(roomId), delay); }
 
 function aiTurn(roomId) {
   const room = rooms[roomId]; if (!room?.game) return;
-  const game = room.game; if (game.phase==='ended') return;
-  const cur = cp(game); if (!cur?.isAI) return;
+  const game = room.game;
+  if (game.phase === 'ended') return;
+  const cur = cp(game);
+  if (!cur?.isAI) return;
 
   if (game.phase === 'draw') {
-    if (cur.nextTurnBonus) {
-      const count = cur.nextTurnBonus; cur.nextTurnBonus = null;
-      const drawn = [];
-      for (let i=0;i<count;i++){const c=drawCard(game,cur);if(c)drawn.push(c);}
-      game.pendingFarmerDrawn = drawn.map(c=>c.uid);
-      game.phase = 'farmer_select';
-      broadcastStateUpdate(roomId);
+    const r = processDraw(game, cur.id);
+    flush(roomId);
+    if (game.phase === 'farmer_select') {
       setTimeout(() => {
         if (!rooms[roomId]?.game) return;
-        const kept = aiBest(drawn, cur.difficulty);
-        const rets = drawn.filter(c => c.uid!==kept.uid);
-        for(const r of rets){const idx=cur.hand.findIndex(c=>c.uid===r.uid);if(idx!==-1)cur.hand.splice(idx,1);}
-        game.deck.push(...rets); game.deck = shuffle(game.deck);
-        game.pendingFarmerDrawn = null;
-        addLog(game, `🌾 ${cur.name}が「${kept.name}」を選択`);
-        game.phase = 'action'; broadcastStateUpdate(roomId);
-        if (game.phase!=='ended' && cp(game)?.isAI) scheduleAI(roomId);
+        const kept = CORE.aiBest(r.farmerDraw, cur.difficulty);
+        processFarmerSelect(game, cur.id, kept.uid);
+        flush(roomId);
+        if (game.phase !== 'ended' && cp(game)?.isAI) scheduleAI(roomId);
       }, 1200);
       return;
     }
-    const drawn = drawCard(game, cur);
-    if (!drawn) { checkDeckEmpty(game); broadcastStateUpdate(roomId); return; }
-    game.phase = 'action'; broadcastStateUpdate(roomId);
-    setTimeout(() => aiTurn(roomId), 1500);
+    if (game.phase === 'ended') return;
+    setTimeout(() => aiTurn(roomId), 1400);
     return;
   }
 
   if (game.phase === 'action') {
     const action = aiChoose(game, cur, cur.difficulty);
-    if (!action) { nextTurn(game); broadcastStateUpdate(roomId); return; }
-    const result = processPlay(roomId, cur.id, action.cardUid, action.targetId, action.guess);
+    if (!action) { CORE.nextTurn(game); flush(roomId); return; }
+    const result = processPlay(game, cur.id, action.cardUid, action.targetId, action.guess);
 
-    if (result.swapped) {
-      const tgtP = game.players.find(p=>p.id===action.targetId);
-      if (tgtP && !tgtP.isAI) sendTo(tgtP.id, { type:'spirit_swap', newCard:result.theirNewCard });
-    }
+    /* 見せ合い・交換の結果は当事者にだけ個別に届ける */
     if (result.myCard && result.theirCard) {
-      broadcastToRoom(roomId, { type:'kurando_reveal_all', aiName:cur.name, myCard:result.myCard, theirCard:result.theirCard, myName:cur.name, theirName: game.players.find(p=>p.id===action.targetId)?.name });
+      sendTo(action.targetId, { type:'kurando_reveal', myCard: result.theirCard, theirCard: result.myCard });
     }
-    broadcastStateUpdate(roomId);
+    if (result.swapped) sendTo(action.targetId, { type:'spirit_swap', newCard: result.theirNewCard });
+    flush(roomId);
+
     if (result.waitingTarget) {
       const pending = game.pendingAction;
-      /* warrior & sword_girl: 攻撃者AI がターゲットの手札から最弱カードを選んで捨てさせる */
-      if (pending && (pending.type === 'warrior_discard' || pending.type === 'sword_girl_discard' || pending.type === 'boy_discard')) {
-        if (cur.isAI) {
-          const tgtP = game.players.find(p=>p.id===action.targetId);
-          setTimeout(() => { processTargetDiscard(roomId,cur.id,aiWorst(tgtP.hand,cur.difficulty).uid); broadcastStateUpdate(roomId); if(game.phase!=='ended'&&cp(game)?.isAI)scheduleAI(roomId); }, 1500);
-        }
-      }
+      const tgtP = game.players.find(p => p.id === action.targetId);
+      setTimeout(() => {
+        if (!rooms[roomId]?.game) return;
+        const pick = aiPickDiscard(pending.type, tgtP.hand, cur.difficulty);
+        if (pick) processTargetDiscard(game, cur.id, pick.uid);
+        flush(roomId);
+        if (game.phase !== 'ended' && cp(game)?.isAI) scheduleAI(roomId);
+      }, 1500);
       return;
     }
-    if (game.phase!=='ended' && cp(game)?.isAI) scheduleAI(roomId);
+    if (game.phase !== 'ended' && cp(game)?.isAI) scheduleAI(roomId);
     return;
   }
 
   if (game.phase === 'waiting_target') {
     const pending = game.pendingAction;
-    if ((pending?.type === 'warrior_discard' || pending?.type === 'sword_girl_discard') && pending.fromPlayerId === cur.id && cur.isAI) {
-      /* warrior & sword_girl: 攻撃者AIがターゲットの手札から選ぶ */
-      const tgtP = game.players.find(p=>p.id===pending.targetId);
-      setTimeout(() => { processTargetDiscard(roomId,cur.id,aiWorst(tgtP.hand,cur.difficulty).uid); broadcastStateUpdate(roomId); if(game.phase!=='ended'&&cp(game)?.isAI)scheduleAI(roomId); }, 1500);
+    if (pending?.fromPlayerId === cur.id) {
+      const tgtP = game.players.find(p => p.id === pending.targetId);
+      setTimeout(() => {
+        if (!rooms[roomId]?.game) return;
+        const pick = aiPickDiscard(pending.type, tgtP.hand, cur.difficulty);
+        if (pick) processTargetDiscard(game, cur.id, pick.uid);
+        flush(roomId);
+        if (game.phase !== 'ended' && cp(game)?.isAI) scheduleAI(roomId);
+      }, 1500);
     }
   }
-}
-
-function aiBest(hand, diff) {
-  if (diff==='easy') return hand[Math.floor(Math.random()*hand.length)];
-  return hand.reduce((b,c) => c.level>b.level?c:b, hand[0]);
-}
-function aiWorst(hand, diff) {
-  if (diff==='easy') return hand[Math.floor(Math.random()*hand.length)];
-  const cands = hand.filter(c=>c.id!=='kukuochi');
-  const pool = cands.length ? cands : hand;
-  return pool.reduce((w,c) => c.level<w.level?c:w, pool[0]);
-}
-function aiChoose(game, player, diff) {
-  const playable = player.hand.filter(c=>c.id!=='kukuochi');
-  if (!playable.length) return null;
-  const opponents = game.players.filter(p=>p.alive && p.id!==player.id);
-  if (!opponents.length) return null;
-
-  if (diff==='easy') {
-    const card = playable[Math.floor(Math.random()*playable.length)];
-    const needsTgt = ['scout','warrior','kurando','spirit','sword_girl','trainee','boy'].includes(card.id);
-    const tgt = needsTgt ? opponents[Math.floor(Math.random()*opponents.length)] : null;
-    const guess = card.id==='trainee' ? CARDS.filter(c=>c.id!=='kukuochi_young')[Math.floor(Math.random()*10)].id : null;
-    return { cardUid:card.uid, targetId:tgt?.id, guess };
-  }
-
-  let best=null, bestScore=-Infinity;
-  const allD = game.players.flatMap(p=>p.discard);
-
-  for (const card of playable) {
-    const needsTgt = ['scout','warrior','kurando','spirit','sword_girl','trainee','boy'].includes(card.id);
-    const targets = needsTgt ? opponents : [null];
-    for (const tgt of targets) {
-      let score = 0;
-      const myOther = player.hand.find(c=>c.uid!==card.uid)?.level??0;
-      switch(card.id) {
-        case 'sword_girl':     score=90; break;
-        case 'warrior':        score=65; break;
-        case 'scout':          score=40; break;
-        case 'kurando':        score = myOther>(tgt?.hand[0]?.level??5) ? 80 : 10; break;
-        case 'spirit':         score = myOther<(tgt?.hand[0]?.level??5) ? 72 : 20; break;
-        case 'trainee':        score = diff==='hard'?50:25; break;
-        case 'masu_craftsman': score = allD.filter(c=>c.id==='masu_craftsman').length>=1 ? 88 : 32; break;
-        case 'farmer':         score=35; break;
-        case 'boy':            score = allD.filter(c=>c.id==='boy').length>=1 ? 82 : 18; break;
-        case 'kukuochi_young': score=5; break;
-        default:               score=15;
-      }
-      // Hard bonus: use kukuochi advantage in kurando
-      if (diff==='hard' && card.id==='kurando' && player.hand.find(c=>c.id==='kukuochi')) score=97;
-      score += Math.random() * (diff==='hard'?6:20);
-      if (score>bestScore) { bestScore=score; best={card,tgt}; }
-    }
-  }
-  if (!best) return null;
-  const guess = best.card.id==='trainee' ? CARDS.filter(c=>c.id!=='kukuochi_young'&&c.id!=='kukuochi')[Math.floor(Math.random()*9)].id : null;
-  return { cardUid:best.card.uid, targetId:best.tgt?.id, guess };
 }
 
 // ============================================================
 // Matchmaking
 // ============================================================
 function tryMatch() {
+  /* 切断済みのエントリが先頭に残ると永久にマッチしないので先に掃除する */
+  for (let i = matchQueue.length - 1; i >= 0; i--)
+    if (matchQueue[i].ws.readyState !== 1) matchQueue.splice(i, 1);
+
   while (matchQueue.length >= 2) {
-    const [a, b] = matchQueue.splice(0,2);
-    const roomId = createRoom({ isPublic:true });
+    const [a, b] = matchQueue.splice(0, 2);
+    const roomId = createRoom({ isPublic: true });
     const room = rooms[roomId];
-    room.players.push({ id:a.pid, name:a.name, isAI:false });
-    room.players.push({ id:b.pid, name:b.name, isAI:false });
-    clientInfo.set(a.ws, { playerId:a.pid, roomId });
-    clientInfo.set(b.ws, { playerId:b.pid, roomId });
-    sendWs(a.ws, { type:'matched', roomId, opponentName:b.name });
-    sendWs(b.ws, { type:'matched', roomId, opponentName:a.name });
-    const game = initGame(room);
-    addLog(game, `🎮 マッチング成立！${room.players[0].name} vs ${room.players[1].name}`);
-    room.players.forEach(p => sendTo(p.id, { type:'game_started', state:stateFor(game,p.id) }));
+    room.players.push({ id: a.pid, name: a.name, isAI: false });
+    room.players.push({ id: b.pid, name: b.name, isAI: false });
+    clientInfo.set(a.ws, { playerId: a.pid, roomId });
+    clientInfo.set(b.ws, { playerId: b.pid, roomId });
+    sendWs(a.ws, { type:'matched', roomId, opponentName: b.name });
+    sendWs(b.ws, { type:'matched', roomId, opponentName: a.name });
+    const game = startGame(room);
+    addLog(game, 'match_made', { a: room.players[0].name, b: room.players[1].name });
+    room.players.forEach(p => sendTo(p.id, { type:'game_started', roomId, state: stateFor(game, p.id) }));
   }
 }
 
 function publicRooms() {
   return Object.values(rooms)
-    .filter(r => r.isPublic && r.state==='playing')
-    .map(r => ({ id:r.id, players:r.players.map(p=>p.name), spectators:(r.spectators||[]).length, turn:r.game?.turn??0 }));
+    .filter(r => r.isPublic && r.state === 'playing' && r.game?.phase !== 'ended')
+    .map(r => ({ id: r.id, players: r.players.map(p => p.name), spectators: (r.spectators || []).length, turn: r.game?.turn ?? 0 }));
+}
+
+// ============================================================
+// Disconnect / reconnect
+// ============================================================
+function scheduleForfeit(roomId, playerId) {
+  const room = rooms[roomId]; if (!room) return;
+  clearTimeout(room.timers.get(playerId));
+  room.timers.set(playerId, setTimeout(() => {
+    const r = rooms[roomId]; if (!r) return;
+    r.timers.delete(playerId);
+    if (playerMap.has(playerId)) return;                 // 復帰済み
+    const game = r.game;
+    if (!game || game.phase === 'ended') {
+      if (!roomHasLiveHuman(r)) destroyRoom(roomId);
+      return;
+    }
+    forfeit(game, playerId);
+    flush(roomId);
+    if (game.phase !== 'ended' && cp(game)?.isAI) scheduleAI(roomId);
+    if (!roomHasLiveHuman(r)) destroyRoom(roomId);
+  }, DISCONNECT_GRACE));
+}
+
+function handleDisconnect(ws) {
+  const info = clientInfo.get(ws);
+  clientInfo.delete(ws);
+  if (!info) return;
+  const { playerId, roomId } = info;
+  if (playerMap.get(playerId) === ws) playerMap.delete(playerId);
+
+  const qi = matchQueue.findIndex(q => q.pid === playerId);
+  if (qi !== -1) matchQueue.splice(qi, 1);
+
+  const room = roomId && rooms[roomId];
+  if (!room) return;
+
+  if (info.spectator) {
+    room.spectators = (room.spectators || []).filter(s => s.id !== playerId);
+    if (!roomHasLiveHuman(room)) destroyRoom(roomId);
+    return;
+  }
+  const player = room.players.find(p => p.id === playerId);
+  if (!player) return;
+
+  if (room.state === 'waiting') {
+    room.players = room.players.filter(p => p.id !== playerId);
+    if (!room.players.some(p => !p.isAI)) { destroyRoom(roomId); return; }
+    broadcastToRoom(roomId, { type:'room_update', players: room.players });
+    return;
+  }
+  broadcastToRoom(roomId, { type:'opponent_disconnected', playerId, playerName: player.name, graceMs: DISCONNECT_GRACE });
+  scheduleForfeit(roomId, playerId);
 }
 
 // ============================================================
 // WS handler
 // ============================================================
+const RATE_WINDOW = 3000, RATE_MAX = 60;
+
 wss.on('connection', ws => {
-  const pid = uuidv4();
+  let pid = uuidv4();
+  const token = uuidv4();
   playerMap.set(pid, ws);
-  clientInfo.set(ws, { playerId:pid, roomId:null });
-  sendWs(ws, { type:'connected', playerId:pid });
+  sessionTokens.set(pid, token);
+  clientInfo.set(ws, { playerId: pid, roomId: null });
+  ws.isAlive = true;
+  ws.on('pong', () => { ws.isAlive = true; });
+  let windowStart = Date.now(), msgCount = 0;
+  sendWs(ws, { type:'connected', playerId: pid, token });
+
+  const fail = (code) => sendWs(ws, { type:'error', code });
 
   ws.on('message', raw => {
-    let msg; try { msg=JSON.parse(raw); } catch { return; }
-    const info = clientInfo.get(ws);
+    /* 単純なトークンバケット。連打でメモリを膨らませる系の悪用を弾く */
+    const now = Date.now();
+    if (now - windowStart > RATE_WINDOW) { windowStart = now; msgCount = 0; }
+    if (++msgCount > RATE_MAX) return;
+    if (typeof raw?.length === 'number' && raw.length > 4096) return;
+
+    let msg; try { msg = JSON.parse(raw); } catch { return; }
+    if (!msg || typeof msg !== 'object' || typeof msg.type !== 'string') return;
     const { type } = msg;
 
-    if (type==='create_room') {
-      const roomId = createRoom();
-      rooms[roomId].players.push({ id:pid, name:msg.name||'プレイヤー', isAI:false });
-      clientInfo.set(ws, { playerId:pid, roomId });
-      sendWs(ws, { type:'room_created', roomId });
-      sendWs(ws, { type:'room_update', players:rooms[roomId].players });
+    /* 再接続：playerIdだけでは他人になりすませるので、接続時に配ったtokenを必須にする */
+    if (type === 'rejoin') {
+      const oldPid = msg.playerId, roomId = sanitizeRoomId(msg.roomId);
+      const room = roomId && rooms[roomId];
+      const seat = room?.players.find(p => p.id === oldPid && !p.isAI);
+      if (!oldPid || !seat || sessionTokens.get(oldPid) !== msg.token) { sendWs(ws, { type:'rejoin_failed' }); return; }
+      const stale = playerMap.get(oldPid);
+      if (stale && stale !== ws) { clientInfo.delete(stale); try { stale.close(); } catch {} }
+      playerMap.delete(pid); sessionTokens.delete(pid);
+      pid = oldPid;
+      playerMap.set(pid, ws);
+      clientInfo.set(ws, { playerId: pid, roomId });
+      clearTimeout(room.timers.get(pid)); room.timers.delete(pid);
+      touchRoom(roomId);
+      /* クライアントの myId を元の席のIDに戻させる。
+         これを送らないと、直前の 'connected' で配った新IDのまま手番判定が壊れる */
+      sendWs(ws, { type:'rejoined', playerId: pid, token: sessionTokens.get(pid), roomId });
+      broadcastToRoom(roomId, { type:'opponent_reconnected', playerId: pid, playerName: seat.name }, pid);
+      if (room.game) sendWs(ws, { type:'game_started', roomId, state: stateFor(room.game, pid) });
+      else { sendWs(ws, { type:'room_joined', roomId }); sendWs(ws, { type:'room_update', players: room.players }); }
+      return;
     }
 
-    else if (type==='join_room') {
-      const room = rooms[msg.roomId];
-      if (!room) { sendWs(ws,{type:'error',msg:'ルームが見つかりません'}); return; }
-      if (room.state!=='waiting') { sendWs(ws,{type:'error',msg:'ゲームはすでに開始しています'}); return; }
-      if (room.players.length>=4) { sendWs(ws,{type:'error',msg:'ルームが満員です'}); return; }
-      room.players.push({ id:pid, name:msg.name||`プレイヤー${room.players.length+1}`, isAI:false });
-      clientInfo.set(ws, { playerId:pid, roomId:msg.roomId });
-      sendWs(ws, { type:'room_joined', roomId:msg.roomId });
-      broadcastToRoom(msg.roomId, { type:'room_update', players:room.players });
-    }
-
-    else if (type==='add_ai') {
-      const room = rooms[info?.roomId];
-      if (!room||room.state!=='waiting') return;
-      if (room.players[0].id!==pid) return;
-      if (room.players.length>=4) { sendWs(ws,{type:'error',msg:'満員です'}); return; }
-      room.players.push(createAI(msg.difficulty||'normal'));
-      broadcastToRoom(info.roomId, { type:'room_update', players:room.players });
-    }
-
-    else if (type==='remove_ai') {
-      const room = rooms[info?.roomId];
-      if (!room||room.state!=='waiting'||room.players[0].id!==pid) return;
-      const idx = room.players.findIndex(p=>p.isAI);
-      if (idx!==-1) room.players.splice(idx,1);
-      broadcastToRoom(info.roomId, { type:'room_update', players:room.players });
-    }
-
-    else if (type==='start_game') {
-      const room = rooms[info?.roomId];
-      if (!room) return;
-      if (room.players[0].id!==pid) { sendWs(ws,{type:'error',msg:'ホストのみ開始できます'}); return; }
-      if (room.players.length<2) { sendWs(ws,{type:'error',msg:'2人以上必要です'}); return; }
-      const game = initGame(room);
-      addLog(game, `🎮 ゲーム開始！先手は ${cp(game).name}`);
-      room.players.forEach(p => { if(!p.isAI) sendTo(p.id,{type:'game_started',state:stateFor(game,p.id)}); });
-      if (cp(game).isAI) scheduleAI(info.roomId);
-    }
-
-    else if (type==='rematch') {
-      const room = rooms[info?.roomId];
-      if (!room) return;
-      const humanPlayers = room.players.filter(p => !p.isAI);
-      // AI戦はホストだけで即再戦
-      if (humanPlayers.length <= 1) {
-        room.state = 'waiting'; room.game = null;
-        if (!room.rematchVotes) room.rematchVotes = new Set();
-        room.rematchVotes.clear();
-        const game = initGame(room);
-        addLog(game, `🎮 再戦開始！先手は ${cp(game).name}`);
-        room.players.forEach(p => { if(!p.isAI) sendTo(p.id,{type:'game_started',state:stateFor(game,p.id)}); });
-        if (cp(game).isAI) scheduleAI(info.roomId);
-        return;
-      }
-      // オンライン対戦: 投票制
-      if (!room.rematchVotes) room.rematchVotes = new Set();
-      room.rematchVotes.add(pid);
-      const votedCount = room.rematchVotes.size;
-      const totalHumans = humanPlayers.length;
-      // 全員に投票状況を通知
-      broadcastToRoom(info.roomId, { type:'rematch_vote', votedCount, totalHumans, votedBy: pid });
-      // 全員が同意したら再戦開始
-      if (votedCount >= totalHumans) {
-        room.rematchVotes.clear();
-        room.state = 'waiting'; room.game = null;
-        const game = initGame(room);
-        addLog(game, `🎮 再戦開始！先手は ${cp(game).name}`);
-        room.players.forEach(p => { if(!p.isAI) sendTo(p.id,{type:'game_started',state:stateFor(game,p.id)}); });
-        if (cp(game).isAI) scheduleAI(info.roomId);
-      }
-    }
-
-    else if (type==='start_vs_ai') {
-      const roomId = createRoom();
-      const room = rooms[roomId];
-      room.players.push({ id:pid, name:msg.name||'プレイヤー', isAI:false });
-      const cnt = Math.min(Math.max(msg.aiCount||1,1),3);
-      for (let i=0;i<cnt;i++) room.players.push(createAI(msg.difficulty||'normal'));
-      clientInfo.set(ws, { playerId:pid, roomId });
-      const game = initGame(room);
-      addLog(game, `🎮 ゲーム開始！先手は ${cp(game).name}`);
-      sendWs(ws, { type:'game_started', state:stateFor(game,pid) });
-      if (cp(game).isAI) scheduleAI(roomId);
-    }
-
-    else if (type==='join_queue') {
-      if (matchQueue.find(q=>q.pid===pid)) return;
-      matchQueue.push({ pid, name:msg.name||'プレイヤー', ws });
-      sendWs(ws, { type:'queue_joined', position:matchQueue.length });
-      tryMatch();
-    }
-
-    else if (type==='leave_queue') {
-      const idx = matchQueue.findIndex(q=>q.pid===pid);
-      if (idx!==-1) matchQueue.splice(idx,1);
-      sendWs(ws, { type:'queue_left' });
-    }
-
-    else if (type==='get_public_rooms') {
-      sendWs(ws, { type:'public_rooms', rooms:publicRooms() });
-    }
-
-    else if (type==='spectate') {
-      const room = rooms[msg.roomId];
-      if (!room||room.state!=='playing') { sendWs(ws,{type:'error',msg:'観戦できるゲームがありません'}); return; }
-      if (!room.spectators) room.spectators=[];
-      room.spectators.push({ id:pid, name:msg.name||'観戦者' });
-      clientInfo.set(ws, { playerId:pid, roomId:msg.roomId, spectator:true });
-      sendWs(ws, { type:'spectating', state:stateForSpectator(room.game) });
-    }
-
-    else if (type==='draw_card') {
-      const room = rooms[info?.roomId]; if (!room?.game) return;
-      const game = room.game; const roomId = info.roomId;
-      if (cp(game).id!==pid) { sendWs(ws,{type:'error',msg:'手番ではありません'}); return; }
-      if (game.phase!=='draw') { sendWs(ws,{type:'error',msg:'引けません'}); return; }
-      const player = game.players.find(p=>p.id===pid);
-      if (player.nextTurnBonus) {
-        const count=player.nextTurnBonus; player.nextTurnBonus=null;
-        const drawn=[];
-        for(let i=0;i<count;i++){const c=drawCard(game,player);if(c)drawn.push(c);}
-        game.pendingFarmerDrawn=drawn.map(c=>c.uid);
-        game.phase='farmer_select';
-        sendWs(ws,{type:'farmer_draw',cards:drawn});
-        broadcastStateUpdate(roomId); return;
-      }
-      const drawn = drawCard(game, player);
-      if (!drawn) { checkDeckEmpty(game); broadcastStateUpdate(roomId); return; }
-      game.phase='action'; broadcastStateUpdate(roomId);
-    }
-
-    else if (type==='farmer_select') {
-      const result = processFarmerSelect(info?.roomId, pid, msg.keepCardUid);
-      if (result.error) { sendWs(ws,{type:'error',msg:result.error}); return; }
-      broadcastStateUpdate(info.roomId);
-      const game=rooms[info.roomId]?.game;
-      if (game&&cp(game)?.isAI) scheduleAI(info.roomId);
-    }
-
-    else if (type==='play_card') {
-      const roomId=info?.roomId;
-      const result = processPlay(roomId, pid, msg.cardUid, msg.targetId, msg.guess);
-      if (result.error) { sendWs(ws,{type:'error',msg:result.error}); return; }
-      if (result.needTarget) { sendWs(ws,{type:'need_target',cardUid:result.cardUid,effect:result.effect,requiresGuess:result.requiresGuess}); return; }
-      if (result.waitingFomus) { sendWs(ws,{type:'waiting_fomus'}); broadcastStateUpdate(roomId); return; }
-      if (result.peekedCard) sendWs(ws,{type:'peek_result',card:result.peekedCard});
-      if (result.myCard&&result.theirCard) {
-        sendWs(ws,{type:'kurando_reveal',myCard:result.myCard,theirCard:result.theirCard});
-        const tw=playerMap.get(msg.targetId); if(tw) sendWs(tw,{type:'kurando_reveal',myCard:result.theirCard,theirCard:result.myCard});
-      }
-      if (result.swapped) { const tw=playerMap.get(msg.targetId); if(tw) sendWs(tw,{type:'spirit_swap',newCard:result.theirNewCard}); }
-      broadcastStateUpdate(roomId);
-      const game=rooms[roomId]?.game;
-      if (result.waitingTarget) {
-        const tgtP=game?.players.find(p=>p.id===msg.targetId);
-        if (tgtP?.isAI) setTimeout(()=>{ processTargetDiscard(roomId,tgtP.id,aiWorst(tgtP.hand,tgtP.difficulty).uid); broadcastStateUpdate(roomId); if(game.phase!=='ended'&&cp(game)?.isAI)scheduleAI(roomId); },900);
-        return;
-      }
-      if (game&&game.phase!=='ended'&&cp(game)?.isAI) scheduleAI(roomId);
-    }
-
-    else if (type==='target_discard') {
-      const roomId=info?.roomId;
-      const result=processTargetDiscard(roomId,pid,msg.cardUid);
-      if (result.error) { sendWs(ws,{type:'error',msg:result.error}); return; }
-      broadcastStateUpdate(roomId);
-      const game=rooms[roomId]?.game;
-      if (game&&game.phase!=='ended'&&cp(game)?.isAI) scheduleAI(roomId);
-    }
-
-    else if (type==='fomus_declare') {
-      const roomId=info?.roomId;
-      const result=processFomus(roomId,pid,msg.declaration);
-      if (result.error) { sendWs(ws,{type:'error',msg:result.error}); return; }
-      broadcastToRoom(roomId,{type:'fomus_summoned',playerName:rooms[roomId]?.players.find(p=>p.id===pid)?.name,success:result.success,declaration:msg.declaration});
-      broadcastStateUpdate(roomId);
-      const game=rooms[roomId]?.game;
-      if (game&&game.phase!=='ended'&&cp(game)?.isAI) scheduleAI(roomId);
-    }
-  });
-
-  ws.on('close', () => {
     const info = clientInfo.get(ws);
-    if (info) {
-      playerMap.delete(info.playerId);
-      const idx=matchQueue.findIndex(q=>q.pid===info.playerId);
-      if (idx!==-1) matchQueue.splice(idx,1);
-      if (info.roomId&&info.spectator) {
-        const room=rooms[info.roomId];
-        if (room) room.spectators=room.spectators.filter(s=>s.id!==info.playerId);
+    touchRoom(info?.roomId);
+    const room = rooms[info?.roomId];
+    const game = room?.game;
+
+    switch (type) {
+
+      case 'create_room': {
+        if (info?.roomId) return;                       // 連打で無人ルームを量産させない
+        const roomId = createRoom();
+        rooms[roomId].players.push({ id: pid, name: sanitizeName(msg.name), isAI: false });
+        clientInfo.set(ws, { playerId: pid, roomId });
+        sendWs(ws, { type:'room_created', roomId });
+        sendWs(ws, { type:'room_update', players: rooms[roomId].players });
+        return;
       }
-      clientInfo.delete(ws);
+
+      case 'join_room': {
+        const roomId = sanitizeRoomId(msg.roomId);
+        const target = roomId && rooms[roomId];
+        if (!target) return fail('room_not_found');
+        if (target.state !== 'waiting') return fail('already_started');
+        if (target.players.length >= 4) return fail('room_full');
+        if (target.players.some(p => p.id === pid)) return;
+        target.players.push({ id: pid, name: sanitizeName(msg.name, `Player${target.players.length + 1}`), isAI: false });
+        clientInfo.set(ws, { playerId: pid, roomId });
+        sendWs(ws, { type:'room_joined', roomId });
+        broadcastToRoom(roomId, { type:'room_update', players: target.players });
+        return;
+      }
+
+      case 'add_ai': {
+        if (!room || room.state !== 'waiting' || room.players[0].id !== pid) return;
+        if (room.players.length >= 4) return fail('room_full');
+        room.players.push(createAI(msg.difficulty, room));
+        broadcastToRoom(info.roomId, { type:'room_update', players: room.players });
+        return;
+      }
+
+      case 'remove_ai': {
+        if (!room || room.state !== 'waiting' || room.players[0].id !== pid) return;
+        const idx = room.players.findIndex(p => p.isAI);
+        if (idx !== -1) room.players.splice(idx, 1);
+        broadcastToRoom(info.roomId, { type:'room_update', players: room.players });
+        return;
+      }
+
+      case 'start_game': {
+        if (!room) return;
+        if (room.state !== 'waiting') return fail('already_started');
+        if (room.players[0].id !== pid) return fail('host_only');
+        if (room.players.length < 2) return fail('need_two');
+        const g = startGame(room);
+        addLog(g, 'game_start', { name: cp(g).name });
+        room.players.forEach(p => { if (!p.isAI) sendTo(p.id, { type:'game_started', roomId: room.id, state: stateFor(g, p.id) }); });
+        if (cp(g).isAI) scheduleAI(info.roomId);
+        return;
+      }
+
+      case 'rematch': {
+        if (!room) return;
+        const humans = room.players.filter(p => !p.isAI);
+        room.rematchVotes ||= new Set();
+        if (humans.length > 1) {
+          room.rematchVotes.add(pid);
+          broadcastToRoom(info.roomId, { type:'rematch_vote', votedCount: room.rematchVotes.size, totalHumans: humans.length, votedBy: pid });
+          if (room.rematchVotes.size < humans.length) return;
+        }
+        room.rematchVotes.clear();
+        room.state = 'waiting';
+        const g = startGame(room);
+        addLog(g, 'rematch_start', { name: cp(g).name });
+        room.players.forEach(p => { if (!p.isAI) sendTo(p.id, { type:'game_started', roomId: room.id, state: stateFor(g, p.id) }); });
+        if (cp(g).isAI) scheduleAI(info.roomId);
+        return;
+      }
+
+      /* AI戦は通常ブラウザ内で完結するが、古いキャッシュのクライアントが
+         これを送ってくる可能性があるので受け口を残しておく（移行用） */
+      case 'start_vs_ai': {
+        if (info?.roomId && rooms[info.roomId]) destroyRoom(info.roomId);
+        const roomId = createRoom();
+        const r = rooms[roomId];
+        r.players.push({ id: pid, name: sanitizeName(msg.name), isAI: false });
+        const cnt = Math.min(Math.max(Number(msg.aiCount) || 1, 1), 3);
+        for (let i = 0; i < cnt; i++) r.players.push(createAI(msg.difficulty, r));
+        clientInfo.set(ws, { playerId: pid, roomId });
+        const g = startGame(r);
+        addLog(g, 'game_start', { name: cp(g).name });
+        sendWs(ws, { type:'game_started', roomId, state: stateFor(g, pid) });
+        if (cp(g).isAI) scheduleAI(roomId);
+        return;
+      }
+
+      case 'join_queue': {
+        if (matchQueue.find(q => q.pid === pid)) return;
+        if (room?.state === 'playing') return;
+        matchQueue.push({ pid, name: sanitizeName(msg.name), ws });
+        sendWs(ws, { type:'queue_joined', position: matchQueue.length });
+        tryMatch();
+        return;
+      }
+
+      case 'leave_queue': {
+        const idx = matchQueue.findIndex(q => q.pid === pid);
+        if (idx !== -1) matchQueue.splice(idx, 1);
+        sendWs(ws, { type:'queue_left' });
+        return;
+      }
+
+      case 'get_public_rooms':
+        sendWs(ws, { type:'public_rooms', rooms: publicRooms() });
+        return;
+
+      case 'spectate': {
+        const roomId = sanitizeRoomId(msg.roomId);
+        const target = roomId && rooms[roomId];
+        if (!target || target.state !== 'playing') return fail('no_spectate');
+        target.spectators ||= [];
+        if (target.spectators.some(s => s.id === pid)) return;
+        target.spectators.push({ id: pid, name: sanitizeName(msg.name, 'Spectator') });
+        clientInfo.set(ws, { playerId: pid, roomId, spectator: true });
+        sendWs(ws, { type:'spectating', state: stateForSpectator(target.game) });
+        return;
+      }
+
+      case 'draw_card': {
+        if (!game) return;
+        const r = processDraw(game, pid);
+        if (r.error) return fail(r.error);
+        if (r.farmerDraw) sendWs(ws, { type:'farmer_draw', cards: r.farmerDraw });
+        flush(info.roomId);
+        return;
+      }
+
+      case 'farmer_select': {
+        if (!game) return;
+        const r = processFarmerSelect(game, pid, msg.keepCardUid);
+        if (r.error) return fail(r.error);
+        flush(info.roomId);
+        if (game.phase !== 'ended' && cp(game)?.isAI) scheduleAI(info.roomId);
+        return;
+      }
+
+      case 'play_card': {
+        if (!game) return;
+        const r = processPlay(game, pid, msg.cardUid, msg.targetId, msg.guess);
+        if (r.error) return fail(r.error);
+        if (r.needTarget) { sendWs(ws, { type:'need_target', cardUid: r.cardUid, effect: r.effect, requiresGuess: r.requiresGuess }); return; }
+        if (r.peekedCard) sendWs(ws, { type:'peek_result', card: r.peekedCard });
+        if (r.myCard && r.theirCard) {
+          sendWs(ws, { type:'kurando_reveal', myCard: r.myCard, theirCard: r.theirCard });
+          sendTo(r.targetId, { type:'kurando_reveal', myCard: r.theirCard, theirCard: r.myCard });
+        }
+        if (r.swapped) sendTo(r.targetId, { type:'spirit_swap', newCard: r.theirNewCard });
+        flush(info.roomId);
+        if (r.waitingTarget) return;   // 捨てる札を選ぶのは攻撃者本人
+        if (game.phase !== 'ended' && cp(game)?.isAI) scheduleAI(info.roomId);
+        return;
+      }
+
+      case 'target_discard': {
+        if (!game) return;
+        const r = processTargetDiscard(game, pid, msg.cardUid);
+        if (r.error) return fail(r.error);
+        flush(info.roomId);
+        if (game.phase !== 'ended' && cp(game)?.isAI) scheduleAI(info.roomId);
+        return;
+      }
     }
   });
+
+  ws.on('error', () => {});
+  ws.on('close', () => handleDisconnect(ws));
 });
 
+/* モバイルはタブを裏に回すと黙って切れる。生存確認しないと幽霊接続が溜まり続ける */
+const heartbeat = setInterval(() => {
+  wss.clients.forEach(ws => {
+    if (ws.isAlive === false) { handleDisconnect(ws); return ws.terminate(); }
+    ws.isAlive = false;
+    try { ws.ping(); } catch {}
+  });
+}, 30000);
+heartbeat.unref?.();
+wss.on('close', () => clearInterval(heartbeat));
+
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`SILVA server running on http://localhost:${PORT}`));
+if (require.main === module) {
+  server.listen(PORT, () => console.log(`SILVA server running on http://localhost:${PORT}`));
+}
+
+module.exports = { app, server, rooms, createRoom, startGame, sanitizeName, sanitizeRoomId, createAI, CORE };
