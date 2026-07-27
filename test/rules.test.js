@@ -294,5 +294,20 @@ console.log('\n▸ 多言語辞書の網羅性（翻訳漏れの検出）');
      interpolated.length ? `→ ${interpolated.length}件: ${interpolated.slice(0, 3).map(s2=>s2.slice(0,50)).join(' / ')}` : '');
 }
 
+console.log('\n▸ ソースの健全性');
+{
+  const fs = require('fs'), path = require('path');
+  const root = path.join(__dirname, '..');
+  const files = ['server.js', 'public/game-core.js', 'public/i18n.js', 'public/local-game.js',
+                 'public/index.html', 'public/rules.html', 'public/sw.js'];
+  /* ソースに制御文字が混ざると git がバイナリ扱いして差分が読めなくなる。
+     正規表現に生の制御文字を書いてしまった事故があったので固定する */
+  const dirty = files.filter(f => {
+    const b = fs.readFileSync(path.join(root, f));
+    return b.some(c => c < 9 || (c > 13 && c < 32));
+  });
+  ok(dirty.length === 0, 'ソースに生の制御文字が混ざっていない（gitがバイナリ扱いしない）', dirty.join(','));
+}
+
 console.log(`\n${'═'.repeat(52)}\n  合計: ${pass} passed, ${fail} failed\n${'═'.repeat(52)}`);
 process.exit(fail ? 1 : 0);
