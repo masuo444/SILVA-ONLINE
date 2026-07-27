@@ -33,6 +33,8 @@ function makeLocalGame(onMessage) {
     if (!game || game.phase === 'ended') return;
     const cur = CORE.cp(game);
     if (!cur || !cur.isAI) return;
+    /* 待ち時間を「考えている」に見せる（v2から移植） */
+    post({ type: 'computer_thinking', playerId: cur.id, playerName: cur.name });
 
     if (game.phase === 'draw') {
       const r = CORE.processDraw(game, cur.id);

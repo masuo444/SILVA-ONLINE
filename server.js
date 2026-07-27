@@ -200,6 +200,8 @@ function aiTurn(roomId) {
   if (game.phase === 'ended') return;
   const cur = cp(game);
   if (!cur?.isAI) return;
+  /* 待ち時間を「考えている」に見せる */
+  broadcastToRoom(roomId, { type:'computer_thinking', playerId: cur.id, playerName: cur.name });
 
   if (game.phase === 'draw') {
     const r = processDraw(game, cur.id);

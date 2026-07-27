@@ -1,10 +1,10 @@
 // SILVA Service Worker
 // ⚠ リリースのたびに CACHE_NAME を上げること。上げないと古いHTMLが端末に残り続ける
-const CACHE_NAME = 'silva-v6';
+const CACHE_NAME = 'silva-v7';
 
 /* index.html の <script src="...?v=N"> と必ず同じ値にする（テストが同期を検査する）。
    ズレると、オフライン初回にコアJSがキャッシュに無くてAI戦が起動できない */
-const ASSET_VER = '11';
+const ASSET_VER = '12';
 
 const STATIC_ASSETS = [
   '/',
