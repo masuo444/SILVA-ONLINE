@@ -234,11 +234,33 @@ console.log('\n▸ 多言語辞書の網羅性（翻訳漏れの検出）');
   }
 
   /* ja と en でキー集合が一致しているか（片方だけ追加した事故を防ぐ） */
-  for (const section of ['card','effect','effectDesc','log','err','ui']) {
+  for (const section of ['card','effect','effectDesc','log','err','ui','bot']) {
     const ja = Object.keys(I18N.DICT.ja[section]).sort();
     const en = Object.keys(I18N.DICT.en[section]).sort();
     const diff = [...ja.filter(k=>!en.includes(k)).map(k=>'en欠:'+k), ...en.filter(k=>!ja.includes(k)).map(k=>'ja欠:'+k)];
     ok(!diff.length, `${section} のキーが ja/en で一致`, diff.join(','));
+  }
+
+  /* ルールボット辞書の内側キーも ja/en で一致していること */
+  for (const sub of ['rules','tips','detail','aliases','ruleKeys']) {
+    const ja = Object.keys(I18N.DICT.ja.bot[sub]).sort();
+    const en2 = Object.keys(I18N.DICT.en.bot[sub]).sort();
+    const diff = [...ja.filter(k=>!en2.includes(k)).map(k=>'en欠:'+k), ...en2.filter(k=>!ja.includes(k)).map(k=>'ja欠:'+k)];
+    ok(!diff.length, `bot.${sub} のキーが ja/en で一致`, diff.join(','));
+  }
+
+  /* ボットの回答が確定裁定と食い違っていないこと（v2からの移植時に誤りを3件直した） */
+  {
+    const jaBot = JSON.stringify(I18N.DICT.ja.bot);
+    ok(!jaBot.includes('16枚'), 'bot辞書に「山札16枚」の誤記が無い（正:17枚）');
+    ok(I18N.DICT.ja.bot.rules.rebirth.body.includes('少年2枚目で捨てさせられた場合も再生'),
+       'botの再生説明: 少年2枚目では再生する（確定裁定）');
+    ok(I18N.DICT.ja.bot.rules.rebirth.body.includes('刀の少女'),
+       'botの再生説明: 斬れるのは刀の少女のみ');
+    ok(I18N.DICT.ja.bot.rules.ward.body.includes('醸造で自分が負けた時も守られます'),
+       'botの守護説明: 醸造の自己敗北も防ぐ');
+    ok(I18N.DICT.en.bot.rules.rebirth.body.includes('Only the Blade Maiden'),
+       'EN botの再生説明も裁定と一致');
   }
 
   /* ルール説明ページに全カードが載っているか */

@@ -974,6 +974,47 @@ select option{background:#080d0b}
 .lang-switch button.on{color:var(--dew);background:rgba(74,173,106,.16)}
 @media(max-width:640px){.lang-switch{top:.5rem;right:.5rem}.lang-switch button{padding:.28rem .5rem;font-size:.62rem}}
 
+/* ルールボット（v2から移植・i18n対応） */
+.rulebot-fab{
+  position:fixed;left:16px;bottom:16px;z-index:220;
+  display:flex;align-items:center;gap:.45rem;padding:.62rem .9rem;
+  border:1px solid rgba(74,173,106,.38);background:rgba(8,13,8,.9);
+  color:var(--mint);font-family:var(--f-serif);font-size:.78rem;letter-spacing:.1em;
+  border-radius:999px;cursor:pointer;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  box-shadow:0 8px 28px rgba(0,0,0,.45),0 0 18px rgba(74,173,106,.08);
+  transition:transform .25s,border-color .25s,box-shadow .25s;
+}
+.rulebot-fab:hover{transform:translateY(-3px);border-color:var(--sprout);box-shadow:0 10px 32px rgba(0,0,0,.5),0 0 24px rgba(74,173,106,.12)}
+.rulebot-box{max-width:560px;height:min(640px,88vh);padding:0;overflow:hidden;text-align:left}
+.rulebot-head{
+  display:flex;align-items:center;justify-content:space-between;gap:.8rem;
+  padding:1rem 1.1rem;border-bottom:1px solid rgba(74,173,106,.12);
+  background:linear-gradient(90deg,rgba(74,173,106,.08),rgba(74,173,106,.02));
+}
+.rulebot-title{font-family:var(--f-serif);font-size:.9rem;color:var(--mint);letter-spacing:.12em}
+.rulebot-sub{font-size:.58rem;color:var(--frond3);margin-top:.16rem}
+.rulebot-close{border:1px solid rgba(74,173,106,.2);background:rgba(74,173,106,.04);color:var(--sprout);width:32px;height:32px;border-radius:50%;cursor:pointer}
+.rulebot-body{height:calc(100% - 150px);overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.7rem}
+.rulebot-msg{max-width:88%;padding:.65rem .78rem;border-radius:9px;font-size:.78rem;line-height:1.75}
+.rulebot-msg.bot{align-self:flex-start;background:rgba(74,173,106,.06);border:1px solid rgba(74,173,106,.12);color:var(--frond2)}
+.rulebot-msg.user{align-self:flex-end;background:rgba(74,173,106,.14);border:1px solid rgba(74,173,106,.22);color:var(--dew)}
+.rulebot-msg strong{color:var(--mint)}
+.rulebot-msg ul{padding-left:1rem;margin:.25rem 0 0}
+.rulebot-msg li{margin:.12rem 0}
+.rulebot-suggestions{display:flex;gap:.35rem;flex-wrap:wrap;padding:0 1rem .7rem}
+.rulebot-chip{border:1px solid rgba(74,173,106,.18);background:rgba(74,173,106,.035);color:var(--sprout);font-family:var(--f-serif);font-size:.62rem;padding:.32rem .55rem;border-radius:999px;cursor:pointer}
+.rulebot-chip:hover{border-color:var(--sprout);color:var(--mint)}
+.rulebot-input{display:grid;grid-template-columns:1fr auto;gap:.5rem;padding:.8rem 1rem 1rem;border-top:1px solid rgba(74,173,106,.12);background:rgba(4,8,6,.7)}
+.rulebot-input input{font-size:.82rem;padding:.62rem .8rem}
+.rulebot-input button{padding:.62rem .9rem}
+@media(max-width:660px){
+  .rulebot-fab{left:8px;bottom:8px;padding:.52rem .7rem;font-size:.68rem}
+  .rulebot-box{height:92vh;width:94vw}
+  .rulebot-body{height:calc(100% - 158px);padding:.75rem}
+  .rulebot-msg{max-width:94%;font-size:.74rem}
+  .rulebot-input{grid-template-columns:1fr}
+}
+
 /* AIの思考中表示 — 無反応に見える待ち時間を「考えている」に変える（v2から移植） */
 .thinking-strip{
   display:flex;align-items:center;justify-content:center;gap:.5rem;
@@ -1579,6 +1620,27 @@ select option{background:#080d0b}
 
 <!-- 接続状態（切断・再接続・相手の離脱）を常に伝える -->
 <div id="netBanner" class="net-banner hidden"></div>
+
+<!-- ルール相談（ルールボット） -->
+<button class="rulebot-fab" id="rulebotFab" onclick="openRuleBot()">💬 ルール相談</button>
+
+<div class="overlay" id="ovRuleBot">
+  <div class="modal-box rulebot-box">
+    <div class="rulebot-head">
+      <div>
+        <div class="rulebot-title" id="rulebotTitle"></div>
+        <div class="rulebot-sub" id="rulebotSub"></div>
+      </div>
+      <button class="rulebot-close" onclick="closeOv('ovRuleBot')" aria-label="close">×</button>
+    </div>
+    <div class="rulebot-body" id="rulebotBody"></div>
+    <div class="rulebot-suggestions" id="rulebotSuggestions"></div>
+    <div class="rulebot-input">
+      <input type="text" id="rulebotInput" onkeydown="if(event.key==='Enter')askRuleBot()">
+      <button class="btn filled" id="rulebotAsk" onclick="askRuleBot()"></button>
+    </div>
+  </div>
+</div>
 
 <!-- FX Canvas overlay for particle effects -->
 <canvas id="fxCanvas"></canvas>
@@ -3030,9 +3092,9 @@ const FX = (function(){
 <!-- ルールエンジン（サーバーと共有）・多言語辞書・ブラウザ内AI対戦
      ⚠ これらを変更したらリリース時に ?v= を上げること。
         上げないと、古いキャッシュを持つ端末が古いルールで動いてしまう -->
-<script src="/game-core.js?v=12"></script>
-<script src="/i18n.js?v=12"></script>
-<script src="/local-game.js?v=12"></script>
+<script src="/game-core.js?v=14"></script>
+<script src="/i18n.js?v=14"></script>
+<script src="/local-game.js?v=14"></script>
 
 <script>
 /* ═══════════════════════════════════
@@ -3060,6 +3122,7 @@ function setLang(lang){
   try{localStorage.setItem('silva_lang',lang);}catch{}
   I18.applyStatic();
   renderLangSwitch();
+  if(typeof resetRuleBot==='function')resetRuleBot();
   if(typeof gameState!=='undefined'&&gameState) renderGame();
 }
 function renderLangSwitch(){
@@ -3955,6 +4018,149 @@ let _replayTimer=null;
    結果画像の共有 — SNSに貼れる1200x630のカードを生成する。
    拡散はここが起点になるので、OGP画像と同じトーンで仕上げる
 ═══════════════════════════════════ */
+/* ═══════════════════════════════════
+   ルールボット（v2から移植・i18n対応・回答は確定裁定に監査済み）
+   回答文はすべて i18n.js の bot 辞書から取る。
+   マッチングは日英両方のキーワードを常に見る（EN画面で日本語カード名を打ってもよい）
+═══════════════════════════════════ */
+function botDict(){ return SILVA_I18N.DICT[LANG]?.bot || SILVA_I18N.DICT.ja.bot; }
+function botNorm(x){ return String(x||'').toLowerCase().replace(/\s+/g,''); }
+/* キーワードの得点。日本語は2文字でも意味が濃い（少年・守護・醸造…）ので、
+   ASCII基準の「3文字未満は1点」だと日本語質問の精度が落ちる。CJKは文字数×2で評価する */
+function botPt(k){ return /[^\x00-\x7f]/.test(k) ? k.length*2 : (k.length>=3 ? k.length : 1); }
+
+function openRuleBot(prefill){
+  openOv('ovRuleBot');
+  initRuleBot();
+  const input=document.getElementById('rulebotInput');
+  if(prefill){input.value=prefill;askRuleBot();}
+  else input.focus();
+}
+function initRuleBot(){
+  const b=botDict();
+  document.getElementById('rulebotTitle').textContent=b.title;
+  document.getElementById('rulebotSub').textContent=b.sub;
+  document.getElementById('rulebotAsk').textContent=b.ask;
+  const rbInput=document.getElementById('rulebotInput');
+  rbInput.placeholder=b.placeholder;
+  /* applyStatic は属性の初回値を「原文」として控えるため、ja原文に固定しておく。
+     こうしないと EN で先に開いた端末で ja に戻せなくなる */
+  (rbInput._jaAttrs||(rbInput._jaAttrs={})).placeholder=SILVA_I18N.DICT.ja.bot.placeholder;
+  const body=document.getElementById('rulebotBody');
+  if(body.dataset.ready)return;
+  addRuleBotMessage('bot',b.greet);
+  renderRuleBotSuggestions(b.suggWelcome);
+  body.dataset.ready='1';
+}
+/* 言語を切り替えたら会話をリセット（次に開いたとき新しい言語で挨拶する） */
+function resetRuleBot(){
+  const body=document.getElementById('rulebotBody');
+  if(body){body.innerHTML='';delete body.dataset.ready;}
+}
+function renderRuleBotSuggestions(items){
+  const el=document.getElementById('rulebotSuggestions');
+  el.innerHTML='';
+  (items||[]).forEach(q=>{
+    const btn=document.createElement('button');
+    btn.className='rulebot-chip';btn.textContent=q;
+    btn.onclick=()=>askRuleBot(q);
+    el.appendChild(btn);
+  });
+}
+function addRuleBotMessage(role,html){
+  const body=document.getElementById('rulebotBody');
+  const div=document.createElement('div');
+  div.className=`rulebot-msg ${role}`;
+  div.innerHTML=html;
+  body.appendChild(div);
+  body.scrollTop=body.scrollHeight;
+}
+function askRuleBot(forced){
+  const input=document.getElementById('rulebotInput');
+  const q=(typeof forced==='string'?forced:input.value||'').trim();
+  if(!q)return;
+  addRuleBotMessage('user',esc(q));
+  input.value='';
+  const answer=answerRuleQuestion(q);
+  addRuleBotMessage('bot',answer.html);
+  renderRuleBotSuggestions(answer.suggestions||botDict().suggDefault);
+}
+function answerRuleQuestion(raw){
+  const b=botDict();
+  const q=botNorm(raw);
+  /* 「今なにをすればいい？」— 対局中の状況アドバイス */
+  if(/今|どうすれば|何すれば|なにすれば|次|whatshouldido|whatnow|donow/.test(q)&&gameState){
+    return {html:currentRuleAdvice(),suggestions:b.suggAdvice};
+  }
+  const card=matchRuleCard(q);
+  const rule=matchRuleEntry(q);
+  if(rule&&/違い|比較|どっち|差|difference|versus|vs\b|compare/.test(q)){
+    return {html:`<strong>${rule.entry.title}</strong><br>${rule.entry.body}`,suggestions:b.suggCompare};
+  }
+  if(card&&(!rule||card.score>=rule.score)){
+    return {html:cardAnswer(card.card),suggestions:relatedSuggestions(card.card)};
+  }
+  if(rule)return {html:`<strong>${rule.entry.title}</strong><br>${rule.entry.body}`,suggestions:b.suggAfterRule};
+  const cardList=SILVA_CORE.CARDS.map(c=>`${N(c.level)} ${cardName(c.id)}`).join(' / ');
+  return {html:`${b.fallbackIntro}<br><br><strong>${b.cardListTitle}</strong><br>${cardList}`,suggestions:b.suggFallback};
+}
+/* 日英どちらのキーワードでも当てられるように、両言語の別名を常にマージして探す */
+function botAliasesFor(id){
+  const ja=SILVA_I18N.DICT.ja, en=SILVA_I18N.DICT.en;
+  /* lvN・レベルN は辞書の aliases 側に含まれている。
+     カード名が辞書と別名の両方に載っていると二重加点でルール項目に勝ちすぎるため、重複を除く */
+  return [...new Set([ja.card[id],en.card[id],ja.effect[id],en.effect[id],
+          ...(ja.bot.aliases[id]||[]),...(en.bot.aliases[id]||[])].map(a=>botNorm(a)))];
+}
+function matchRuleCard(q){
+  let best=null;
+  for(const c of SILVA_CORE.CARDS){
+    let score=0;
+    botAliasesFor(c.id).forEach(k=>{if(k&&q.includes(k))score+=botPt(k);});
+    if(score&&(!best||score>best.score))best={card:c,score};
+  }
+  return best;
+}
+function matchRuleEntry(q){
+  const b=botDict();
+  const jaKeys=SILVA_I18N.DICT.ja.bot.ruleKeys, enKeys=SILVA_I18N.DICT.en.bot.ruleKeys;
+  let best=null;
+  for(const id of Object.keys(b.rules)){
+    let score=0;
+    [...new Set([...(jaKeys[id]||[]),...(enKeys[id]||[])].map(botNorm))].forEach(kk=>{if(kk&&q.includes(kk))score+=botPt(kk);});
+    if(score&&(!best||score>best.score))best={entry:b.rules[id],id,score};
+  }
+  return best;
+}
+function cardAnswer(c){
+  const b=botDict();
+  const full=SILVA_CORE.CARD_BY_ID[c.id];
+  const copies=c.id==='kukuochi_young'?'※':full.count;
+  return `<strong>${N(c.level)} ${cardName(c.id)}（${I18.effectName(c.id)}）</strong><br>${b.tips[c.id]||''}`+
+    `<ul><li>${b.level}: ${c.level}</li><li>${b.copies}: ${copies}</li><li>${b.detail[c.id]||''}</li></ul>`;
+}
+function relatedSuggestions(c){
+  const b=botDict();
+  if(c.id==='kukuochi')return b.suggKukuochi;
+  if(c.id==='warrior'||c.id==='sword_girl')return b.suggSwords;
+  if(c.id==='scout'||c.id==='trainee')return b.suggScout;
+  return b.suggDefault;
+}
+function currentRuleAdvice(){
+  const b=botDict();
+  const {players,currentPlayerId,phase,pendingAction,deckCount}=gameState;
+  const me=players.find(p=>p.id===myId);
+  const selected=me?.hand?.find(c=>c.uid===selectedUid);
+  let body;
+  if(pendingAction?.fromPlayerId===myId)body=b.advicePickDiscard;
+  else if(currentPlayerId!==myId)body=SILVA_I18N.fill(b.adviceOpponentTurn,{deck:deckCount});
+  else if(phase==='draw')body=b.adviceDraw;
+  else if(phase==='farmer_select')body=b.adviceFarmer;
+  else if(selected)return `<strong>${SILVA_I18N.fill(b.adviceSelected,{card:cardName(selected.id)})}</strong><br>${b.tips[selected.id]||I18.effectDesc(selected.id)}`;
+  else body=b.advicePlay;
+  return `<strong>${b.adviceTitle}</strong><br>${body}`;
+}
+
 /* AIの思考中表示（v2から移植・i18n対応） */
 let _thinkingTimer=null;
 function showThinking(playerName){
