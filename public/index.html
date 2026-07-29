@@ -974,6 +974,27 @@ select option{background:#080d0b}
 .lang-switch button.on{color:var(--dew);background:rgba(74,173,106,.16)}
 @media(max-width:640px){.lang-switch{top:.5rem;right:.5rem}.lang-switch button{padding:.28rem .5rem;font-size:.62rem}}
 
+/* カード詳細ポップ — 選択中のカードの効果をその場で確認（v2から移植） */
+.card-pop{
+  position:fixed;left:50%;bottom:88px;z-index:260;
+  width:min(340px,calc(100vw - 28px));padding:.9rem 1rem;
+  transform:translateX(-50%);
+  background:linear-gradient(170deg,rgba(13,26,16,.96),rgba(7,13,8,.98));
+  border:1px solid rgba(74,173,106,.36);border-radius:8px;
+  box-shadow:0 18px 48px rgba(0,0,0,.52),0 0 32px rgba(74,173,106,.1);
+  display:grid;grid-template-columns:auto 1fr auto;gap:.65rem;align-items:start;
+  animation:fadeUp .18s ease both;
+}
+.card-pop.hidden{display:none}
+.card-pop-lv{
+  width:34px;height:34px;border:1px solid rgba(74,173,106,.28);border-radius:50%;
+  display:grid;place-items:center;font-family:var(--f-serif);font-size:1.05rem;color:var(--mint);
+  background:rgba(74,173,106,.06);
+}
+.card-pop-name{font-family:var(--f-serif);font-size:.86rem;color:var(--mint);letter-spacing:.08em;margin-bottom:.2rem}
+.card-pop-text{font-size:.68rem;color:var(--frond2);line-height:1.65}
+.card-pop-close{border:0;background:transparent;color:var(--frond3);font-size:1rem;cursor:pointer;padding:.1rem .2rem}
+
 /* はじめてガイド（v2から移植・i18n対応） */
 .guide-box{max-width:760px;max-height:92vh;overflow:auto;text-align:left;padding-bottom:1rem;position:relative}
 .guide-box .m-title{text-align:center}
@@ -1655,6 +1676,9 @@ select option{background:#080d0b}
 
 <!-- 接続状態（切断・再接続・相手の離脱）を常に伝える -->
 <div id="netBanner" class="net-banner hidden"></div>
+
+<!-- カード詳細ポップ（選択中カードの効果表示） -->
+<div class="card-pop hidden" id="cardPop" aria-live="polite"></div>
 
 <!-- ルール相談（ルールボット） -->
 <button class="rulebot-fab" id="rulebotFab" onclick="openRuleBot()">💬 ルール相談</button>
@@ -3150,9 +3174,9 @@ const FX = (function(){
 <!-- ルールエンジン（サーバーと共有）・多言語辞書・ブラウザ内AI対戦
      ⚠ これらを変更したらリリース時に ?v= を上げること。
         上げないと、古いキャッシュを持つ端末が古いルールで動いてしまう -->
-<script src="/game-core.js?v=15"></script>
-<script src="/i18n.js?v=15"></script>
-<script src="/local-game.js?v=15"></script>
+<script src="/game-core.js?v=16"></script>
+<script src="/i18n.js?v=16"></script>
+<script src="/local-game.js?v=16"></script>
 
 <script>
 /* ═══════════════════════════════════
@@ -3910,7 +3934,7 @@ function renderAction(){
     else hint.textContent=t('ui.discardOpen',{name:tgtName});
     return;
   }
-  if(!isMy||!me?.alive){hint.textContent=t('ui.waitingFor',{name:dn(players.find(p=>p.id===currentPlayerId)?.name)||'—'});pendingCardUid=null;pendingEffect=null;selectedUid=null;return;}
+  if(!isMy||!me?.alive){hint.textContent=t('ui.waitingFor',{name:dn(players.find(p=>p.id===currentPlayerId)?.name)||'—'});pendingCardUid=null;pendingEffect=null;selectedUid=null;hideCardPop();return;}
   if(phase==='draw'){hint.textContent='カードを引いてください';return;}
   if(phase==='farmer_select'){hint.textContent='🌾 農家の効果 — 手札から1枚選んでください';return;}
   if(phase==='action'){
@@ -3949,7 +3973,7 @@ function renderTgtBtns(isPending){
     row.appendChild(b);
   });
   const cb=document.createElement('button');cb.className='btn';cb.textContent='キャンセル';
-  cb.onclick=()=>{pendingCardUid=null;pendingEffect=null;selectedUid=null;renderGame();};
+  cb.onclick=()=>{pendingCardUid=null;pendingEffect=null;selectedUid=null;hideCardPop();renderGame();};
   row.appendChild(cb);
   wrap.appendChild(row);
   myZone.appendChild(wrap);
@@ -3982,16 +4006,23 @@ function renderGuessFlow(){
     b.onclick=()=>{playCardWithFX(pendingCardUid,{targetId:_guessTarget,guess:c.id});pendingCardUid=null;pendingEffect=null;pendingGuess=false;_guessTarget=null;};
     btns.appendChild(b);
   });
-  btns.appendChild(mkBtn('キャンセル','btn',()=>{_guessTarget=null;pendingCardUid=null;pendingEffect=null;pendingGuess=false;renderGame();}));
+  btns.appendChild(mkBtn(t('ui.cancel'),'btn',()=>{_guessTarget=null;pendingCardUid=null;pendingEffect=null;pendingGuess=false;hideCardPop();renderGame();}));
 }
 
 function mkBtn(l,c,f){const b=document.createElement('button');b.className=c;b.textContent=l;b.onclick=f;return b;}
-function selectCard(u){selectedUid=selectedUid===u?null:u;renderGame();renderAction();}
+function selectCard(u){
+  selectedUid=selectedUid===u?null:u;
+  const me=gameState?.players?.find(p=>p.id===myId);
+  const card=me?.hand?.find(c=>c.uid===selectedUid);
+  if(card)showCardPop(card);else hideCardPop();
+  renderGame();renderAction();
+}
 function discardCard(u){send({type:'target_discard',cardUid:u});}
 function warriorDiscard(u){send({type:'target_discard',cardUid:u});}
 
 /* FX hook: trigger card effect when playing a card locally */
 function playCardWithFX(cardUid, extra){
+  hideCardPop();
   if(typeof FX!=='undefined' && gameState){
     const me=gameState.players.find(p=>p.id===myId);
     const card=me?.hand?.find(c=>c.uid===cardUid);
@@ -4086,6 +4117,28 @@ let _replayTimer=null;
    回答文はすべて i18n.js の bot 辞書から取る。
    マッチングは日英両方のキーワードを常に見る（EN画面で日本語カード名を打ってもよい）
 ═══════════════════════════════════ */
+/* ═══════════════════════════════════
+   カード詳細ポップ（v2から移植・i18n対応）
+   手札のカードを選ぶと、効果の一言解説を盤面の上に出す。
+   初心者が「このカード何だっけ」で手を止めないためのもの
+═══════════════════════════════════ */
+function showCardPop(card){
+  const el=document.getElementById('cardPop');
+  if(!el||!card)return;
+  el.innerHTML=`
+    <div class="card-pop-lv">${N(card.level)}</div>
+    <div>
+      <div class="card-pop-name">${esc(cardName(card.id))}</div>
+      <div class="card-pop-text">${esc(botDict().tips[card.id]||I18.effectDesc(card.id))}</div>
+    </div>
+    <button class="card-pop-close" onclick="hideCardPop()" aria-label="close">×</button>`;
+  el.classList.remove('hidden');
+}
+function hideCardPop(){
+  const el=document.getElementById('cardPop');
+  if(el)el.classList.add('hidden');
+}
+
 /* ═══════════════════════════════════
    はじめてガイド（v2から移植・i18n対応）
    初めての訪問者にはスプラッシュ後に自動で開く。
@@ -4392,6 +4445,7 @@ async function shareResult(){
 }
 
 function showWin(wid,players){
+  hideCardPop();
   const icon=document.getElementById('winIcon');
   const title=document.getElementById('winTitle');
   const sub=document.getElementById('winSub');
