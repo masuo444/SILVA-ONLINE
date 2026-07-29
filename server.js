@@ -78,6 +78,29 @@ app.use(express.static(path.join(__dirname, 'public'), {
 }));
 /* 静的配信をCloudflare Pages等に分離した場合、疎通確認は別オリジンから来る。
    ALLOWED_ORIGINS 未設定なら誰でも叩ける単なる ping なので緩めてよい */
+/* 検索エンジン向け。ホスト名は配信時に解決する */
+app.get('/robots.txt', (req, res) => {
+  const proto=(req.headers['x-forwarded-proto']||req.protocol||'https').split(',')[0];
+  res.type('text/plain').send(`User-agent: *\nAllow: /\nSitemap: ${proto}://${req.headers.host}/sitemap.xml\n`);
+});
+app.get('/sitemap.xml', (req, res) => {
+  const proto=(req.headers['x-forwarded-proto']||req.protocol||'https').split(',')[0];
+  const o=`${proto}://${req.headers.host}`;
+  res.type('application/xml').send(
+`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url><loc>${o}/</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="${o}/?lang=ja"/>
+    <xhtml:link rel="alternate" hreflang="en" href="${o}/?lang=en"/>
+  </url>
+  <url><loc>${o}/rules.html</loc>
+    <xhtml:link rel="alternate" hreflang="ja" href="${o}/rules.html?lang=ja"/>
+    <xhtml:link rel="alternate" hreflang="en" href="${o}/rules.html?lang=en"/>
+  </url>
+</urlset>
+`);
+});
+
 app.get('/ping', (req, res) => {
   const allow = (process.env.ALLOWED_ORIGINS || '*').split(',').map(s => s.trim());
   const origin = req.headers.origin;
