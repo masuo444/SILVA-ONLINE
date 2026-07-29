@@ -637,6 +637,23 @@ const STATIC = {
     'SILVAで対戦しよう！':'Come play SILVA!', 'SILVA対戦':'SILVA match',
     '🏺 枡 0':'🏺 Masu 0', '🏺 枡 守護中🛡':'🏺 Masu — Warded 🛡',
 
+    /* ── はじめてガイド ── */
+    'SILVA はじめてガイド':'SILVA — First-Time Guide',
+    '1. 引く':'1. Draw',
+    '手札1枚から始まり、自分の手番で1枚引きます。':'You start with one card and draw one on your turn.',
+    '2. 出す':'2. Play',
+    '2枚から1枚を使います。残った1枚があなたの強さです。':'Play one of your two cards. The one you keep is your strength.',
+    '3. 読む':'3. Read',
+    '相手の手札を見たり、当てたり、交換したりして生き残ります。':'Peek, guess and swap your way to survival.',
+    '勝ち方':'How to win',
+    '最後まで残る。山札切れなら手札レベルが一番高い人が勝ち。':'Outlast everyone — or hold the highest card when the deck runs out.',
+    '大事':'Key rule',
+    'ククノチ Lv.10 は出せませんが、脱落時に再生することがあります。':'Kukunochi (Lv.10) cannot be played, but it may be reborn when you fall.',
+    '最初のおすすめ':'First game',
+    'やさしいAIと1人で、カード効果を見ながら1戦だけ遊ぶ。':'Play one round against the easy AI while reading the card effects.',
+    '🌱 練習をはじめる':'🌱 Start a practice game',
+    '🌱 はじめて遊ぶ':'🌱 New here? Start guide',
+
     /* ── ルール説明ページ（rules.html） ── */
     'トップへ戻る':'Back to top',
     '心理戦カードゲーム — ルール説明':'A game of bluff and deduction — Rules',
