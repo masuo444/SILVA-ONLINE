@@ -305,7 +305,8 @@ console.log('\n▸ 多言語辞書の網羅性（翻訳漏れの検出）');
   const found = new Set();
   for (const m of body.matchAll(/>([^<>]*?)</g)) {
     const t = m[1].trim();
-    if (t && jp.test(t) && t.length < 70 && !t.includes('${') && !t.includes('`')) found.add(t);
+    /* JS文字列連結（'+esc(L(...))+'）の断片は表示テキストではないので除外 */
+    if (t && jp.test(t) && t.length < 70 && !t.includes('${') && !t.includes('`') && !t.includes("+") && !t.includes("('")) found.add(t);
   }
   for (const m of body.matchAll(/(?:placeholder|title|alt)="([^"]*)"/g)) {
     const t = m[1].trim();

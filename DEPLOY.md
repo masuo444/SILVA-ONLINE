@@ -28,21 +28,23 @@ npm start         # ローカル起動 http://localhost:3000
 
 ## B. 静的を Cloudflare Pages に分離する（推奨・帯域が無料になる）
 
-### 1. Pages 側
+### 1. Pages 側（wrangler で直接デプロイ）
 
-- Cloudflare Pages で新規プロジェクトを作成し、このリポジトリを接続
-- ビルドコマンド: なし（空欄）
-- 出力ディレクトリ: `public`
+```bash
+# 静的ビルド（__ORIGIN__ 焼き込み・WS接続先設定・robots/sitemap生成）
+ORIGIN=https://<project>.pages.dev WS=wss://silva-online.onrender.com \
+  node scripts/build-pages.mjs
 
-### 2. WSサーバーの場所を教える
-
-`public/index.html` の先頭にあるメタタグに、Railway 側のURLを書く：
-
-```html
-<meta name="silva-ws" content="wss://silva-online-production.up.railway.app">
+npx wrangler pages project create <project> --production-branch=main   # 初回のみ
+npx wrangler pages deploy dist --project-name=<project>
 ```
 
-空のままなら「HTMLを配信しているのと同じホスト」に繋ぐので、A構成では触らなくてよい。
+独自ドメインに切り替えたら ORIGIN を変えて再ビルド＆デプロイするだけ。
+
+### 2. WSサーバーの場所
+
+`build-pages.mjs` が `<meta name="silva-ws">` に WS のURLを焼き込む（手動編集は不要）。
+リポジトリ内の `public/index.html` は空のままにしておく — Render 単体構成用。
 一時的に試すだけなら `?ws=wss://...` をURLに付けても切り替わる。
 
 ### 3. Railway 側で接続元を制限する
