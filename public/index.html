@@ -1671,7 +1671,7 @@ select option{background:#080d0b}
   100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}
 }
 </style>
-<link rel="stylesheet" href="/experience.css?v=21">
+<link rel="stylesheet" href="/experience.css?v=22">
 </head>
 <body>
 
@@ -3129,9 +3129,9 @@ const FX = (function(){
 <!-- ルールエンジン（サーバーと共有）・多言語辞書・ブラウザ内AI対戦
      ⚠ これらを変更したらリリース時に ?v= を上げること。
         上げないと、古いキャッシュを持つ端末が古いルールで動いてしまう -->
-<script src="/game-core.js?v=21"></script>
-<script src="/i18n.js?v=21"></script>
-<script src="/local-game.js?v=21"></script>
+<script src="/game-core.js?v=22"></script>
+<script src="/i18n.js?v=22"></script>
+<script src="/local-game.js?v=22"></script>
 
 <script>
 /* ═══════════════════════════════════
@@ -3378,26 +3378,26 @@ function handle(m){
     case 'computer_thinking': showThinking(dn(m.playerName)); break;
     case 'spectating': isSpectator=true;gameState=m.state;goScreen('game');document.getElementById('specBanner').classList.remove('hidden');renderGame(); break;
     case 'public_rooms': renderRooms(m.rooms); break;
-    case 'peek_result': showPeek(m.card); break;
-    case 'kurando_reveal': showKurando(m.myCard,m.theirCard); break;
-    case 'kurando_reveal_all': showKurandoAll(m); break;
-    case 'spirit_swap': toast(L('✨ 精霊の効果で手札が交換された！'));FX.playCard('spirit',document.querySelector('.pzone.pz-mine')); break;
+    case 'peek_result': afterCardReveal(()=>showPeek(m.card)); break;
+    case 'kurando_reveal': afterCardReveal(()=>showKurando(m.myCard,m.theirCard)); break;
+    case 'kurando_reveal_all': afterCardReveal(()=>showKurandoAll(m)); break;
+    case 'spirit_swap': toast(L('✨ 精霊の効果で手札が交換された！')); break;
     case 'need_target': pendingCardUid=m.cardUid;pendingEffect=m.effect;pendingGuess=!!m.requiresGuess;renderAction(); break;
     case 'waiting_fomus': showFomus(); break;
-    case 'farmer_draw': showFarmer(m.cards);FX.playCard('farmer',document.querySelector('.pzone.pz-mine')); break;
+    case 'farmer_draw': showFarmer(m.cards); break;
     case 'fomus_summoned': showBlast(dn(m.playerName),m.success,m.declaration); break;
     case 'card_played':
       _lastPlayedCard={cardId:m.cardId,cardName:cardName(m.cardId),cardLevel:m.cardLevel,cardEffect:I18.effectName(m.cardId),cardEmoji:(SILVA_CORE.CARD_BY_ID[m.cardId]||{}).emoji,playerName:m.playerName,playerId:m.playerId,noEffect:m.noEffect};
       if(m.noEffect) showTurnBannerSimple(_lastPlayedCard);
       else showTurnBanner(_lastPlayedCard);
-      if(m.cardId&&typeof FX!=='undefined'){const _el=[...document.querySelectorAll('.pzone')].find(el=>el.dataset.pid===m.playerId);FX.playCard(m.cardId,_el,{hit:m.hit,noEffect:m.noEffect});}
+      if(m.cardId&&typeof FX!=='undefined'){const _el=[...document.querySelectorAll('.pzone')].find(el=>el.dataset.pid===m.playerId);FX.playCard(m.cardId,_el,{noEffect:m.noEffect,target:[...document.querySelectorAll('.pzone')].find(el=>el.dataset.pid===m.targetId)});}
       break;
     case 'player_eliminated': if(typeof FX!=='undefined'){const _pz=document.querySelector(`.pzone[data-pid="${m.playerId}"]`)||document.querySelector('.pzone.pz-dead');FX.eliminate(_pz);} break;
     case 'shield_blocked': if(typeof FX!=='undefined'){const _sz=document.querySelector(`.pzone[data-pid="${m.playerId}"]`)||document.querySelector('.pzone.pz-mine');FX.shieldBlock(_sz);} break;
     case 'trainee_result': {
       const _tel=document.querySelector(`.pzone[data-pid="${m.targetId}"]`)||document.querySelector('.pzone.pz-active');
       if(typeof FX!=='undefined') FX.playCard('trainee',_tel,{hit:m.hit});
-      showTraineeResult(m);
+      afterCardReveal(()=>showTraineeResult(m));
       break;
     }
     case 'rebirth': toast(I18.logLine({k:'rebirth',name:m.playerName}));if(typeof FX!=='undefined'){const _rz=document.querySelector(`.pzone[data-pid="${m.playerId}"]`);FX.playCard('kukuochi',_rz);} break;
@@ -3903,6 +3903,10 @@ function playCardWithFX(cardUid, extra){
 /* ═══════════════════════════════════
    OVERLAYS
 ═══════════════════════════════════ */
+function afterCardReveal(show){
+  const quiet=document.body.classList.contains('reduced-motion')||matchMedia('(prefers-reduced-motion:reduce)').matches;
+  setTimeout(()=>{if(document.body.dataset.screen==='game'&&gameState?.phase!=='ended')show();},quiet?0:780);
+}
 function openOv(id){document.getElementById(id).classList.add('show');}
 function closeOv(id){document.getElementById(id).classList.remove('show');}
 
@@ -4423,7 +4427,7 @@ function showPeek(card){
   area.appendChild(flipper);
   document.getElementById('peekTxt').textContent='';
   openOv('ovPeek');
-  if(typeof FX!=='undefined') FX.playCard('scout',document.querySelector('.pzone.pz-mine'));
+
   /* 少し待ってからフリップ開始 */
   setTimeout(()=>{flipper.classList.add('do-flip');},400);
   /* フリップ完了後にカード名を表示 */
@@ -4449,7 +4453,7 @@ function showKurando(myCard,theirCard){
   const b=makeFlipSide(theirCard,'相手');
   d.appendChild(a.side);d.appendChild(vs);d.appendChild(b.side);
   openOv('ovKurando');
-  if(typeof FX!=='undefined') FX.playCard('kurando',document.querySelector('.pzone.pz-mine'));
+
   /* 左カードめくり */
   setTimeout(()=>{a.flipper.classList.add('do-flip');},500);
   /* 右カードめくり */
@@ -4480,7 +4484,7 @@ function showKurandoAll(m){
   const b=makeFlipSide(m.theirCard,m.theirName||'対象');
   d.appendChild(a.side);d.appendChild(vs);d.appendChild(b.side);
   openOv('ovKurando');
-  if(typeof FX!=='undefined') FX.playCard('kurando',document.querySelector('.pzone.pz-active')||document.querySelector('.pzone.pz-mine'));
+
   setTimeout(()=>{a.flipper.classList.add('do-flip');},500);
   setTimeout(()=>{b.flipper.classList.add('do-flip');},900);
   setTimeout(()=>{vs.classList.add('show');a.lbl.classList.add('show');b.lbl.classList.add('show');},1400);
@@ -4541,8 +4545,8 @@ function toast(msg,dur=3500){
   document.body.appendChild(el);setTimeout(()=>el.remove(),dur);
 }
 </script>
-<script src="/card-effects.js?v=21"></script>
-<script src="/experience.js?v=21"></script>
+<script src="/card-effects.js?v=22"></script>
+<script src="/experience.js?v=22"></script>
 </body>
 </html>
 <script>

@@ -559,7 +559,7 @@ const STATIC = {
     '📱 QRコードで招待':'📱 Invite by QR code', 'スマホで読み取って参加':'Scan with a phone to join',
     'QR生成エラー':'Could not generate a QR code',
     'コピーしました:':'Copied:', '招待URLをコピーしました':'Invite link copied',
-    'オンラインマッチング':'Online matchmaking', 'マッチングを開始':'Find a match',
+    'AI設定':'AI settings', 'オンラインマッチング':'Online matchmaking', 'マッチングを開始':'Find a match',
     '相手を探す':'Find an opponent', '対戦相手を探しています...':'Searching for an opponent…',
     '⚔️ 対戦の準備が整いました':'⚔️ Ready to play',
     '待機中...':'Waiting…', '✓ 待機中…':'✓ Waiting…', '準備完了！':'Ready!',

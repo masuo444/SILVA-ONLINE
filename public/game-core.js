@@ -246,7 +246,7 @@ function processPlay(game, playerId, cardUid, targetId, guess) {
   for (const observerId of Object.keys(game.knowledge))
     if (game.knowledge[observerId][playerId] === card.id) delete game.knowledge[observerId][playerId];
 
-  emit(game, { type: 'card_played', cardId: card.id, playerId, playerName: player.name, cardLevel: card.level, noEffect });
+  emit(game, { type: 'card_played', cardId: card.id, playerId, playerName: player.name, cardLevel: card.level, noEffect, targetId: noEffect ? null : targetId });
 
   let result = { ok: true };
 

@@ -15,24 +15,42 @@
     kukuochi:'<g class="grow"><path d="M100 180V56M100 115L61 82M100 96L136 60M100 148L145 117M100 153L55 126M100 172L75 187M100 172L125 187"/><circle cx="100" cy="62" r="38"/><circle cx="63" cy="93" r="28"/><circle cx="136" cy="94" r="28"/></g><circle class="wave" cx="100" cy="105" r="78"/>'
   };
   const colors={boy:'#e8d78b',trainee:'#edbc85',scout:'#9edbd5',warrior:'#e5be9d',kurando:'#d4b8e3',masu_craftsman:'#dfd29b',farmer:'#c2d98e',spirit:'#a3d9ea',sword_girl:'#f1ead5',kukuochi:'#a9d6a0',kukuochi_young:'#b1dda1'};
-  const recent=new Map();const active=new Set();
+  const levels={kukuochi_young:11,boy:1,trainee:2,scout:3,warrior:4,kurando:5,masu_craftsman:6,farmer:7,spirit:8,sword_girl:9,kukuochi:10};
+  const recent=new Map(),active=new Set();
   function clear(){for(const node of active)node.remove();active.clear();recent.clear();}
+  function center(el){const r=el.getBoundingClientRect();return {x:Math.max(35,Math.min(innerWidth-35,r.left+r.width/2)),y:Math.max(75,Math.min(innerHeight-85,r.top+r.height/2))};}
+  function glyph(id){return '<svg viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+art[id]+'</svg>';}
   window.SILVA_CARD_FX={play(id,el,options={}){
     if(!art[id]||!el||document.hidden)return;
-    const key=id+':'+(el.dataset.pid||'')+':'+String(options.hit)+':'+!!options.noEffect;
-    const now=performance.now();if(now-(recent.get(key)||-10000)<850)return;recent.set(key,now);
+    const result=typeof options.hit==='boolean'||options.blocked;
+    const key=id+':'+(el.dataset.pid||'')+':'+result+':'+!!options.noEffect;
+    const now=performance.now();if(now-(recent.get(key)||-10000)<1050)return;recent.set(key,now);
     const rect=el.getBoundingClientRect();if(rect.bottom<0||rect.top>innerHeight)return;
     if(active.size>=3){const oldest=active.values().next().value;oldest.remove();active.delete(oldest);}
-    const size=Math.min(innerWidth<600?148:190,innerWidth-24);
-    const node=document.createElement('div');node.className='card-effect';node.dataset.effect=id;node.setAttribute('aria-hidden','true');
-    node.style.cssText=`--fx-color:${colors[id]};width:${size}px;height:${size}px;left:${Math.max(12,Math.min(innerWidth-size-12,rect.left+rect.width/2-size/2))}px;top:${Math.max(12,Math.min(innerHeight-size-12,rect.top+rect.height/2-size/2))}px`;
+    const source=center(el),target=options.target?center(options.target):source;
+    const traveling=!!options.target&&Math.hypot(source.x-target.x,source.y-target.y)>45&&!options.noEffect;
+    const node=document.createElement('div');node.className='cinematic-fx';node.dataset.effect=id;node.setAttribute('aria-hidden','true');
+    const small=innerWidth<600,portrait=small?88:116;
+    source.x=Math.max(portrait/2+14,Math.min(innerWidth-portrait/2-14,source.x));
     const quiet=document.body.classList.contains('reduced-motion')||matchMedia('(prefers-reduced-motion:reduce)').matches;
     if(quiet)node.classList.add('fx-quiet');
     if(options.hit===false)node.classList.add('fx-miss');
     if(options.noEffect)node.classList.add('fx-no-effect');
-    const body=options.noEffect?'<circle cx="100" cy="100" r="48"/><path d="M76 100H124"/>':art[id];
-    node.innerHTML='<svg viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">'+body+'</svg>';
-    document.body.append(node);active.add(node);setTimeout(()=>{node.remove();active.delete(node);},quiet?400:900);
+    if(result)node.classList.add('fx-result');
+    if(traveling)node.classList.add('fx-travel');
+    node.style.cssText=`--fx-color:${colors[id]};--sx:${source.x}px;--sy:${source.y}px;--tx:${target.x}px;--ty:${target.y}px;--portrait:${portrait}px;--duration:1250ms`;
+    const dx=target.x-source.x,dy=target.y-source.y;
+    const bend=id==='spirit'?80:id==='scout'?35:0;
+    const path=`M ${source.x} ${source.y} Q ${(source.x+target.x)/2+bend} ${(source.y+target.y)/2} ${target.x} ${target.y}`;
+    const back=`M ${target.x} ${target.y} Q ${(source.x+target.x)/2-bend} ${(source.y+target.y)/2} ${source.x} ${source.y}`;
+    let html='<div class="fx-source"><div class="fx-halo"></div><div class="fx-orbit-ring"></div><div class="fx-portrait"><img alt="" src="/'+levels[id]+'.webp"><i class="fx-sheen"></i></div><div class="fx-sigil">'+(options.noEffect?'':glyph(id))+'</div></div>';
+    if(traveling)html+='<svg class="fx-trajectory" width="'+innerWidth+'" height="'+innerHeight+'" viewBox="0 0 '+innerWidth+' '+innerHeight+'"><path class="fx-trail" pathLength="100" d="'+path+'"/>'+(id==='spirit'?'<path class="fx-trail fx-return" pathLength="100" d="'+back+'"/>':'')+'</svg>';
+    html+='<div class="fx-destination"><div class="fx-impact-ring"></div><div class="fx-impact-core"></div><div class="fx-target-sigil">'+(options.noEffect?'':glyph(id))+'</div>';
+    const count=small?8:12;
+    for(let i=0;i<count;i++)html+='<i class="fx-mote" style="--angle:'+(i*360/count)+'deg;--distance:'+(small?48:72)+'px;--delay:'+(i%3*35)+'ms"></i>';
+    html+='</div>';
+    node.innerHTML=html;document.body.append(node);active.add(node);
+    setTimeout(()=>{node.remove();active.delete(node);},quiet?420:options.noEffect?650:1300);
   },clear};
   window.addEventListener('silva:screen',e=>{if(e.detail!=='game')clear();});
   document.addEventListener('visibilitychange',()=>{if(document.hidden)clear();});
