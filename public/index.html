@@ -1671,7 +1671,7 @@ select option{background:#080d0b}
   100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}
 }
 </style>
-<link rel="stylesheet" href="/experience.css?v=17">
+<link rel="stylesheet" href="/experience.css?v=18">
 </head>
 <body>
 
@@ -1786,10 +1786,7 @@ select option{background:#080d0b}
 <div id="lobby" class="screen active">
   <header class="silva-header"><a class="brandmark" href="/" aria-label="SILVA ホーム"><span class="brand-sigil">✧</span> SILVA<span class="brand-caption"></span></a><nav class="header-nav"><button onclick="openGuide()" data-ja="遊び方" data-en="How to play">遊び方</button><button onclick="openMyPage()" data-ja="戦績" data-en="Your record">戦績</button></nav></header>
   <main class="lobby-main">
-    <section class="forest-hero" aria-labelledby="hero-title">
-      <div class="hero-copy"><p class="eyebrow">FOMUS × KUKU PROJECT</p><h1 id="hero-title"><span data-ja="一枚に、" data-en="One card.">一枚に、</span><br><span data-ja="すべてを隠せ。" data-en="Countless secrets.">すべてを隠せ。</span></h1><p hidden class="hero-intro" data-ja="森の精霊と、人の思惑。
-相手の一枚を読み、生き残る心理戦。" data-en="Spirits of the forest. Secrets in every hand.
-Read your rival. Be the last one standing.">森の精霊と、人の思惑。<br>相手の一枚を読み、生き残る心理戦。</p><div hidden class="hero-facts"><span data-ja="2–4人" data-en="2–4 players">2–4人</span><span data-ja="1局 約5分" data-en="About 5 minutes">1局 約5分</span><span data-ja="登録不要" data-en="No sign-up">登録不要</span></div><button class="learn-link" onclick="startGuideGame()"><span class="small-play">▷</span><span data-ja="まずは、練習の一局から" data-en="Learn with a practice game">まずは、練習の一局から</span><span>↗</span></button></div>
+    <section class="forest-hero" aria-label="SILVA">
       <div class="hero-art" aria-label="SILVA カードアート"><div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div><span hidden class="art-coordinate">森に宿る、十一の物語</span><div class="showcase-card card-left"><img src="/9.webp" alt="刀の少女" fetchpriority="high"></div><div class="showcase-card card-right"><img src="/8.webp" alt="精霊" fetchpriority="high"></div><div class="showcase-card card-center"><img src="/10.webp" alt="ククノチ" fetchpriority="high"><div hidden class="showcase-caption"><span>THE FOREST SPIRIT</span><strong data-ja="ククノチ" data-en="Kukunochi">ククノチ</strong></div></div><div hidden class="art-footnote"><span>01 — 11</span><span>SILVA CARD COLLECTION</span></div></div>
     </section>
     <section class="play-section" aria-labelledby="play-title"><div class="section-heading"><h2 id="play-title" data-ja="さあ、森の対局へ。" data-en="Your next move starts here.">さあ、森の対局へ。</h2></div>
@@ -3131,9 +3128,9 @@ const FX = (function(){
 <!-- ルールエンジン（サーバーと共有）・多言語辞書・ブラウザ内AI対戦
      ⚠ これらを変更したらリリース時に ?v= を上げること。
         上げないと、古いキャッシュを持つ端末が古いルールで動いてしまう -->
-<script src="/game-core.js?v=17"></script>
-<script src="/i18n.js?v=17"></script>
-<script src="/local-game.js?v=17"></script>
+<script src="/game-core.js?v=18"></script>
+<script src="/i18n.js?v=18"></script>
+<script src="/local-game.js?v=18"></script>
 
 <script>
 /* ═══════════════════════════════════
@@ -4540,7 +4537,7 @@ function toast(msg,dur=3500){
   document.body.appendChild(el);setTimeout(()=>el.remove(),dur);
 }
 </script>
-<script src="/experience.js?v=17"></script>
+<script src="/experience.js?v=18"></script>
 </body>
 </html>
 <script>
