@@ -131,3 +131,21 @@ body[data-screen=game] .rulebot-fab{position:absolute!important;top:16px!importa
 .forest-hero .hero-art{width:100%;max-width:620px;height:340px;margin:0 auto}
 @media(max-width:600px){.forest-hero .hero-art{height:230px}.play-section{padding-top:14px}}
 @media(max-height:500px) and (orientation:landscape){.forest-hero .hero-art{height:200px}}
+/* A single quiet action receipt; full history remains in the result details. */
+#lastMove{font-size:12px;line-height:1.65;color:#c5d3b5;padding:8px 12px;border-left:2px solid #b9c590;background:#13251a;border-radius:0 7px 7px 0;overflow-wrap:anywhere}
+.d-card[role=button]{cursor:pointer;min-height:44px}.d-card[role=button]:hover{border-color:#d8ce94!important}
+.pzone.available-target{border-color:#d9c98c!important;box-shadow:inset 0 0 0 1px #d9c98c44!important}
+#ovWin .win-box{background:#102219;border:1px solid #aabd8a55;border-radius:18px;max-height:90dvh;overflow-y:auto}
+#ovWin .win-icon{font-size:30px;margin-bottom:8px}#ovWin .win-title{font-size:32px;margin-bottom:8px}
+#ovWin .win-reason{font-size:14px;line-height:1.8;color:#d8dfc7;margin:16px 0 22px}
+#ovWin .win-actions{width:100%;gap:10px!important}
+#ovWin .win-actions>button{min-height:48px;width:100%;justify-content:center}
+#ovWin #rematchBtn{font-size:16px;background:#c2ce9b;color:#13241a;border-color:#c2ce9b}
+#ovWin #rematchStatus{font-size:12px!important;line-height:1.7}
+#resultDetails{width:100%;margin-top:20px;border-top:1px solid #b4c79933;padding-top:6px;text-align:left}
+#resultDetails>summary{cursor:pointer;padding:14px 0;font-size:12px;color:#bbcaaa;min-height:44px}
+#resultDetails #shareResultBtn{margin-top:12px;min-height:44px;width:100%}
+@media(min-width:1000px){.game-wrap>#lastMove{grid-column:1;grid-row:3}.game-wrap>.board{grid-row:4}.game-wrap>.card-pop{grid-row:2/6}}
+@media(max-width:600px){#lastMove{font-size:11px;padding:7px 10px}#ovWin .win-box{width:calc(100vw - 28px);padding:24px 20px!important}}
+/* The compact receipt replaces the older multi-line turn banner. */
+#turnBanner{display:none!important}

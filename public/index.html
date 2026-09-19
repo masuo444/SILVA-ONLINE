@@ -1671,7 +1671,7 @@ select option{background:#080d0b}
   100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}
 }
 </style>
-<link rel="stylesheet" href="/experience.css?v=19">
+<link rel="stylesheet" href="/experience.css?v=20">
 </head>
 <body>
 
@@ -3128,9 +3128,9 @@ const FX = (function(){
 <!-- ルールエンジン（サーバーと共有）・多言語辞書・ブラウザ内AI対戦
      ⚠ これらを変更したらリリース時に ?v= を上げること。
         上げないと、古いキャッシュを持つ端末が古いルールで動いてしまう -->
-<script src="/game-core.js?v=19"></script>
-<script src="/i18n.js?v=19"></script>
-<script src="/local-game.js?v=19"></script>
+<script src="/game-core.js?v=20"></script>
+<script src="/i18n.js?v=20"></script>
+<script src="/local-game.js?v=20"></script>
 
 <script>
 /* ═══════════════════════════════════
@@ -3659,6 +3659,7 @@ function renderGame(){
   renderPlayers(players,currentPlayerId,phase,pendingAction);
   renderLog(log);
   renderAction();
+  window.dispatchEvent(new CustomEvent('silva:board'));
   /* 描画直後に同期で訳す。MutationObserver 任せだと、
      非表示タブでは setTimeout が絞られて表示が一瞬日本語のままになる */
   if(LANG!=='ja'){ try{ I18.applyStatic(); }catch(e){ console.error('[i18n]',e); } }
@@ -3759,7 +3760,7 @@ function renderPlayers(players,curId,phase,pending){
     const disc=discArr.map((c,i)=>{
       const isLatest=i===discArr.length-1;
       const imgSz=isLatest?'28px':'22px';
-      return `<div class="d-card${isLatest?' d-latest':''}"><div class="d-lv">${N(c.level)}</div><img src="${cardImg(c.level)}" style="width:${imgSz};height:${imgSz};object-fit:contain;opacity:${isLatest?'.8':'.5'}"><div class="d-nm">${cardName(c.id)}</div></div>`;
+      return `<div role="button" tabindex="0" aria-label="${esc(cardName(c.id))}" onclick="event.stopPropagation();showCardPop(SILVA_CORE.CARD_BY_ID['${c.id}'])" class="d-card${isLatest?' d-latest':''}"><div class="d-lv">${N(c.level)}</div><img src="${cardImg(c.level)}" style="width:${imgSz};height:${imgSz};object-fit:contain;opacity:${isLatest?'.8':'.5'}"><div class="d-nm">${cardName(c.id)}</div></div>`;
     }).join('');
 
     z.innerHTML=`
@@ -4200,6 +4201,8 @@ function hideThinking(){
 
 /* 勝因の一文 — 「なぜ勝った/負けたか」を言葉にする（v2から移植・i18n対応） */
 function resultReason(wid,players){
+  const decisive=(gameState?.log||[]).slice(0,4).find(l=>['young_beats_spirit','max_level','tie_level','forfeit','kukuochi_slain','trainee_hit','kurando'].includes(l.k));
+  if(decisive)return I18.logLine(decisive);
   const me=players.find(p=>p.id===myId);
   const winner=players.find(p=>p.id===wid);
   const alive=players.filter(p=>p.alive);
@@ -4321,7 +4324,7 @@ function showWin(wid,players){
   const icon=document.getElementById('winIcon');
   const title=document.getElementById('winTitle');
   const sub=document.getElementById('winSub');
-  if(!wid){icon.textContent='\uD83E\uDD1D';title.textContent='引き分け';sub.textContent='同時脱落による引き分け';}
+  if(!wid){icon.textContent='\uD83E\uDD1D';title.textContent='引き分け';sub.textContent=t('ui.reasonDraw');}
   else if(wid===myId){icon.textContent='\uD83C\uDF33';title.textContent=t('ui.win');sub.textContent=t('ui.youWin');FX.victory();}
   else{const w=players.find(p=>p.id===wid);icon.textContent='\uD83C\uDF42';title.textContent=t('ui.lose');sub.textContent=t('ui.someoneWins',{name:dn(w?.name)||'\u2014'});}
   const _wr=document.getElementById('winReason');
@@ -4364,6 +4367,7 @@ function showWin(wid,players){
   rs.style.display='none';rs.textContent='';
   /* デフォルトタブ */
   winTab('summary');
+  const detail=document.getElementById('resultDetails');if(detail)detail.open=false;
   openOv('ovWin');
 }
 
@@ -4544,7 +4548,7 @@ function toast(msg,dur=3500){
   document.body.appendChild(el);setTimeout(()=>el.remove(),dur);
 }
 </script>
-<script src="/experience.js?v=19"></script>
+<script src="/experience.js?v=20"></script>
 </body>
 </html>
 <script>

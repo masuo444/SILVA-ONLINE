@@ -61,3 +61,48 @@ function leaveSilva(){
   stopLocalGame();clearSession();myRoomId=null;myToken=null;gameState=null;isSpectator=false;
   document.querySelectorAll('.overlay.show').forEach(el=>el.classList.remove('show'));hideCardPop();goScreen('lobby');
 }
+
+/* One public action at a time; never reveal information outside the server log. */
+(function(){
+  const strip=document.createElement('div');strip.id='lastMove';strip.hidden=true;
+  strip.setAttribute('role','status');strip.setAttribute('aria-live','polite');
+  document.getElementById('actionBar').after(strip);
+  let lastSignature='';
+  function updateBoard(){
+    const log=gameState?.log||[];
+    const ignored=new Set(['reveal_hand','winner','draw_game','deck_empty']);
+    const event=log.find(l=>!ignored.has(l.k));
+    const signature=JSON.stringify(event);
+    if(!event){strip.hidden=true;lastSignature='';return;}
+    strip.hidden=false;
+    const sentence=I18.logLine(event);
+    if(strip.textContent!==sentence)strip.textContent=sentence;
+    if(signature!==lastSignature){
+      lastSignature=signature;
+      if(!document.body.classList.contains('reduced-motion')&&!matchMedia('(prefers-reduced-motion:reduce)').matches){
+        strip.animate([{opacity:.3,transform:'translateY(4px)'},{opacity:1,transform:'translateY(0)'}],{duration:220});
+        document.querySelectorAll('.pzone').forEach(zone=>{
+          const player=gameState.players.find(p=>p.id===zone.dataset.pid);
+          if(player&&(player.name===event.name||player.name===event.target))zone.animate([{boxShadow:'0 0 0 2px #d8ce94'},{boxShadow:'0 0 0 2px transparent'}],{duration:650});
+        });
+      }
+    }
+  }
+  window.addEventListener('silva:board',updateBoard);
+  window.addEventListener('silva:language',()=>{if(gameState)updateBoard();});
+  // Secondary result information stays available without crowding out rematch.
+  const recap=document.querySelector('.win-recap');
+  const details=document.createElement('details');details.id='resultDetails';
+  const summary=document.createElement('summary');summary.dataset.ja='対局を振り返る';summary.dataset.en='Review this match';summary.textContent=LANG==='ja'?summary.dataset.ja:summary.dataset.en;
+  details.append(summary);recap.before(details);details.append(recap);
+  const actions=document.querySelector('.win-actions');details.before(actions);
+  details.append(document.getElementById('shareResultBtn'));
+  const targetObserver=new MutationObserver(()=>{
+    const choosing=!!document.querySelector('.zone-tgt-wrap');
+    document.querySelectorAll('.pzone').forEach(zone=>{
+      const player=gameState?.players.find(p=>p.id===zone.dataset.pid);
+      zone.classList.toggle('available-target',choosing&&!!player?.alive&&player.id!==myId);
+    });
+  });
+  targetObserver.observe(document.getElementById('playersCol'),{childList:true,subtree:true});
+})();
