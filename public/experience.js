@@ -47,7 +47,7 @@
   });
   document.querySelectorAll('.overlay').forEach(el=>observer.observe(el,{attributes:true,attributeFilter:['class']}));
   window.addEventListener('silva:screen',e=>{
-    if(e.detail.startsWith('panel'))requestAnimationFrame(()=>document.querySelector('#'+e.detail+' input')?.focus({preventScroll:true}));
+    if(e.detail.startsWith('panel'))requestAnimationFrame(()=>document.querySelector('#'+e.detail+' input:not([type=hidden]), #'+e.detail+' select')?.focus({preventScroll:true}));
     if(e.detail==='lobby')document.getElementById('netBanner')?.classList.add('hidden');
   });
   // Restore a saved seat only after an explicit online session existed.

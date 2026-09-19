@@ -1671,7 +1671,7 @@ select option{background:#080d0b}
   100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}
 }
 </style>
-<link rel="stylesheet" href="/experience.css?v=18">
+<link rel="stylesheet" href="/experience.css?v=19">
 </head>
 <body>
 
@@ -1790,10 +1790,10 @@ select option{background:#080d0b}
       <div class="hero-art" aria-label="SILVA カードアート"><div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div><span hidden class="art-coordinate">森に宿る、十一の物語</span><div class="showcase-card card-left"><img src="/9.webp" alt="刀の少女" fetchpriority="high"></div><div class="showcase-card card-right"><img src="/8.webp" alt="精霊" fetchpriority="high"></div><div class="showcase-card card-center"><img src="/10.webp" alt="ククノチ" fetchpriority="high"><div hidden class="showcase-caption"><span>THE FOREST SPIRIT</span><strong data-ja="ククノチ" data-en="Kukunochi">ククノチ</strong></div></div><div hidden class="art-footnote"><span>01 — 11</span><span>SILVA CARD COLLECTION</span></div></div>
     </section>
     <section class="play-section" aria-labelledby="play-title"><div class="section-heading"><h2 id="play-title" data-ja="さあ、森の対局へ。" data-en="Your next move starts here.">さあ、森の対局へ。</h2></div>
-      <div class="play-grid"><button class="play-tile solo-tile" onclick="goPanel('panelAI')"><span class="tile-top"><span class="tile-symbol">✧</span><span hidden class="tile-tag" data-ja="ひとりで、気軽に" data-en="AT YOUR OWN PACE">ひとりで、気軽に</span><span class="tile-arrow">↗</span></span><strong data-ja="ひとりで遊ぶ" data-en="Play solo">ひとりで遊ぶ</strong><span hidden class="tile-description" data-ja="3つの強さのAIと、読み合いを磨く。" data-en="Sharpen your instincts against three AI levels.">3つの強さのAIと、読み合いを磨く。</span><span class="tile-bottom" data-ja="オフラインでもプレイ可能" data-en="Also available offline">オフラインでもプレイ可能</span></button>
-      <button class="play-tile friends-tile" onclick="goPanel('panelCreate')"><span class="tile-top"><span class="tile-symbol">❖</span><span hidden class="tile-tag" data-ja="離れていても、一緒に" data-en="A SHARED TABLE">離れていても、一緒に</span><span class="tile-arrow">↗</span></span><strong data-ja="友達と遊ぶ" data-en="Play with friends">友達と遊ぶ</strong><span hidden class="tile-description" data-ja="部屋を作って、招待リンクを送るだけ。" data-en="Create a room. Share a link. Play together.">部屋を作って、招待リンクを送るだけ。</span><span class="tile-bottom" data-ja="2–4人のオンライン対戦" data-en="ONLINE · 2–4 PLAYERS">2–4人のオンライン対戦</span></button>
+      <div class="play-grid"><button class="play-tile solo-tile" onclick="startVsAI()"><span class="tile-top"><span class="tile-symbol">✧</span><span hidden class="tile-tag" data-ja="ひとりで、気軽に" data-en="AT YOUR OWN PACE">ひとりで、気軽に</span><span class="tile-arrow">↗</span></span><strong data-ja="ひとりで遊ぶ" data-en="Play solo">ひとりで遊ぶ</strong><span hidden class="tile-description" data-ja="3つの強さのAIと、読み合いを磨く。" data-en="Sharpen your instincts against three AI levels.">3つの強さのAIと、読み合いを磨く。</span><span class="tile-bottom" data-ja="オフラインでもプレイ可能" data-en="Also available offline">オフラインでもプレイ可能</span></button>
+      <button class="play-tile friends-tile" onclick="goPanel('panelCreate');doCreateRoom()"><span class="tile-top"><span class="tile-symbol">❖</span><span hidden class="tile-tag" data-ja="離れていても、一緒に" data-en="A SHARED TABLE">離れていても、一緒に</span><span class="tile-arrow">↗</span></span><strong data-ja="友達と遊ぶ" data-en="Play with friends">友達と遊ぶ</strong><span hidden class="tile-description" data-ja="部屋を作って、招待リンクを送るだけ。" data-en="Create a room. Share a link. Play together.">部屋を作って、招待リンクを送るだけ。</span><span class="tile-bottom" data-ja="2–4人のオンライン対戦" data-en="ONLINE · 2–4 PLAYERS">2–4人のオンライン対戦</span></button>
       <button class="play-tile join-tile" onclick="goPanel('panelJoin')"><span class="tile-top"><span class="tile-symbol">⌑</span><span hidden class="tile-tag" data-ja="招待されたら" data-en="GOT AN INVITATION?">招待されたら</span><span class="tile-arrow">↗</span></span><strong data-ja="ルームに参加" data-en="Join a room">ルームに参加</strong><span hidden class="tile-description" data-ja="5文字の合言葉で、同じテーブルへ。" data-en="A five-character code brings you to the table.">5文字の合言葉で、同じテーブルへ。</span><span class="tile-bottom" data-ja="ルームIDを入力 →" data-en="ENTER ROOM CODE →">ルームIDを入力 →</span></button></div>
-      <div class="lobby-secondary"><button onclick="goPanel('panelMatch')" data-ja="誰かと対戦する ↗" data-en="Find an opponent ↗">誰かと対戦する ↗</button><button onclick="goPanel('panelSpectate');loadRooms()" data-ja="対局を観る ↗" data-en="Watch a match ↗">対局を観る ↗</button><a href="/rules.html" target="_blank" rel="noopener" data-ja="カードとルール ↗" data-en="Cards & rules ↗">カードとルール ↗</a></div>
+      <div class="lobby-secondary"><button onclick="goPanel('panelAI')" data-ja="AI設定" data-en="AI settings">AI設定</button><button onclick="goPanel('panelMatch');doJoinQueue()" data-ja="誰かと対戦する ↗" data-en="Find an opponent ↗">誰かと対戦する ↗</button><button onclick="goPanel('panelSpectate');loadRooms()" data-ja="対局を観る ↗" data-en="Watch a match ↗">対局を観る ↗</button><a href="/rules.html" target="_blank" rel="noopener" data-ja="カードとルール ↗" data-en="Cards & rules ↗">カードとルール ↗</a></div>
     </section>
   </main><footer class="lobby-footer"><span>© SILVA · FOMUS × KUKU PROJECT</span><a href="https://silva.fomus.jp/" target="_blank" rel="noopener" data-ja="SILVAの世界を知る ↗" data-en="Explore the world of SILVA ↗">SILVAの世界を知る ↗</a></footer>
 </div>
@@ -1804,7 +1804,7 @@ select option{background:#080d0b}
     <button class="back-link" onclick="goScreen('lobby')">戻る</button>
     <div class="p-eyebrow">コンピューター対戦</div>
     <div class="p-title">vs AI</div>
-    <div class="field"><label class="field-label">あなたの名前</label><input type="text" id="aiName" placeholder="名前を入力" maxlength="12"></div>
+    <input type="hidden" id="aiName">
     <div class="field"><label class="field-label">難易度</label>
       <select id="aiDiff"><option value="easy">🟢 ゆっくりAI（簡単）</option><option value="normal" selected>🟡 策士AI（普通）</option><option value="hard">🔴 鬼神AI（強い）</option></select></div>
     <div class="field"><label class="field-label">対戦人数</label>
@@ -1818,7 +1818,7 @@ select option{background:#080d0b}
     <button class="back-link" onclick="goScreen('lobby')">戻る</button>
     <div class="p-eyebrow">ルーム作成</div>
     <div class="p-title">新しい対局</div>
-    <div class="field"><label class="field-label">あなたの名前</label><input type="text" id="createName" placeholder="名前を入力" maxlength="12"></div>
+    <input type="hidden" id="createName">
     <button class="btn filled full" onclick="doCreateRoom()">ルームを作成する</button>
   </div>
 </div>
@@ -1828,7 +1828,7 @@ select option{background:#080d0b}
     <button class="back-link" onclick="goScreen('lobby')">戻る</button>
     <div class="p-eyebrow">ルーム参加</div>
     <div class="p-title">対局に参加</div>
-    <div class="field"><label class="field-label">あなたの名前</label><input type="text" id="joinName" placeholder="名前を入力" maxlength="12"></div>
+    <input type="hidden" id="joinName">
     <div class="field"><label class="field-label">ルームID</label>
       <input type="text" id="joinId" placeholder="AB3CD" maxlength="6" style="text-transform:uppercase;letter-spacing:.28em;font-family:var(--f-display);font-style:italic;font-size:1.2rem"></div>
     <button class="btn filled full" onclick="doJoinRoom()">参加する</button>
@@ -1840,7 +1840,7 @@ select option{background:#080d0b}
     <button class="back-link" onclick="doLeaveQueue();goScreen('lobby')">戻る</button>
     <div class="p-eyebrow">オンラインマッチング</div>
     <div class="p-title">相手を探す</div>
-    <div class="field"><label class="field-label">あなたの名前</label><input type="text" id="matchName" placeholder="名前を入力" maxlength="12"></div>
+    <input type="hidden" id="matchName">
     <div id="matchStart">
       <button class="btn filled full" onclick="doJoinQueue()">マッチングを開始</button>
     </div>
@@ -3128,9 +3128,9 @@ const FX = (function(){
 <!-- ルールエンジン（サーバーと共有）・多言語辞書・ブラウザ内AI対戦
      ⚠ これらを変更したらリリース時に ?v= を上げること。
         上げないと、古いキャッシュを持つ端末が古いルールで動いてしまう -->
-<script src="/game-core.js?v=18"></script>
-<script src="/i18n.js?v=18"></script>
-<script src="/local-game.js?v=18"></script>
+<script src="/game-core.js?v=19"></script>
+<script src="/i18n.js?v=19"></script>
+<script src="/local-game.js?v=19"></script>
 
 <script>
 /* ═══════════════════════════════════
@@ -3421,22 +3421,29 @@ window.addEventListener('load',()=>{
 /* ═══════════════════════════════════
    LOBBY ACTIONS
 ═══════════════════════════════════ */
+function guestName(){
+  const saved=getProfile().name?.trim();
+  if(saved)return saved;
+  let tag=sessionStorage.getItem('silva_guest_tag');
+  if(!tag){tag=String(1000+crypto.getRandomValues(new Uint32Array(1))[0]%9000);sessionStorage.setItem('silva_guest_tag',tag);}
+  return (LANG==='ja'?'ゲスト':'Guest')+tag;
+}
 function startVsAI(){
-  myName=document.getElementById('aiName').value.trim()||t('ui.namePlaceholderDefault');
+  myName=t('ui.namePlaceholderDefault');
   const diff=document.getElementById('aiDiff').value;
   _gameRecorded=false;_gameInfo={aiDifficulty:diff,isOnline:false};
   /* AI戦はサーバーを介さずブラウザ内で完結させる */
   startLocalAIGame({name:myName,difficulty:diff,aiCount:parseInt(document.getElementById('aiCount').value)||1});
 }
-function doCreateRoom(){myName=document.getElementById('createName').value.trim()||t('ui.namePlaceholderDefault');_gameRecorded=false;_gameInfo={aiDifficulty:null,isOnline:true};ensureWS(()=>send({type:'create_room',name:myName}));}
+function doCreateRoom(){myName=guestName();_gameRecorded=false;_gameInfo={aiDifficulty:null,isOnline:true};ensureWS(()=>send({type:'create_room',name:myName}));}
 function doJoinRoom(){
-  myName=document.getElementById('joinName').value.trim()||t('ui.namePlaceholderDefault');
+  myName=guestName();
   const rid=document.getElementById('joinId').value.trim().toUpperCase();
   if(!rid){toast('ルームIDを入力してください');return;}
   _gameRecorded=false;_gameInfo={aiDifficulty:null,isOnline:true};
   ensureWS(()=>send({type:'join_room',roomId:rid,name:myName}));
 }
-function doJoinQueue(){myName=document.getElementById('matchName').value.trim()||t('ui.namePlaceholderDefault');ensureWS(()=>send({type:'join_queue',name:myName}));}
+function doJoinQueue(){myName=guestName();ensureWS(()=>send({type:'join_queue',name:myName}));}
 function doLeaveQueue(){send({type:'leave_queue'});}
 function loadRooms(){ensureWS(()=>send({type:'get_public_rooms'}));}
 function doAddAI(){send({type:'add_ai',difficulty:document.getElementById('aiAddDiff').value});}
@@ -4537,7 +4544,7 @@ function toast(msg,dur=3500){
   document.body.appendChild(el);setTimeout(()=>el.remove(),dur);
 }
 </script>
-<script src="/experience.js?v=18"></script>
+<script src="/experience.js?v=19"></script>
 </body>
 </html>
 <script>
