@@ -1671,7 +1671,7 @@ select option{background:#080d0b}
   100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}
 }
 </style>
-<link rel="stylesheet" href="/experience.css?v=20">
+<link rel="stylesheet" href="/experience.css?v=21">
 </head>
 <body>
 
@@ -3107,6 +3107,7 @@ const FX = (function(){
   return {
     /* Play a card effect by cardId */
     playCard(cardId, el, opts){
+      if(window.SILVA_CARD_FX){window.SILVA_CARD_FX.play(cardId,el,opts);return;}
       const fn = cardFxMap[cardId];
       if(fn) fn(el, opts?.hit);
     },
@@ -3114,7 +3115,7 @@ const FX = (function(){
     eliminate: fx_eliminate,
     victory: fx_victory,
     fomus: fx_fomus,
-    shieldBlock: fx_shieldBlock,
+    shieldBlock(el){if(window.SILVA_CARD_FX)window.SILVA_CARD_FX.play('masu_craftsman',el,{blocked:true});else fx_shieldBlock(el);},
     /* Low-level access */
     shake, flash, floatText, shockwave, slashLine, scanLine,
     screenSplit, ripple, barrier, aura, addCrack, eyeIcon,
@@ -3128,9 +3129,9 @@ const FX = (function(){
 <!-- ルールエンジン（サーバーと共有）・多言語辞書・ブラウザ内AI対戦
      ⚠ これらを変更したらリリース時に ?v= を上げること。
         上げないと、古いキャッシュを持つ端末が古いルールで動いてしまう -->
-<script src="/game-core.js?v=20"></script>
-<script src="/i18n.js?v=20"></script>
-<script src="/local-game.js?v=20"></script>
+<script src="/game-core.js?v=21"></script>
+<script src="/i18n.js?v=21"></script>
+<script src="/local-game.js?v=21"></script>
 
 <script>
 /* ═══════════════════════════════════
@@ -3389,7 +3390,7 @@ function handle(m){
       _lastPlayedCard={cardId:m.cardId,cardName:cardName(m.cardId),cardLevel:m.cardLevel,cardEffect:I18.effectName(m.cardId),cardEmoji:(SILVA_CORE.CARD_BY_ID[m.cardId]||{}).emoji,playerName:m.playerName,playerId:m.playerId,noEffect:m.noEffect};
       if(m.noEffect) showTurnBannerSimple(_lastPlayedCard);
       else showTurnBanner(_lastPlayedCard);
-      if(m.cardId&&!m.noEffect&&typeof FX!=='undefined'){const _el=document.querySelector(m.playerId===myId?'.pzone.pz-mine':'.pzone.pz-active');FX.playCard(m.cardId,_el,{hit:m.hit});}
+      if(m.cardId&&typeof FX!=='undefined'){const _el=[...document.querySelectorAll('.pzone')].find(el=>el.dataset.pid===m.playerId);FX.playCard(m.cardId,_el,{hit:m.hit,noEffect:m.noEffect});}
       break;
     case 'player_eliminated': if(typeof FX!=='undefined'){const _pz=document.querySelector(`.pzone[data-pid="${m.playerId}"]`)||document.querySelector('.pzone.pz-dead');FX.eliminate(_pz);} break;
     case 'shield_blocked': if(typeof FX!=='undefined'){const _sz=document.querySelector(`.pzone[data-pid="${m.playerId}"]`)||document.querySelector('.pzone.pz-mine');FX.shieldBlock(_sz);} break;
@@ -3896,14 +3897,6 @@ function warriorDiscard(u){send({type:'target_discard',cardUid:u});}
 /* FX hook: trigger card effect when playing a card locally */
 function playCardWithFX(cardUid, extra){
   hideCardPop();
-  if(typeof FX!=='undefined' && gameState){
-    const me=gameState.players.find(p=>p.id===myId);
-    const card=me?.hand?.find(c=>c.uid===cardUid);
-    if(card){
-      const myZone=document.querySelector('.pzone.pz-mine');
-      FX.playCard(card.id, myZone);
-    }
-  }
   send(Object.assign({type:'play_card',cardUid}, extra||{}));
 }
 
@@ -4548,7 +4541,8 @@ function toast(msg,dur=3500){
   document.body.appendChild(el);setTimeout(()=>el.remove(),dur);
 }
 </script>
-<script src="/experience.js?v=20"></script>
+<script src="/card-effects.js?v=21"></script>
+<script src="/experience.js?v=21"></script>
 </body>
 </html>
 <script>

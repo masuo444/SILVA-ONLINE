@@ -149,3 +149,29 @@ body[data-screen=game] .rulebot-fab{position:absolute!important;top:16px!importa
 @media(max-width:600px){#lastMove{font-size:11px;padding:7px 10px}#ovWin .win-box{width:calc(100vw - 28px);padding:24px 20px!important}}
 /* The compact receipt replaces the older multi-line turn banner. */
 #turnBanner{display:none!important}
+/* Card-specific, non-blocking effects: all complete within 900ms. */
+.card-effect{position:fixed;z-index:190;pointer-events:none!important;color:var(--fx-color);filter:drop-shadow(0 0 8px currentColor);animation:card-fx-envelope .88s ease both;contain:layout style}
+.card-effect svg{width:100%;height:100%;overflow:visible}.card-effect svg *{transform-box:view-box;transform-origin:100px 100px}
+.card-effect .grow{animation:card-fx-grow .7s ease-out both}.card-effect .wave{animation:card-fx-wave .75s ease-out both}
+.card-effect .bolt{stroke-dasharray:440;animation:card-fx-draw .45s ease-out both;fill:#e8d78b22}
+.card-effect .aim{animation:card-fx-aim .6s ease-out both}.card-effect .impact{animation:card-fx-impact .65s ease-out both}
+.card-effect .eye{animation:card-fx-eye .65s ease both}.card-effect .scan{animation:card-fx-scan .65s ease both}
+.card-effect .blade-a{animation:card-fx-left .4s ease-out both}.card-effect .blade-b{animation:card-fx-right .4s ease-out both}
+.card-effect .duel-left{animation:card-fx-left .65s ease both}.card-effect .duel-right{animation:card-fx-right .65s ease both}
+.card-effect .shield{animation:card-fx-grow .5s ease-out both;fill:#dfd29b15}
+.card-effect .exchange,.card-effect .orbit{animation:card-fx-orbit .8s ease-in-out both}
+.card-effect .slash{stroke-width:5;stroke-dasharray:230;animation:card-fx-draw .35s ease-out both}.card-effect .slash-b{animation-delay:.1s;stroke-width:2}
+.card-effect.fx-miss{filter:none;opacity:.55}.card-effect.fx-miss .impact{display:none}
+.card-effect.fx-no-effect{filter:none;opacity:.45}
+.card-effect.fx-quiet,.card-effect.fx-quiet *{animation:none!important;filter:none!important}
+@keyframes card-fx-envelope{0%{opacity:0}15%,65%{opacity:.9}100%{opacity:0}}
+@keyframes card-fx-grow{from{transform:translateY(18px) scale(.65);opacity:0}to{transform:none;opacity:1}}
+@keyframes card-fx-wave{from{transform:scale(.35);opacity:.8}to{transform:scale(1.12);opacity:0}}
+@keyframes card-fx-draw{from{stroke-dashoffset:440}to{stroke-dashoffset:0}}
+@keyframes card-fx-aim{from{transform:rotate(-35deg) scale(1.4);opacity:0}to{transform:none;opacity:1}}
+@keyframes card-fx-impact{0%,30%{opacity:0;transform:scale(.3)}60%{opacity:1;transform:scale(1.2)}100%{opacity:0;transform:scale(1.5)}}
+@keyframes card-fx-eye{0%{transform:scaleY(.1)}40%,100%{transform:scaleY(1)}}
+@keyframes card-fx-scan{0%{transform:translateY(-40px);opacity:0}40%{opacity:1}100%{transform:translateY(40px);opacity:0}}
+@keyframes card-fx-left{from{transform:translateX(-35px);opacity:0}to{transform:none;opacity:1}}
+@keyframes card-fx-right{from{transform:translateX(35px);opacity:0}to{transform:none;opacity:1}}
+@keyframes card-fx-orbit{from{transform:rotate(-55deg);opacity:0}to{transform:rotate(20deg);opacity:1}}
