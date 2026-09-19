@@ -1,88 +1,72 @@
-# SILVA デプロイ手順
+# SILVA — Cloudflare deployment
 
-## 構成の考え方
+## Production architecture
 
-AI対戦がブラウザ内で完結するようになったため、**大多数のプレイはサーバーに一切触れない**。
-サーバーが要るのはオンライン対戦（WebSocket）だけ。
+- Public URL: https://silva-online.fomus.jp
+- Static client: Cloudflare Pages project `silva-online-next`
+- Same-origin `/api/*` WebSocket requests: Pages Function → `GAME` service binding → Worker `silva-online-next`
+- Worker: one SQLite-backed `GameRoom` Durable Object per room. `Lobby` only coordinates entrances/matchmaking, never ongoing games.
+- AI solo play: browser-local, with service-worker offline caching. No Render dependency.
+- DNS stays at Xserver. Only `silva-online.fomus.jp` CNAME points to `silva-online-next.pages.dev` (TTL 3600). Other domains/mail are unaffected.
 
-| 層 | 置き場所 | 費用 |
-|---|---|---|
-| 静的（HTML・画像・PWA・ルールエンジン） | Cloudflare Pages | 無料・帯域無制限・世界300拠点 |
-| AI対戦 | **ブラウザ内**（`local-game.js`） | $0・オフライン可 |
-| オンライン対戦（WS） | Railway / Fly.io | $0〜5/月 |
+## Development and validation
 
-同一ホストで全部動かす構成（現状のRailway単体）もそのまま動く。分離は任意。
-
----
-
-## A. 現状のまま（Railway単体）
-
-追加設定は不要。`git push` → Railway が自動デプロイ。
-
-```bash
-npm test          # ルール判定・多言語の回帰テスト（必ず通してから push）
-npm start         # ローカル起動 http://localhost:3000
+```sh
+npm ci
+npm run dev
+# http://127.0.0.1:8787
+npm test                 # existing rule and legacy protocol regression tests
+npm run test:cloudflare   # run while the local Worker is listening
+npm run test:browser     # Chrome installed; SILVA_SCREENSHOT_DIR can override output path
+npm run check:worker
+npm run types
 ```
 
----
+`npm start` is the retained legacy Node server; use `npm run dev` for the new Cloudflare architecture.
 
-## B. 静的を Cloudflare Pages に分離する（推奨・帯域が無料になる）
+The browser test defaults to `../../outputs`, relative to the checkout. Set `SILVA_SCREENSHOT_DIR` to an existing directory for other checkouts.
 
-### 1. Pages 側（wrangler で直接デプロイ）
+## Release
 
-```bash
-# 静的ビルド（__ORIGIN__ 焼き込み・WS接続先設定・robots/sitemap生成）
-ORIGIN=https://<project>.pages.dev WS=wss://silva-online.onrender.com \
-  node scripts/build-pages.mjs
+1. Run regression and Cloudflare tests. Validate phone/desktop layouts and both languages.
+2. If client code changes, bump shared `?v=` in index/rules, `ASSET_VER`, experience asset versions and `CACHE_NAME` in `public/sw.js` together.
+3. Deploy the Worker first:
+   ```sh
+   npm run deploy
+   ```
+4. Build Pages assets with the production canonical URL:
+   ```sh
+   ORIGIN=https://silva-online.fomus.jp npm run build:pages
+   ```
+5. Deploy the same-origin frontend gateway:
+   ```sh
+   npm run deploy:pages
+   ```
+6. Validate https://silva-online-next.pages.dev and the production URL. The custom domain is registered on the Pages project. Pages' `GAME` binding must point to the Worker.
 
-npx wrangler pages project create <project> --production-branch=main   # 初回のみ
-npx wrangler pages deploy dist --project-name=<project>
-```
+Wrangler 4.135 delegates *new* `pages project create` commands to Workers unless `--force` is specified. This Pages project already exists; ordinary `pages deploy` now targets it directly. Pages is intentional here because the custom subdomain uses externally managed DNS.
 
-独自ドメインに切り替えたら ORIGIN を変えて再ビルド＆デプロイするだけ。
+## State, recovery and privacy
 
-### 2. WSサーバーの場所
+- State is stored before messages are broadcast. SQL persists room state, player secrets, revisions, retry IDs, AI deadlines and disconnect deadlines.
+- Hibernation-compatible WebSockets; durable alarms advance online AI and enforce disconnect grace.
+- A disconnected player has 120 seconds to rejoin with the original per-seat secret. Reload uses sessionStorage; closing the browser tab can discard this browser-managed session.
+- Inactive rooms expire after 30 minutes. This is recovery storage, not a permanent match archive.
+- A completed game can restart only after all human seats agree. Mid-game rematch requests are ignored.
+- Opponents/spectators receive filtered state; full hands are revealed only after completion. Private friend rooms do not allow spectators.
+- Action ID + state revision prevents retry/double-click moves from advancing the game twice.
+- Reduced-motion and optional synthesized sound are local preferences. The default is sound off.
 
-`build-pages.mjs` が `<meta name="silva-ws">` に WS のURLを焼き込む（手動編集は不要）。
-リポジトリ内の `public/index.html` は空のままにしておく — Render 単体構成用。
-一時的に試すだけなら `?ws=wss://...` をURLに付けても切り替わる。
+## Rollback
 
-### 3. Railway 側で接続元を制限する
+The previous service has not been deleted. Xserver's previous CNAME value was `silva-online.onrender.com` (TTL 3600). Restoring that value rolls the domain back to the previous service after DNS propagation. Do not delete the Render service until the Cloudflare version is accepted.
 
-環境変数に Pages のドメインを設定する。設定しなければ全オリジン許可のまま。
+For a Cloudflare-only code rollback, use Worker deployment rollback and the Pages deployment history together. Preserve Durable Object binding/class names and migration tags; renaming them creates separate state.
 
-```
-ALLOWED_ORIGINS=https://silva.pages.dev,https://silva.example.com
-```
+## Verified 2026-09-19
 
-### 4. OGP の絶対URL
-
-サーバーは配信時に `__ORIGIN__` を実際のホスト名へ置換している。
-Cloudflare Pages は静的配信なのでこの置換が走らない。分離する場合は、
-`public/index.html` と `public/rules.html` の `__ORIGIN__` を
-**Pages側の本番URLに一括置換**してからデプロイすること。
-
-```bash
-# 例
-sed -i '' 's|__ORIGIN__|https://silva.example.com|g' public/index.html public/rules.html
-```
-
----
-
-## リリース前チェックリスト
-
-1. `npm test` が全て通ること（ルール判定・翻訳漏れを検出する）
-2. **`public/sw.js` の `CACHE_NAME` を上げる** — 上げないと古いHTMLが端末に残る
-3. **`index.html` の `?v=` を上げる**（`game-core.js` / `i18n.js` / `local-game.js` を変更した場合）
-   — 上げないと古いルールで対局する端末が出る
-4. 実機（スマホ）で以下を通す：
-   - AI戦を1局（機内モードでも遊べることを確認）
-   - オンライン対戦を1局
-   - 対局中にタブを閉じて開き直し、盤面が復帰すること
-   - 言語を English に切り替えて日本語が残らないこと
-
-## 注意点
-
-- サーバーの対局状態はメモリ上にあるため、**デプロイすると進行中のオンライン対局は失われる**。
-  プレイヤーが少ない時間帯にデプロイすること。（恒久対応はDurable Objects移行）
-- AI対戦はサーバーを使わないので、デプロイの影響を受けない。
+- 70 rule/translation/version checks, 11 server checks, 14 legacy full-game checks passed.
+- 21 Cloudflare checks passed locally; the initial 19 also passed through the real Pages service binding: private rooms, full matches, state secrecy, duplicate moves, rejoin authentication, reconnection, rematch voting, online AI, matchmaking and spectators.
+- Full local process stop/start restored the exact saved board, hand, revision and seat.
+- Real Chrome: 360/390/768/1440px overflow checks, language round-trip, create/join/start/draw UI, reload recovery, keyboard card selection and offline AI play. No runtime errors in that run.
+- Load testing at large concurrency and physical iOS/Android device testing are not included.

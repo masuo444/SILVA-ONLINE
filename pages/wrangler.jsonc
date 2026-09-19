@@ -1,0 +1,7 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "silva-online-next",
+  "pages_build_output_dir": "../dist",
+  "compatibility_date": "2026-09-19",
+  "services": [{ "binding": "GAME", "service": "silva-online-next" }]
+}

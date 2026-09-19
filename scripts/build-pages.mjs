@@ -16,7 +16,7 @@ import { fileURLToPath } from 'url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ORIGIN = (process.env.ORIGIN || '').replace(/\/$/, '');
-const WS = process.env.WS || 'wss://silva-online.onrender.com';
+const WS = process.env.WS || ''; // Same-origin Pages Functions → Worker service binding.
 if (!ORIGIN) { console.error('ORIGIN 環境変数が必要です（例: https://silva.pages.dev）'); process.exit(1); }
 
 const dist = join(root, 'dist');
@@ -34,6 +34,8 @@ for (const f of ['index.html', 'rules.html']) {
 }
 
 /* robots.txt / sitemap.xml（Render では server.js が動的生成している分） */
+writeFileSync(join(dist, '_routes.json'), JSON.stringify({version:1,include:['/api/*'],exclude:[]}));
+writeFileSync(join(dist, 'ping'), 'pong');
 writeFileSync(join(dist, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${ORIGIN}/sitemap.xml\n`);
 writeFileSync(join(dist, 'sitemap.xml'),
 `<?xml version="1.0" encoding="UTF-8"?>

@@ -1,16 +1,18 @@
 // SILVA Service Worker
 // ⚠ リリースのたびに CACHE_NAME を上げること。上げないと古いHTMLが端末に残り続ける
-const CACHE_NAME = 'silva-v11';
+const CACHE_NAME = 'silva-v12';
 
 /* index.html の <script src="...?v=N"> と必ず同じ値にする（テストが同期を検査する）。
    ズレると、オフライン初回にコアJSがキャッシュに無くてAI戦が起動できない */
-const ASSET_VER = '16';
+const ASSET_VER = '17';
 
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/rules.html',
   '/manifest.json',
+  '/experience.css?v=17',
+  '/experience.js?v=17',
   `/game-core.js?v=${ASSET_VER}`,
   `/i18n.js?v=${ASSET_VER}`,
   `/local-game.js?v=${ASSET_VER}`,
@@ -54,10 +56,10 @@ self.addEventListener('fetch', event => {
     return;
   }
   if (url.origin !== self.location.origin) return;
-  if (url.pathname === '/ping') return;
+  if (url.pathname === '/ping' || url.pathname.startsWith('/api/')) return;
 
   // JS はネットワーク優先。古いロジックが残ると盤面がサーバーと食い違う
-  if (/\.js$/.test(url.pathname)) {
+  if (/\.(js|css)$/.test(url.pathname)) {
     event.respondWith(
       fetch(req).then(res => {
         if (res.ok) { const clone = res.clone(); caches.open(CACHE_NAME).then(c => c.put(req, clone)); }
@@ -82,7 +84,7 @@ self.addEventListener('fetch', event => {
   if (req.mode === 'navigate') {
     event.respondWith(
       fetch(req).then(res => {
-        if (res.ok) { const clone = res.clone(); caches.open(CACHE_NAME).then(c => c.put('/index.html', clone)); }
+        if (res.ok) { const clone = res.clone(); caches.open(CACHE_NAME).then(c => c.put(url.pathname === '/rules.html' ? '/rules.html' : '/index.html', clone)); }
         return res;
       }).catch(() => caches.match(req).then(c => c || caches.match('/index.html')))
     );

@@ -179,7 +179,7 @@ const DICT = {
       not_action_phase:'手番フェーズではありません', card_not_found:'カードが見つかりません',
       kukuochi_unplayable:'ククノチは場に出せません', no_self_target:'自分自身は対象にできません',
       invalid_target:'ターゲットが無効です', invalid_guess:'その宣言はできません',
-      invalid_action:'無効な操作です', not_chooser:'あなたが選択者ではありません',
+      server_busy:'混み合っています。もう一度お試しください', player_disconnected:'相手の再接続を待っています', invalid_action:'無効な操作です', not_chooser:'あなたが選択者ではありません',
       cannot_draw:'今は引けません', not_select_phase:'選択フェーズではありません',
       must_pick_drawn:'引いたカードから選んでください', no_game:'ゲームが見つかりません',
       room_not_found:'ルームが見つかりません', room_full:'ルームが満員です',
@@ -407,7 +407,7 @@ const DICT = {
       not_action_phase:'Not the action phase', card_not_found:'Card not found',
       kukuochi_unplayable:'Kukunochi cannot be played', no_self_target:'You cannot target yourself',
       invalid_target:'Invalid target', invalid_guess:'Invalid card name',
-      invalid_action:'Invalid action', not_chooser:'You are not the one choosing',
+      server_busy:'Please try again in a moment', player_disconnected:'Waiting for the other player to reconnect', invalid_action:'Invalid action', not_chooser:'You are not the one choosing',
       cannot_draw:'You cannot draw right now', not_select_phase:'Not the selection phase',
       must_pick_drawn:'Pick one of the cards you drew', no_game:'Game not found',
       room_not_found:'Room not found', room_full:'The room is full',
@@ -489,6 +489,39 @@ const DICT = {
    ============================================================ */
 const STATIC = {
   en: {
+    "遊び方":"How to play",
+    "戦績":"Your record",
+    "一枚に、":"One card.",
+    "すべてを隠せ。":"Countless secrets.",
+    "森の精霊と、人の思惑。\n相手の一枚を読み、生き残る心理戦。":"Spirits of the forest. Secrets in every hand.\nRead your rival. Be the last one standing.",
+    "2–4人":"2–4 players",
+    "1局 約5分":"About 5 minutes",
+    "登録不要":"No sign-up",
+    "まずは、練習の一局から":"Learn with a practice game",
+    "ククノチ":"Kukunochi",
+    "さあ、森の対局へ。":"Your next move starts here.",
+    "ひとりで、気軽に":"AT YOUR OWN PACE",
+    "ひとりで遊ぶ":"Play solo",
+    "3つの強さのAIと、読み合いを磨く。":"Sharpen your instincts against three AI levels.",
+    "オフラインでもプレイ可能":"Also available offline",
+    "離れていても、一緒に":"A SHARED TABLE",
+    "友達と遊ぶ":"Play with friends",
+    "部屋を作って、招待リンクを送るだけ。":"Create a room. Share a link. Play together.",
+    "2–4人のオンライン対戦":"ONLINE · 2–4 PLAYERS",
+    "招待されたら":"GOT AN INVITATION?",
+    "ルームに参加":"Join a room",
+    "5文字の合言葉で、同じテーブルへ。":"A five-character code brings you to the table.",
+    "ルームIDを入力 →":"ENTER ROOM CODE →",
+    "誰かと対戦する ↗":"Find an opponent ↗",
+    "対局を観る ↗":"Watch a match ↗",
+    "カードとルール ↗":"Cards & rules ↗",
+    "SILVAの世界を知る ↗":"Explore the world of SILVA ↗",
+    "森の精霊と、人の思惑。":"Spirits of the forest.",
+    "相手の一枚を読み、生き残る心理戦。":"Read your rival. Be the last one standing.",
+    "森に宿る、十一の物語":"Eleven stories of the forest",
+    "👁 観戦モード — 手札は対局終了後に公開されます":"Spectating — hands are revealed after the match",
+    "観戦モード — 手札は対局終了後に公開されます":"Spectating — hands are revealed after the match",
+
     /* モード選択・トップ */
     '心理戦カードゲーム':'A game of bluff and deduction',
     'モードを選択':'Select a mode',
@@ -812,7 +845,8 @@ function makeT(getLang) {
     for (let n = walker.nextNode(); n; n = walker.nextNode()) nodes.push(n);
     for (const n of nodes) {
       if (n._ja === undefined) n._ja = n.nodeValue;
-      n.nodeValue = api.L(n._ja);
+      const translated = api.L(n._ja);
+      if(n.nodeValue !== translated) n.nodeValue = translated;
     }
 
     /* 原文の控えは dataset ではなく要素の隠しプロパティに持つ。
@@ -822,7 +856,8 @@ function makeT(getLang) {
       for (const a of ATTRS) {
         if (!el.hasAttribute(a)) continue;
         if (orig[a] === undefined) orig[a] = el.getAttribute(a);
-        el.setAttribute(a, api.L(orig[a]));
+        const translated = api.L(orig[a]);
+        if(el.getAttribute(a) !== translated) el.setAttribute(a, translated);
       }
     });
 

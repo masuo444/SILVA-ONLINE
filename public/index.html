@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>SILVA — 心理戦カードゲーム</title>
 
 <!-- オンライン対戦サーバー。静的配信を別ホスト（Cloudflare Pages等）に置く場合だけ、
@@ -1671,6 +1671,7 @@ select option{background:#080d0b}
   100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}
 }
 </style>
+<link rel="stylesheet" href="/experience.css?v=17">
 </head>
 <body>
 
@@ -1678,7 +1679,7 @@ select option{background:#080d0b}
 <div id="langSwitch" class="lang-switch"></div>
 
 <!-- 接続状態（切断・再接続・相手の離脱）を常に伝える -->
-<div id="netBanner" class="net-banner hidden"></div>
+<div id="netBanner" class="net-banner hidden" role="status" aria-live="polite"></div>
 
 <!-- カード詳細ポップ（選択中カードの効果表示） -->
 <div class="card-pop hidden" id="cardPop" aria-live="polite"></div>
@@ -1781,70 +1782,23 @@ select option{background:#080d0b}
 </svg>
 </div>
 
-<!-- ═══════ SPLASH ═══════ -->
-<div id="splash">
-  <div class="sp-particles" id="spParticles"></div>
-  <div class="sp-orbit" id="spOrbit">
-    <div class="sp-orbit-ring" id="spOrbitRing"></div>
-    <div class="sp-center">
-      <div class="sp-logo">SILVA</div>
-      <div class="sp-tagline">心理戦カードゲーム</div>
-    </div>
-  </div>
-  <div class="sp-bar"><div class="sp-bar-fill" id="spBarFill"></div></div>
-  <div class="sp-status" id="spStatus">森の世界を準備しています…</div>
-  <div class="sp-tips-area" id="spTipsArea"></div>
-  <div class="sp-flash" id="spFlash"></div>
-</div>
-
-<!-- ═══════ LOBBY ═══════ -->
+<!-- The lobby is immediately usable, including offline. -->
 <div id="lobby" class="screen active">
-  <div class="hero">
-    <h1 class="silva-title">SILVA</h1>
-    <p class="silva-jp">心理戦カードゲーム</p>
-    <p class="silva-desc">FOMUS × KUKU PROJECT</p>
-  </div>
-  <div class="modes-wrap">
-    <div class="modes-divider"><span class="modes-label">モードを選択</span></div>
-    <div class="mode-grid">
-      <div class="mode-card" onclick="goPanel('panelAI')">
-        <span class="mc-icon">🤖</span>
-        <span class="mc-name">コンピューター</span>
-        <span class="mc-desc">AIと1人で対戦。3段階の難易度</span>
-        <div class="root-corner"></div>
-      </div>
-      <div class="mode-card" onclick="goPanel('panelCreate')">
-        <span class="mc-icon">🏯</span>
-        <span class="mc-name">ルーム作成</span>
-        <span class="mc-desc">ルームIDを共有してオンライン対戦</span>
-        <div class="root-corner"></div>
-      </div>
-      <div class="mode-card" onclick="goPanel('panelJoin')">
-        <span class="mc-icon">⚔️</span>
-        <span class="mc-name">ルーム参加</span>
-        <span class="mc-desc">ルームIDやURLで友達と対戦</span>
-        <div class="root-corner"></div>
-      </div>
-      <div class="mode-card" onclick="window.open('/rules.html','_blank')">
-        <span class="mc-icon">📖</span>
-        <span class="mc-name">ルール</span>
-        <span class="mc-desc">カードの効果と遊び方を確認</span>
-        <div class="root-corner"></div>
-      </div>
-      <div class="mode-card" onclick="openMyPage()">
-        <span class="mc-icon">👤</span>
-        <span class="mc-name">マイページ</span>
-        <span class="mc-desc">戦績・ランク・バッジを確認</span>
-        <div class="root-corner"></div>
-      </div>
-    </div>
-    <!-- 外部リンク -->
-    <div style="display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:1.2rem">
-      <button class="btn" onclick="openGuide()" style="font-size:.72rem;padding:.4rem 1rem;border-color:var(--ring2);color:var(--dew)">🌱 はじめて遊ぶ</button>
-      <a href="https://silva.fomus.jp/" target="_blank" rel="noopener" class="btn" style="font-size:.72rem;padding:.4rem 1rem;text-decoration:none;border-color:var(--ring2);color:var(--mint)">🌐 公式サイト</a>
-      <a href="#" id="buyCardLink" onclick="toast('購入ページは準備中です');return false;" class="btn" style="font-size:.72rem;padding:.4rem 1rem;text-decoration:none;border-color:rgba(212,165,116,.3);color:#d4a574">🃏 実物カードを購入</a>
-    </div>
-  </div>
+  <header class="silva-header"><a class="brandmark" href="/" aria-label="SILVA ホーム"><span class="brand-sigil">✧</span> SILVA<span class="brand-caption"></span></a><nav class="header-nav"><button onclick="openGuide()" data-ja="遊び方" data-en="How to play">遊び方</button><button onclick="openMyPage()" data-ja="戦績" data-en="Your record">戦績</button></nav></header>
+  <main class="lobby-main">
+    <section class="forest-hero" aria-labelledby="hero-title">
+      <div class="hero-copy"><p class="eyebrow">FOMUS × KUKU PROJECT</p><h1 id="hero-title"><span data-ja="一枚に、" data-en="One card.">一枚に、</span><br><span data-ja="すべてを隠せ。" data-en="Countless secrets.">すべてを隠せ。</span></h1><p hidden class="hero-intro" data-ja="森の精霊と、人の思惑。
+相手の一枚を読み、生き残る心理戦。" data-en="Spirits of the forest. Secrets in every hand.
+Read your rival. Be the last one standing.">森の精霊と、人の思惑。<br>相手の一枚を読み、生き残る心理戦。</p><div hidden class="hero-facts"><span data-ja="2–4人" data-en="2–4 players">2–4人</span><span data-ja="1局 約5分" data-en="About 5 minutes">1局 約5分</span><span data-ja="登録不要" data-en="No sign-up">登録不要</span></div><button class="learn-link" onclick="startGuideGame()"><span class="small-play">▷</span><span data-ja="まずは、練習の一局から" data-en="Learn with a practice game">まずは、練習の一局から</span><span>↗</span></button></div>
+      <div class="hero-art" aria-label="SILVA カードアート"><div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div><span hidden class="art-coordinate">森に宿る、十一の物語</span><div class="showcase-card card-left"><img src="/9.webp" alt="刀の少女" fetchpriority="high"></div><div class="showcase-card card-right"><img src="/8.webp" alt="精霊" fetchpriority="high"></div><div class="showcase-card card-center"><img src="/10.webp" alt="ククノチ" fetchpriority="high"><div hidden class="showcase-caption"><span>THE FOREST SPIRIT</span><strong data-ja="ククノチ" data-en="Kukunochi">ククノチ</strong></div></div><div hidden class="art-footnote"><span>01 — 11</span><span>SILVA CARD COLLECTION</span></div></div>
+    </section>
+    <section class="play-section" aria-labelledby="play-title"><div class="section-heading"><h2 id="play-title" data-ja="さあ、森の対局へ。" data-en="Your next move starts here.">さあ、森の対局へ。</h2></div>
+      <div class="play-grid"><button class="play-tile solo-tile" onclick="goPanel('panelAI')"><span class="tile-top"><span class="tile-symbol">✧</span><span hidden class="tile-tag" data-ja="ひとりで、気軽に" data-en="AT YOUR OWN PACE">ひとりで、気軽に</span><span class="tile-arrow">↗</span></span><strong data-ja="ひとりで遊ぶ" data-en="Play solo">ひとりで遊ぶ</strong><span hidden class="tile-description" data-ja="3つの強さのAIと、読み合いを磨く。" data-en="Sharpen your instincts against three AI levels.">3つの強さのAIと、読み合いを磨く。</span><span class="tile-bottom" data-ja="オフラインでもプレイ可能" data-en="Also available offline">オフラインでもプレイ可能</span></button>
+      <button class="play-tile friends-tile" onclick="goPanel('panelCreate')"><span class="tile-top"><span class="tile-symbol">❖</span><span hidden class="tile-tag" data-ja="離れていても、一緒に" data-en="A SHARED TABLE">離れていても、一緒に</span><span class="tile-arrow">↗</span></span><strong data-ja="友達と遊ぶ" data-en="Play with friends">友達と遊ぶ</strong><span hidden class="tile-description" data-ja="部屋を作って、招待リンクを送るだけ。" data-en="Create a room. Share a link. Play together.">部屋を作って、招待リンクを送るだけ。</span><span class="tile-bottom" data-ja="2–4人のオンライン対戦" data-en="ONLINE · 2–4 PLAYERS">2–4人のオンライン対戦</span></button>
+      <button class="play-tile join-tile" onclick="goPanel('panelJoin')"><span class="tile-top"><span class="tile-symbol">⌑</span><span hidden class="tile-tag" data-ja="招待されたら" data-en="GOT AN INVITATION?">招待されたら</span><span class="tile-arrow">↗</span></span><strong data-ja="ルームに参加" data-en="Join a room">ルームに参加</strong><span hidden class="tile-description" data-ja="5文字の合言葉で、同じテーブルへ。" data-en="A five-character code brings you to the table.">5文字の合言葉で、同じテーブルへ。</span><span class="tile-bottom" data-ja="ルームIDを入力 →" data-en="ENTER ROOM CODE →">ルームIDを入力 →</span></button></div>
+      <div class="lobby-secondary"><button onclick="goPanel('panelMatch')" data-ja="誰かと対戦する ↗" data-en="Find an opponent ↗">誰かと対戦する ↗</button><button onclick="goPanel('panelSpectate');loadRooms()" data-ja="対局を観る ↗" data-en="Watch a match ↗">対局を観る ↗</button><a href="/rules.html" target="_blank" rel="noopener" data-ja="カードとルール ↗" data-en="Cards & rules ↗">カードとルール ↗</a></div>
+    </section>
+  </main><footer class="lobby-footer"><span>© SILVA · FOMUS × KUKU PROJECT</span><a href="https://silva.fomus.jp/" target="_blank" rel="noopener" data-ja="SILVAの世界を知る ↗" data-en="Explore the world of SILVA ↗">SILVAの世界を知る ↗</a></footer>
 </div>
 
 <!-- ═══════ PANELS ═══════ -->
@@ -2072,7 +2026,7 @@ select option{background:#080d0b}
 
 <!-- ═══════ WAITING ═══════ -->
 <div id="waiting" class="screen">
-  <button class="back-link" onclick="if(confirm('ルームを出ますか？'))location.reload()">戻る</button>
+  <button class="back-link" onclick="leaveSilva()">戻る</button>
   <p class="w-label">対局ルーム</p>
   <div class="room-id" id="roomIdTxt" onclick="copyRoomId()">—</div>
   <p class="room-id-hint" onclick="copyRoomId()">タップでIDをコピー</p>
@@ -2102,9 +2056,9 @@ select option{background:#080d0b}
 <!-- ═══════ GAME ═══════ -->
 <div id="game" class="screen">
   <div class="game-wrap">
-    <div id="specBanner" class="spec-banner hidden">👁 観戦モード — 全員の手札が表示されています</div>
+    <div id="specBanner" class="spec-banner hidden">👁 観戦モード — 手札は対局終了後に公開されます</div>
     <div class="g-bar">
-      <button class="back-link" style="font-size:.7rem;margin-right:.5rem" onclick="if(confirm('部屋を出ますか？'))location.reload()">退出</button>
+      <button class="back-link" style="font-size:.7rem;margin-right:.5rem" onclick="leaveSilva()">退出</button>
       <div class="g-turn" id="gTurn">—</div>
       <div class="g-bar-info">
         <span class="g-deck" id="gDeck">🃏 —</span>
@@ -2113,7 +2067,7 @@ select option{background:#080d0b}
       </div>
     </div>
     <div class="action-bar" id="actionBar">
-      <div class="a-hint" id="aHint">待機中...</div>
+      <div class="a-hint" id="aHint" role="status" aria-live="polite">待機中...</div>
       <div class="thinking-strip hidden" id="thinkingStrip"><span class="thinking-dot"></span><span id="thinkingText"></span></div>
       <div class="a-btns" id="aBtns"></div>
     </div>
@@ -2151,7 +2105,7 @@ select option{background:#080d0b}
   </div>
   <!-- 部屋を出るボタン -->
   <div style="text-align:center;padding:.5rem 0 .8rem">
-    <button class="btn" id="leaveRoomBtn" style="font-size:.75rem;padding:.4rem 1.2rem;opacity:.5;border-color:rgba(255,80,80,.3);color:rgba(255,80,80,.7)" onclick="if(confirm('部屋を出ますか？'))location.reload()">部屋を出る</button>
+    <button class="btn" id="leaveRoomBtn" style="font-size:.75rem;padding:.4rem 1.2rem;opacity:.5;border-color:rgba(255,80,80,.3);color:rgba(255,80,80,.7)" onclick="leaveSilva()">部屋を出る</button>
   </div>
   <!-- 枡お守り（守護中に常時表示） -->
   <div class="masu-omamori hidden" id="masuOmamori">
@@ -3177,9 +3131,9 @@ const FX = (function(){
 <!-- ルールエンジン（サーバーと共有）・多言語辞書・ブラウザ内AI対戦
      ⚠ これらを変更したらリリース時に ?v= を上げること。
         上げないと、古いキャッシュを持つ端末が古いルールで動いてしまう -->
-<script src="/game-core.js?v=16"></script>
-<script src="/i18n.js?v=16"></script>
-<script src="/local-game.js?v=16"></script>
+<script src="/game-core.js?v=17"></script>
+<script src="/i18n.js?v=17"></script>
+<script src="/local-game.js?v=17"></script>
 
 <script>
 /* ═══════════════════════════════════
@@ -3207,6 +3161,7 @@ function setLang(lang){
   try{localStorage.setItem('silva_lang',lang);}catch{}
   I18.applyStatic();
   renderLangSwitch();
+  window.dispatchEvent(new Event('silva:language'));
   if(typeof resetRuleBot==='function')resetRuleBot();
   if(typeof gameState!=='undefined'&&gameState) renderGame();
 }
@@ -3260,58 +3215,67 @@ const EFFECT_DESC=new Proxy({},{ get:(_,id)=>I18.effectDesc(String(id)) });
    モバイルはタブを裏に回すと切断されるため、復帰時に必ず繋ぎ直す
 ═══════════════════════════════════ */
 let myToken=null, _reconnectTries=0, _reconnectTimer=null, _intentionalClose=false, _rejoinPending=false;
-
-/* 対局中のみ復帰対象。sessionStorage なのでタブを閉じれば消える */
-function saveSession(){
-  try{
-    if(myId&&myToken&&myRoomId) sessionStorage.setItem('silva_session',JSON.stringify({playerId:myId,token:myToken,roomId:myRoomId}));
-  }catch{}
-}
-function loadSession(){ try{return JSON.parse(sessionStorage.getItem('silva_session'))||null;}catch{return null;} }
-function clearSession(){ try{sessionStorage.removeItem('silva_session');}catch{} }
-
-/* 静的配信（Cloudflare Pagesなど）とWSサーバーを別ホストに置けるようにする。
-   同一ホストで動かす場合は設定不要 —
-   分離するときは index.html の <meta name="silva-ws"> か ?ws= で指定する */
-function wsEndpoint(){
-  const q=new URLSearchParams(location.search).get('ws');
-  const meta=document.querySelector('meta[name="silva-ws"]')?.content?.trim();
-  const custom=q||(meta&&!meta.startsWith('__')?meta:'');
-  if(custom) return custom.replace(/^http/,'ws');
-  return `${location.protocol==='https:'?'wss:':'ws:'}//${location.host}`;
-}
-
-function connect(cb){
-  _intentionalClose=false;
-  ws=new WebSocket(wsEndpoint());
-  ws.onopen=()=>{
-    _reconnectTries=0;
-    const banner=document.getElementById('netBanner'); if(banner) banner.classList.add('hidden');
-    const s=loadSession();
-    if(s&&s.playerId&&s.token&&s.roomId){
-      _rejoinPending=true;
-      send({type:'rejoin',playerId:s.playerId,token:s.token,roomId:s.roomId});
-      /* 応答が来ないまま固まらないよう保険をかける（サーバー再起動時など） */
-      setTimeout(()=>{ if(_rejoinPending){_rejoinPending=false;clearSession();} },4000);
+let _socketRoute=null, _onlineWanted=false, _connectionReady=false, _connectCallbacks=[], _heartbeatTimer=null;
+function saveSession(){try{if(myId&&myToken&&myRoomId)sessionStorage.setItem('silva_session',JSON.stringify({playerId:myId,token:myToken,roomId:myRoomId}));}catch{}}
+function loadSession(){try{return JSON.parse(sessionStorage.getItem('silva_session'))||null;}catch{return null;}}
+function clearSession(){try{sessionStorage.removeItem('silva_session');}catch{}}
+function wsEndpoint(){return `${location.protocol==='https:'?'wss:':'ws:'}//${location.host}${_socketRoute?'/api/rooms/'+_socketRoute:'/api/lobby'}`;}
+function connectionNotice(ja,en){const b=document.getElementById('netBanner');if(b){b.classList.remove('hidden');b.textContent=LANG==='ja'?ja:en;}}
+function connect(cb, transfer=null){
+  if(cb)_connectCallbacks.push(cb);
+  clearTimeout(_reconnectTimer);clearInterval(_heartbeatTimer);
+  _onlineWanted=true;_intentionalClose=false;_connectionReady=false;
+  const session=transfer?null:loadSession();
+  _socketRoute=transfer?.roomId||session?.roomId||null;
+  _rejoinPending=!!session;
+  if(ws){ws.onclose=null;ws.onmessage=null;try{ws.close();}catch{}}
+  const socket=ws=new WebSocket(wsEndpoint());
+  let welcomed=false;
+  const timeout=setTimeout(()=>{if(ws===socket&&!_connectionReady){connectionNotice('接続できませんでした。もう一度お試しください。','Could not connect. Please try again.');socket.close();}},9000);
+  socket.onmessage=e=>{
+    if(socket!==ws)return;
+    let m;try{m=JSON.parse(e.data);}catch{return;}
+    if(m.type==='transfer'){
+      _connectCallbacks=[];
+      connect(()=>socketSend(m.action),m);return;
     }
-    if(cb)cb();
+    if(m.type==='pong')return;
+    if(m.type==='connected'){
+      welcomed=true;
+      if(session){socketSend({type:'rejoin',...session});return;}
+      handle(m);ready();return;
+    }
+    if(m.type==='rejoin_failed'){
+      handle(m);_socketRoute=null;_onlineWanted=false;_connectCallbacks=[];clearTimeout(timeout);socket.onclose=null;socket.close();_connectionReady=false;
+      connectionNotice('対局の保存期間が終了しました。新しい部屋で遊べます。','This room has expired. You can start a new game.');goScreen('lobby');return;
+    }
+    handle(m);
+    if(m.type==='error'&&transfer&&['room_not_found','already_started','room_full','no_spectate'].includes(m.code)){_socketRoute=null;_connectionReady=false;_onlineWanted=false;clearTimeout(timeout);clearInterval(_heartbeatTimer);socket.onclose=null;socket.close();}
+    if(m.type==='rejoined')ready();
   };
-  ws.onclose=()=>{ if(!_intentionalClose) scheduleReconnect(); };
-  ws.onerror=()=>{};
-  ws.onmessage=e=>{ try{ handle(JSON.parse(e.data)); }catch{} };
+  function ready(){
+    clearTimeout(timeout);_connectionReady=true;_reconnectTries=0;
+    document.getElementById('netBanner')?.classList.add('hidden');
+    const callbacks=_connectCallbacks.splice(0);for(const fn of callbacks)fn();
+    _heartbeatTimer=setInterval(()=>{if(socket.readyState===1)socket.send(JSON.stringify({type:'ping'}));},25000);
+  }
+  socket.onclose=()=>{
+    clearTimeout(timeout);clearInterval(_heartbeatTimer);_connectionReady=false;
+    if(socket!==ws||_intentionalClose||!_onlineWanted||isLocalMode())return;
+    if(!welcomed&&!session){_onlineWanted=false;_connectCallbacks=[];_socketRoute=null;connectionNotice('ルームが見つからないか、接続できません。IDをご確認ください。','Room unavailable. Check the code and try again.');return;}
+    scheduleReconnect();
+  };
+  socket.onerror=()=>{};
 }
-
+function socketSend(m){if(ws?.readyState===1)ws.send(JSON.stringify(m));}
 function scheduleReconnect(){
-  const banner=document.getElementById('netBanner');
-  if(banner){ banner.classList.remove('hidden'); banner.textContent='📡 接続が切れました — 再接続しています…'; }
+  if(!_onlineWanted||isLocalMode())return;
+  connectionNotice('再接続しています。対局は保存されています。','Reconnecting. Your game is saved.');
   clearTimeout(_reconnectTimer);
-  const delay=Math.min(1000*Math.pow(1.6,_reconnectTries++),15000);
-  _reconnectTimer=setTimeout(()=>connect(),delay);
+  _reconnectTimer=setTimeout(()=>connect(),Math.min(1000*Math.pow(1.6,_reconnectTries++),10000));
 }
-
-/* 復帰のきっかけ：タブに戻った / オンラインに戻った */
-document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&ws?.readyState!==1){_reconnectTries=0;connect();} });
-window.addEventListener('online',()=>{ if(ws?.readyState!==1){_reconnectTries=0;connect();} });
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&_onlineWanted&&!isLocalMode()&&ws?.readyState!==1)connect();});
+window.addEventListener('online',()=>{if(_onlineWanted&&!isLocalMode()&&ws?.readyState!==1)connect();});
 
 /* ═══════════════════════════════════
    送信経路の切り替え
@@ -3322,7 +3286,7 @@ let localGame=null;
 function isLocalMode(){ return !!(localGame&&localGame.active); }
 
 function startLocalAIGame(opts){
-  if(ws&&ws.readyState===1){ _intentionalClose=true; try{ws.close();}catch{} }
+  _onlineWanted=false;_intentionalClose=true;clearTimeout(_reconnectTimer);clearInterval(_heartbeatTimer);_connectCallbacks=[];if(ws){ws.onclose=null;try{ws.close();}catch{}}
   clearSession();
   if(!localGame) localGame=SILVA_LOCAL.makeLocalGame(m=>handle(m));
   myId='me';
@@ -3334,9 +3298,10 @@ function stopLocalGame(){ if(localGame){localGame.stop();localGame=null;} }
 
 function send(m){
   if(isLocalMode()){ localGame.send(m); return; }
-  if(ws?.readyState===1) ws.send(JSON.stringify(m));
+  if(['draw_card','play_card','farmer_select','target_discard'].includes(m.type)){m={...m,actionId:crypto.randomUUID(),revision:gameState?.revision};}
+  if(ws?.readyState===1&&_connectionReady) socketSend(m);else connectionNotice('接続を確認しています。少しお待ちください。','Checking your connection. Please wait.');
 }
-function ensureWS(cb){if(ws?.readyState===1){cb();return;}connect(cb);}
+function ensureWS(cb){stopLocalGame();if(ws?.readyState===1&&_connectionReady){cb();return;}if(ws?.readyState===0){_connectCallbacks.push(cb);return;}connect(cb);}
 
 /* HTMLに化ける文字を落とす。サーバー側でもサニタイズしているが二重に守る */
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -3394,6 +3359,7 @@ function handle(m){
       document.getElementById('matchWait').classList.add('hidden');
       document.getElementById('matchStart').classList.remove('hidden'); break;
     case 'game_started': {
+      if(!isLocalMode()){_gameInfo={isOnline:true,aiDifficulty:null};} _gameRecorded=false;
       document.querySelectorAll('.overlay.show').forEach(o=>o.classList.remove('show'));
       /* リマッチUI リセット */
       const _rb=document.getElementById('rematchBtn');if(_rb){_rb.disabled=false;_rb.textContent='⚔️ 続けて対戦する';}
@@ -3442,133 +3408,10 @@ function handle(m){
 }
 
 /* ═══════════════════════════════════
-   SPLASH — サーバーwake-up待ち
-═══════════════════════════════════ */
-(function(){
-  /* カード紹介はエンジンと辞書から生成する。
-     手書きのリストを持たないので、実装とズレようがない */
-  const CARD_DATA=SILVA_CORE.CARDS.map(c=>({
-    img: cardImg(c.level),
-    id: c.id,
-    get name(){ return `${cardName(c.id)} Lv.${c.level}`; },
-    get desc(){ return I18.effectDesc(c.id); },
-  }));
-  const MSG_KEYS=['森の世界を準備しています…','カードをシャッフルしています…','職人たちを呼び集めています…','森の結界を張っています…','もう少しで準備完了です…'];
-  const msgs=MSG_KEYS.map(m=>L(m));
-  const splash=document.getElementById('splash');
-  if(!splash)return;
-  const bar=document.getElementById('spBarFill');
-  const status=document.getElementById('spStatus');
-  const tipsArea=document.getElementById('spTipsArea');
-  const ring=document.getElementById('spOrbitRing');
-  const flash=document.getElementById('spFlash');
-  const particles=document.getElementById('spParticles');
-
-  /* パーティクル生成 */
-  for(let i=0;i<20;i++){
-    const p=document.createElement('div');p.className='sp-particle';
-    p.style.left=Math.random()*100+'%';p.style.top=60+Math.random()*40+'%';
-    p.style.animationDelay=Math.random()*4+'s';p.style.animationDuration=(3+Math.random()*3)+'s';
-    p.style.width=p.style.height=(2+Math.random()*3)+'px';
-    particles.appendChild(p);
-  }
-
-  /* カードを円形に配置（最初は裏面） */
-  const shuffled=[...CARD_DATA].sort(()=>Math.random()-.5);
-  const radius=96;
-  shuffled.forEach((c,i)=>{
-    const angle=(i/11)*Math.PI*2 - Math.PI/2;
-    const x=120+radius*Math.cos(angle)-24;
-    const y=120+radius*Math.sin(angle)-34;
-    const el=document.createElement('div');el.className='sp-orbit-card';
-    el.style.left=x+'px';el.style.top=y+'px';
-    /* 裏面→一定時間後にめくれる */
-    el.style.transform='rotateY(180deg)';el.style.opacity='.4';
-    el.innerHTML=`<img src="/back.webp" alt="" data-front="${c.img}">`;
-    el.dataset.idx=i;el.dataset.cid=c.id;el.dataset.name=c.name;el.dataset.desc=c.desc;el.dataset.frontImg=c.img;
-    ring.appendChild(el);
-  });
-
-  /* カードを1枚ずつめくる演出 */
-  let revealIdx=0;
-  const revealTimer=setInterval(()=>{
-    if(revealIdx>=11){clearInterval(revealTimer);return;}
-    const card=ring.children[revealIdx];
-    if(!card)return;
-    card.style.transform='rotateY(0deg)';card.style.opacity='1';
-    card.querySelector('img').src=card.dataset.frontImg;
-    card.classList.add('sp-reveal');
-    /* Tips更新 — カード画像＋説明 */
-    tipsArea.innerHTML=`<div class="sp-tips-card"><img src="${card.dataset.frontImg}" alt=""><div class="sp-tips-txt"><strong>${card.dataset.name}</strong><br>${card.dataset.desc}</div></div>`;
-    revealIdx++;
-  },3500);
-  /* 最初の1枚は1秒後に */
-  setTimeout(()=>{
-    if(revealIdx===0){
-      const card=ring.children[0];
-      if(card){card.style.transform='rotateY(0deg)';card.style.opacity='1';card.querySelector('img').src=card.dataset.frontImg;card.classList.add('sp-reveal');
-      tipsArea.innerHTML=`<div class="sp-tips-card"><img src="${card.dataset.frontImg}" alt=""><div class="sp-tips-txt"><strong>${card.dataset.name}</strong><br>${card.dataset.desc}</div></div>`;
-      revealIdx=1;}
-    }
-  },1200);
-
-  /* プログレスバー */
-  let progress=0;let msgIdx=0;
-  const barTimer=setInterval(()=>{
-    progress=Math.min(progress+Math.random()*6+2,90);
-    bar.style.width=progress+'%';
-    if(progress>20&&msgIdx<1){msgIdx=1;status.textContent=msgs[1];}
-    if(progress>40&&msgIdx<2){msgIdx=2;status.textContent=msgs[2];}
-    if(progress>60&&msgIdx<3){msgIdx=3;status.textContent=msgs[3];}
-    if(progress>80&&msgIdx<4){msgIdx=4;status.textContent=msgs[4];}
-  },800);
-
-  /* サーバーにpingして起動確認。
-     静的配信を分離した構成（silva-ws設定時）では、ゲームサーバーの起床を
-     待たずにスプラッシュを終える — AI戦はサーバー不要で遊べるため。
-     pingは送り続けてRenderの起床トリガーにする */
-  let _pinged=false;
-  function pingUrl(){
-    try{ return wsEndpoint().replace(/^ws/,'http').replace(/\/$/,'')+'/ping'; }
-    catch{ return '/ping'; }
-  }
-  function finishSplash(){
-    if(_pinged)return; _pinged=true;
-    clearInterval(barTimer);clearInterval(revealTimer);
-    /* 全カードを一斉にめくる */
-    Array.from(ring.children).forEach(c=>{c.style.transform='rotateY(0deg)';c.style.opacity='1';c.querySelector('img').src=c.dataset.frontImg;c.classList.add('sp-reveal');});
-    bar.style.width='100%';status.textContent=L('準備完了！');
-    flash.classList.add('go');setTimeout(()=>flash.classList.remove('go'),600);
-    tipsArea.innerHTML='<div class="sp-tips-card" style="border-color:var(--sprout);background:rgba(74,173,106,.12)"><div class="sp-tips-txt" style="color:var(--dew);text-align:center"><strong>'+esc(L('⚔️ 対戦の準備が整いました'))+'</strong></div></div>';
-    setTimeout(()=>splash.classList.add('hide'),1200);
-    setTimeout(()=>splash.remove(),2000);
-    /* 初めての訪問者にはガイドを開く（ルームURL/観戦で来た人には出さない） */
-    try{
-      if(!localStorage.getItem('silva_guide_seen')&&!window._autoJoinRoom)
-        setTimeout(()=>openGuide(true),2300);
-    }catch{}
-  }
-  let pingTries=0;
-  const dedicatedHost=(()=>{try{return !pingUrl().includes('//'+location.host);}catch{return false;}})();
-  function tryPing(){
-    fetch(pingUrl(),{method:'GET',cache:'no-store'}).then(r=>{if(r.ok)return r.text();throw 0;})
-      .then(finishSplash)
-      .catch(()=>{
-        pingTries++;
-        /* 分離構成なら1回で見切る（ページが表示できている＝静的層は生きている）。
-           同一ホスト構成でも16秒で諦めてオフラインAI戦へ進めるようにする */
-        if(dedicatedHost||pingTries>=8)finishSplash();
-        setTimeout(tryPing,2500);   // 起床トリガーとして継続
-      });
-  }
-  tryPing();
-})();
-
-/* ═══════════════════════════════════
    NAV
 ═══════════════════════════════════ */
-function goScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
-function goPanel(id){ensureWS(()=>goScreen(id));}
+function goScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');document.body.dataset.screen=id;window.scrollTo({top:0});window.dispatchEvent(new CustomEvent('silva:screen',{detail:id}));}
+function goPanel(id){goScreen(id);}
 /* 自動ルーム参加: ?room= パラメータ */
 window.addEventListener('load',()=>{
   /* プロフィール名を各入力欄に自動セット */
@@ -3768,7 +3611,7 @@ function renderRooms(rooms){
   if(!rooms.length){el.innerHTML='<p style="font-family:var(--f-serif);font-size:.73rem;color:var(--frond4);text-align:center;padding:1.2rem">進行中の対局がありません</p>';return;}
   el.innerHTML=rooms.map(r=>`
     <div class="spec-item">
-      <div><div class="spec-vs">${r.players.join(' vs ')}</div><div class="spec-meta">T${r.turn} · 観戦 ${r.spectators}人</div></div>
+      <div><div class="spec-vs">${r.players.map(esc).join(' vs ')}</div><div class="spec-meta">T${r.turn} · 観戦 ${r.spectators}人</div></div>
       <button class="btn" style="font-size:.7rem;padding:.36rem .72rem" onclick="doSpectate('${r.id}')">観戦</button>
     </div>`).join('');
 }
@@ -3827,7 +3670,7 @@ function renderGame(){
     }
     _prevAlive=nowAlive;
   }
-  if(phase==='ended')setTimeout(()=>{document.querySelectorAll('.overlay.show').forEach(o=>o.classList.remove('show'));showWin(winner,players);},3000);
+  if(phase==='ended')setTimeout(()=>{document.querySelectorAll('.overlay.show').forEach(o=>o.classList.remove('show'));showWin(winner,players);},1200);
 }
 
 function renderPlayers(players,curId,phase,pending){
@@ -3843,7 +3686,7 @@ function renderPlayers(players,curId,phase,pending){
   const n=players.length;
   const others=[];
   for(let i=1;i<n;i++) others.push(players[(myIdx+i)%n]);
-  const sorted=[...others, players[myIdx>=0?myIdx:0]];
+  const sorted=myIdx>=0?[...others,players[myIdx]]:[...players];
   /* position classes */
   const posMap={};
   if(n===2){posMap[others[0]?.id]='pos-top';}
@@ -3881,7 +3724,7 @@ function renderPlayers(players,curId,phase,pending){
     ].filter(Boolean).join('');
 
     let hand='';
-    if((isMe||isSpectator||isWarriorTarget)&&p.hand){
+    if((isMe||isSpectator||isWarriorTarget||phase==='ended')&&p.hand){
       hand=p.hand.map(c=>{
         /* warrior裏向き選択: hidden カードは裏面で表示 */
         if(c.hidden){
@@ -3901,7 +3744,8 @@ function renderPlayers(players,curId,phase,pending){
         if(canWarriorPick)oc=`warriorDiscard('${c.uid}')`;
         else if(canDisc)oc=`discardCard('${c.uid}')`;
         else if(canPlay)oc=`selectCard('${c.uid}')`;
-        return `<div class="${cls}" ${oc?`onclick="${oc}"`:''}><div class="c-lv">${N(c.level)}</div><img class="c-img" src="${cardImg(c.level)}" alt="${cardName(c.id)}"><div class="c-nm">${cardName(c.id)}</div><div class="c-ef">${I18.effectName(c.id)}</div></div>`;
+        if(isMe&&!oc)oc=`showCardPop(SILVA_CORE.CARD_BY_ID['${c.id}'])`;
+        return `<div class="${cls}" ${oc?`role="button" tabindex="0" aria-label="${esc(cardName(c.id))}" onclick="${oc}"`:''}><div class="c-lv">${N(c.level)}</div><img class="c-img" src="${cardImg(c.level)}" alt="${cardName(c.id)}"><div class="c-nm">${cardName(c.id)}</div><div class="c-ef">${I18.effectName(c.id)}</div></div>`;
       }).join('');
     } else {
       hand=Array(p.handCount).fill('<div class="card c-back no-act"><img class="c-back-img" src="/back.webp" alt=""></div>').join('');
@@ -3958,6 +3802,7 @@ function renderAction(){
     return;
   }
   if(!isMy||!me?.alive){hint.textContent=t('ui.waitingFor',{name:dn(players.find(p=>p.id===currentPlayerId)?.name)||'—'});pendingCardUid=null;pendingEffect=null;selectedUid=null;hideCardPop();return;}
+  if(phase==='ended'){hint.textContent=LANG==='ja'?'対局が終了しました':'Match complete';return;}
   if(phase==='draw'){hint.textContent='カードを引いてください';return;}
   if(phase==='farmer_select'){hint.textContent='🌾 農家の効果 — 手札から1枚選んでください';return;}
   if(phase==='action'){
@@ -4695,6 +4540,7 @@ function toast(msg,dur=3500){
   document.body.appendChild(el);setTimeout(()=>el.remove(),dur);
 }
 </script>
+<script src="/experience.js?v=17"></script>
 </body>
 </html>
 <script>
