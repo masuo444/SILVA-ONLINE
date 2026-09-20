@@ -24,7 +24,7 @@
     if(!art[id]||!el||document.hidden)return;
     const result=typeof options.hit==='boolean'||options.blocked;
     const key=id+':'+(el.dataset.pid||'')+':'+result+':'+!!options.noEffect;
-    const now=performance.now();if(now-(recent.get(key)||-10000)<1050)return;recent.set(key,now);
+    const now=performance.now();for(const [k,t] of recent){if(now-t>1500)recent.delete(k);}if(now-(recent.get(key)||-10000)<1050)return;recent.set(key,now);
     const rect=el.getBoundingClientRect();if(rect.bottom<0||rect.top>innerHeight)return;
     if(active.size>=3){const oldest=active.values().next().value;oldest.remove();active.delete(oldest);}
     const source=center(el),target=options.target?center(options.target):source;
@@ -39,7 +39,6 @@
     if(result)node.classList.add('fx-result');
     if(traveling)node.classList.add('fx-travel');
     node.style.cssText=`--fx-color:${colors[id]};--sx:${source.x}px;--sy:${source.y}px;--tx:${target.x}px;--ty:${target.y}px;--portrait:${portrait}px;--duration:1250ms`;
-    const dx=target.x-source.x,dy=target.y-source.y;
     const bend=id==='spirit'?80:id==='scout'?35:0;
     const path=`M ${source.x} ${source.y} Q ${(source.x+target.x)/2+bend} ${(source.y+target.y)/2} ${target.x} ${target.y}`;
     const back=`M ${target.x} ${target.y} Q ${(source.x+target.x)/2-bend} ${(source.y+target.y)/2} ${source.x} ${source.y}`;
@@ -53,5 +52,7 @@
     setTimeout(()=>{node.remove();active.delete(node);},quiet?420:options.noEffect?650:1300);
   },clear};
   window.addEventListener('silva:screen',e=>{if(e.detail!=='game')clear();});
+  window.addEventListener('resize',clear);
+  window.addEventListener('scroll',clear,{passive:true});
   document.addEventListener('visibilitychange',()=>{if(document.hidden)clear();});
 })();

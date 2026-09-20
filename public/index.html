@@ -1671,7 +1671,7 @@ select option{background:#080d0b}
   100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}
 }
 </style>
-<link rel="stylesheet" href="/experience.css?v=22">
+<link rel="stylesheet" href="/experience.css?v=23">
 </head>
 <body>
 
@@ -3129,9 +3129,9 @@ const FX = (function(){
 <!-- ルールエンジン（サーバーと共有）・多言語辞書・ブラウザ内AI対戦
      ⚠ これらを変更したらリリース時に ?v= を上げること。
         上げないと、古いキャッシュを持つ端末が古いルールで動いてしまう -->
-<script src="/game-core.js?v=22"></script>
-<script src="/i18n.js?v=22"></script>
-<script src="/local-game.js?v=22"></script>
+<script src="/game-core.js?v=23"></script>
+<script src="/i18n.js?v=23"></script>
+<script src="/local-game.js?v=23"></script>
 
 <script>
 /* ═══════════════════════════════════
@@ -3357,6 +3357,7 @@ function handle(m){
       document.getElementById('matchWait').classList.add('hidden');
       document.getElementById('matchStart').classList.remove('hidden'); break;
     case 'game_started': {
+      window.SILVA_UI_TIMING?.clear();window.SILVA_CARD_FX?.clear();
       if(!isLocalMode()){_gameInfo={isOnline:true,aiDifficulty:null};} _gameRecorded=false;
       document.querySelectorAll('.overlay.show').forEach(o=>o.classList.remove('show'));
       /* リマッチUI リセット */
@@ -3408,7 +3409,7 @@ function handle(m){
 /* ═══════════════════════════════════
    NAV
 ═══════════════════════════════════ */
-function goScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');document.body.dataset.screen=id;window.scrollTo({top:0});window.dispatchEvent(new CustomEvent('silva:screen',{detail:id}));}
+function goScreen(id){if(id!=='game')window.SILVA_UI_TIMING?.clear();document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');document.body.dataset.screen=id;window.scrollTo({top:0});window.dispatchEvent(new CustomEvent('silva:screen',{detail:id}));}
 function goPanel(id){goScreen(id);}
 /* 自動ルーム参加: ?room= パラメータ */
 window.addEventListener('load',()=>{
@@ -3676,7 +3677,8 @@ function renderGame(){
     }
     _prevAlive=nowAlive;
   }
-  if(phase==='ended')setTimeout(()=>{document.querySelectorAll('.overlay.show').forEach(o=>o.classList.remove('show'));showWin(winner,players);},1200);
+  if(phase==='ended'){if(!document.getElementById('ovWin').classList.contains('show'))window.SILVA_UI_TIMING.schedule(()=>{if(gameState?.phase!=='ended'||document.body.dataset.screen!=='game')return;document.querySelectorAll('.overlay.show').forEach(o=>o.classList.remove('show'));showWin(gameState.winner,gameState.players);},1200,'result');}
+  else window.SILVA_UI_TIMING.cancel('result');
 }
 
 function renderPlayers(players,curId,phase,pending){
@@ -3905,7 +3907,7 @@ function playCardWithFX(cardUid, extra){
 ═══════════════════════════════════ */
 function afterCardReveal(show){
   const quiet=document.body.classList.contains('reduced-motion')||matchMedia('(prefers-reduced-motion:reduce)').matches;
-  setTimeout(()=>{if(document.body.dataset.screen==='game'&&gameState?.phase!=='ended')show();},quiet?0:780);
+  window.SILVA_UI_TIMING.schedule(()=>{if(document.body.dataset.screen==='game'&&gameState?.phase!=='ended')show();},quiet?0:780);
 }
 function openOv(id){document.getElementById(id).classList.add('show');}
 function closeOv(id){document.getElementById(id).classList.remove('show');}
@@ -4418,6 +4420,7 @@ function replayToggle(){
 }
 
 function showPeek(card){
+  window.SILVA_UI_TIMING.cancel('peek-label');window.SILVA_UI_TIMING.cancel('peek-flip');
   const area=document.getElementById('peekCard');area.innerHTML='';
   const flipper=document.createElement('div');flipper.className='peek-flipper';
   const back=document.createElement('div');back.className='peek-back';
@@ -4429,12 +4432,13 @@ function showPeek(card){
   openOv('ovPeek');
 
   /* 少し待ってからフリップ開始 */
-  setTimeout(()=>{flipper.classList.add('do-flip');},400);
+  window.SILVA_UI_TIMING.schedule(()=>{flipper.classList.add('do-flip');},400,'peek-flip');
   /* フリップ完了後にカード名を表示 */
-  setTimeout(()=>{document.getElementById('peekTxt').textContent=t('ui.peekResult',{card:cardName(card.id),level:card.level});},1200);
+  window.SILVA_UI_TIMING.schedule(()=>{document.getElementById('peekTxt').textContent=t('ui.peekResult',{card:cardName(card.id),level:card.level});},1200,'peek-label');
 }
 
 function showKurando(myCard,theirCard){
+  window.SILVA_UI_TIMING.cancel('kurando-close');
   const d=document.getElementById('kurandoDuel');d.innerHTML='';
   function makeFlipSide(card,label){
     const side=document.createElement('div');side.className='k-side';
@@ -4455,16 +4459,17 @@ function showKurando(myCard,theirCard){
   openOv('ovKurando');
 
   /* 左カードめくり */
-  setTimeout(()=>{a.flipper.classList.add('do-flip');},500);
+  window.SILVA_UI_TIMING.schedule(()=>{a.flipper.classList.add('do-flip');},500);
   /* 右カードめくり */
-  setTimeout(()=>{b.flipper.classList.add('do-flip');},900);
+  window.SILVA_UI_TIMING.schedule(()=>{b.flipper.classList.add('do-flip');},900);
   /* VS と ラベル表示 */
-  setTimeout(()=>{vs.classList.add('show');a.lbl.classList.add('show');b.lbl.classList.add('show');},1400);
+  window.SILVA_UI_TIMING.schedule(()=>{vs.classList.add('show');a.lbl.classList.add('show');b.lbl.classList.add('show');},1400);
   /* 自動クローズ（勝敗画面への遷移のため） */
-  setTimeout(()=>{closeOv('ovKurando');},2800);
+  window.SILVA_UI_TIMING.schedule(()=>{closeOv('ovKurando');},2800,'kurando-close');
 }
 
 function showKurandoAll(m){
+  window.SILVA_UI_TIMING.cancel('kurando-close');
   /* AI vs 人間 のときも同じフリップ演出を出す */
   const d=document.getElementById('kurandoDuel');d.innerHTML='';
   function makeFlipSide(card,label){
@@ -4485,11 +4490,11 @@ function showKurandoAll(m){
   d.appendChild(a.side);d.appendChild(vs);d.appendChild(b.side);
   openOv('ovKurando');
 
-  setTimeout(()=>{a.flipper.classList.add('do-flip');},500);
-  setTimeout(()=>{b.flipper.classList.add('do-flip');},900);
-  setTimeout(()=>{vs.classList.add('show');a.lbl.classList.add('show');b.lbl.classList.add('show');},1400);
+  window.SILVA_UI_TIMING.schedule(()=>{a.flipper.classList.add('do-flip');},500);
+  window.SILVA_UI_TIMING.schedule(()=>{b.flipper.classList.add('do-flip');},900);
+  window.SILVA_UI_TIMING.schedule(()=>{vs.classList.add('show');a.lbl.classList.add('show');b.lbl.classList.add('show');},1400);
   /* 自動クローズ */
-  setTimeout(()=>{closeOv('ovKurando');},2800);
+  window.SILVA_UI_TIMING.schedule(()=>{closeOv('ovKurando');},2800,'kurando-close');
 }
 
 function showFarmer(cards){
@@ -4545,8 +4550,9 @@ function toast(msg,dur=3500){
   document.body.appendChild(el);setTimeout(()=>el.remove(),dur);
 }
 </script>
-<script src="/card-effects.js?v=22"></script>
-<script src="/experience.js?v=22"></script>
+<script src="/ui-timing.js?v=23"></script>
+<script src="/card-effects.js?v=23"></script>
+<script src="/experience.js?v=23"></script>
 </body>
 </html>
 <script>

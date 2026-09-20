@@ -9,6 +9,7 @@ const OUT=process.env.SILVA_SCREENSHOT_DIR||path.resolve('../../outputs');
   const errors=[];
   const c1=await browser.newContext({locale:'ja-JP',viewport:{width:390,height:844}}),c2=await browser.newContext({locale:'ja-JP',viewport:{width:1440,height:1000}});
   const a=await c1.newPage(),b=await c2.newPage();for(const p of[a,b])p.on('pageerror',e=>errors.push(e.message));
+  if(process.env.SILVA_SLOW==='1'){for(const [context,page] of [[c1,a],[c2,b]]){const dev=await context.newCDPSession(page);await dev.send('Network.enable');await dev.send('Network.emulateNetworkConditions',{offline:false,latency:180,downloadThroughput:750000,uploadThroughput:200000});await dev.send('Emulation.setCPUThrottlingRate',{rate:4});}console.log('Slow profile: 180ms network latency, 4x CPU throttling');}
   await Promise.all([a.goto(BASE),b.goto(BASE)]);await a.waitForTimeout(700);
   for(const width of[360,390,768,1440]){await a.setViewportSize({width,height:844});assert(await a.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'no horizontal scroll '+width);}
   await a.setViewportSize({width:390,height:844});await a.screenshot({path:path.join(OUT,'silva-mobile.png'),fullPage:true});await b.screenshot({path:path.join(OUT,'silva-desktop.png'),fullPage:true});
