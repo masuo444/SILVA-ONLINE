@@ -1671,7 +1671,7 @@ select option{background:#080d0b}
   100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}
 }
 </style>
-<link rel="stylesheet" href="/experience.css?v=23">
+<link rel="stylesheet" href="/experience.css?v=24">
 </head>
 <body>
 
@@ -3129,9 +3129,9 @@ const FX = (function(){
 <!-- ルールエンジン（サーバーと共有）・多言語辞書・ブラウザ内AI対戦
      ⚠ これらを変更したらリリース時に ?v= を上げること。
         上げないと、古いキャッシュを持つ端末が古いルールで動いてしまう -->
-<script src="/game-core.js?v=23"></script>
-<script src="/i18n.js?v=23"></script>
-<script src="/local-game.js?v=23"></script>
+<script src="/game-core.js?v=24"></script>
+<script src="/i18n.js?v=24"></script>
+<script src="/local-game.js?v=24"></script>
 
 <script>
 /* ═══════════════════════════════════
@@ -3716,9 +3716,9 @@ function renderPlayers(players,curId,phase,pending){
         if(e.target.closest('.card')||e.target.closest('.tgt-btn')||e.target.closest('button'))return;
         const pid=p.id;
         /* ターゲット選択待ちの場合 */
-        if(pendingCardUid&&!pendingGuess){playCardWithFX(pendingCardUid,{targetId:pid});pendingCardUid=null;pendingEffect=null;selectedUid=null;return;}
+        if(pendingCardUid&&!pendingGuess){playCardWithFX(pendingCardUid,{targetId:pid});return;}
         if(pendingGuess&&!_guessTarget){_guessTarget=pid;renderGuessFlow();return;}
-        if(selectedUid&&gameState){const me2=gameState.players.find(pp=>pp.id===myId);const card=me2?.hand?.find(c=>c.uid===selectedUid);if(card&&NEEDS_TGT.has(card.id)){playCardWithFX(selectedUid,{targetId:pid});selectedUid=null;return;}}
+        if(selectedUid&&gameState){const me2=gameState.players.find(pp=>pp.id===myId);const card=me2?.hand?.find(c=>c.uid===selectedUid);if(card&&NEEDS_TGT.has(card.id)){playCardWithFX(selectedUid,{targetId:pid});return;}}
       });
     }
     const tags=[
@@ -3845,7 +3845,7 @@ function renderTgtBtns(isPending){
   gameState.players.filter(p=>p.id!==myId&&p.alive).forEach(tp=>{
     const b=document.createElement('button');b.className='tgt-btn';
     b.innerHTML=`<span class="tgt-icon">${tp.isAI?'🤖':'👤'}</span>${esc(dn(tp.name))}`;
-    b.onclick=()=>{playCardWithFX(isPending?pendingCardUid:selectedUid,{targetId:tp.id});pendingCardUid=null;pendingEffect=null;selectedUid=null;};
+    b.onclick=()=>{playCardWithFX(isPending?pendingCardUid:selectedUid,{targetId:tp.id});};
     row.appendChild(b);
   });
   const cb=document.createElement('button');cb.className='btn';cb.textContent='キャンセル';
@@ -3879,14 +3879,15 @@ function renderGuessFlow(){
   ALL_CARDS.filter(c=>c.id!=='kukuochi_young').forEach(c=>{
     const b=document.createElement('button');b.className='guess-btn';
     b.innerHTML=`<span class="g-lv">${N(c.level)}</span><img src="${cardImg(c.level)}" alt="${cardName(c.id)}"><span class="g-nm">${cardName(c.id)}</span>`;
-    b.onclick=()=>{playCardWithFX(pendingCardUid,{targetId:_guessTarget,guess:c.id});pendingCardUid=null;pendingEffect=null;pendingGuess=false;_guessTarget=null;};
+    b.onclick=()=>{playCardWithFX(pendingCardUid,{targetId:_guessTarget,guess:c.id});};
     btns.appendChild(b);
   });
-  btns.appendChild(mkBtn(t('ui.cancel'),'btn',()=>{_guessTarget=null;pendingCardUid=null;pendingEffect=null;pendingGuess=false;hideCardPop();renderGame();}));
+  btns.appendChild(mkBtn(t('ui.cancel'),'btn',()=>{_guessTarget=null;pendingCardUid=null;pendingEffect=null;pendingGuess=false;selectedUid=null;hideCardPop();renderGame();}));
 }
 
 function mkBtn(l,c,f){const b=document.createElement('button');b.className=c;b.textContent=l;b.onclick=f;return b;}
 function selectCard(u){
+  pendingCardUid=null;pendingEffect=null;pendingGuess=false;_guessTarget=null;
   selectedUid=selectedUid===u?null:u;
   const me=gameState?.players?.find(p=>p.id===myId);
   const card=me?.hand?.find(c=>c.uid===selectedUid);
@@ -3898,6 +3899,13 @@ function warriorDiscard(u){send({type:'target_discard',cardUid:u});}
 
 /* FX hook: trigger card effect when playing a card locally */
 function playCardWithFX(cardUid, extra){
+  const card=gameState?.players.find(p=>p.id===myId)?.hand?.find(c=>c.uid===cardUid);
+  if(card?.id==='trainee'&&!extra?.guess){
+    pendingCardUid=cardUid;pendingEffect='trainee';pendingGuess=true;_guessTarget=extra?.targetId||null;
+    hideCardPop();renderGuessFlow();return;
+  }
+  // Local replies can arrive synchronously: clear before sending, never after.
+  pendingCardUid=null;pendingEffect=null;pendingGuess=false;_guessTarget=null;selectedUid=null;
   hideCardPop();
   send(Object.assign({type:'play_card',cardUid}, extra||{}));
 }
@@ -4550,9 +4558,9 @@ function toast(msg,dur=3500){
   document.body.appendChild(el);setTimeout(()=>el.remove(),dur);
 }
 </script>
-<script src="/ui-timing.js?v=23"></script>
-<script src="/card-effects.js?v=23"></script>
-<script src="/experience.js?v=23"></script>
+<script src="/ui-timing.js?v=24"></script>
+<script src="/card-effects.js?v=24"></script>
+<script src="/experience.js?v=24"></script>
 </body>
 </html>
 <script>

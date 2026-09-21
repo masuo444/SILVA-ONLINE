@@ -1,20 +1,20 @@
 // SILVA Service Worker
 // ⚠ リリースのたびに CACHE_NAME を上げること。上げないと古いHTMLが端末に残り続ける
-const CACHE_NAME = 'silva-v18';
+const CACHE_NAME = 'silva-v19';
 
 /* index.html の <script src="...?v=N"> と必ず同じ値にする（テストが同期を検査する）。
    ズレると、オフライン初回にコアJSがキャッシュに無くてAI戦が起動できない */
-const ASSET_VER = '23';
+const ASSET_VER = '24';
 
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/rules.html',
   '/manifest.json',
-  '/experience.css?v=23',
-  '/experience.js?v=23',
-  '/card-effects.js?v=23',
-  '/ui-timing.js?v=23',
+  '/experience.css?v=24',
+  '/experience.js?v=24',
+  '/card-effects.js?v=24',
+  '/ui-timing.js?v=24',
   `/game-core.js?v=${ASSET_VER}`,
   `/i18n.js?v=${ASSET_VER}`,
   `/local-game.js?v=${ASSET_VER}`,
